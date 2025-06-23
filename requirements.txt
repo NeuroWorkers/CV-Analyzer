@@ -1,0 +1,9 @@
+PyYAML~=6.0.2
+Telethon~=1.40.0
+openai~=0.28.0
+edgedb~=2.2.0
+numpy~=2.3.1
+pytz~=2025.2
+langchain~=0.3.26
+flask~=3.1.1
+APScheduler~=3.11.0
