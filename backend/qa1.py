@@ -3,9 +3,6 @@ import edgedb
 from configs.ai_config import *
 
 
-client = edgedb.create_async_client("db")
-
-
 async def generate_search_query(prompt: str) -> str:
     system_prompt = (
         "Ты помощник, который преобразует пользовательский запрос в оптимизированную строку "
@@ -28,20 +25,19 @@ async def generate_search_query(prompt: str) -> str:
     return response["choices"][0]["message"]["content"].strip()
 
 
-async def ai_search(query: str):
-    # ext::ai::search принимает строку запроса, база сама вычисляет embedding
-    return await client.query(
-        """
-        WITH results := ext::ai::search(ResumeMessage, <str>$q)
+client = edgedb.create_async_client("db")
+
+
+async def fts_search(query: str):
+    return await client.query("""
+        WITH results := fts::search(ResumeMessage, <str>$q)
         SELECT results.object {
             content,
             author,
             created_at
         }
         LIMIT 10;
-        """,
-        q=query
-    )
+    """, q=query)
 
 
 async def full_pipeline(user_query: str):
@@ -50,7 +46,8 @@ async def full_pipeline(user_query: str):
     search_phrase = await generate_search_query(user_query)
     print(f"[DEBUG] Сгенерированный поисковый запрос: {search_phrase}")
 
-    results = await ai_search(search_phrase)
+    # Передаём строку, не список
+    results = await fts_search(search_phrase)
 
     return [
         {
@@ -63,7 +60,7 @@ async def full_pipeline(user_query: str):
 
 
 if __name__ == "__main__":
-    query = "Молодые юристы от 20 до 40 лет с опытом работы"
+    query = "PRo People"
     output = asyncio.run(full_pipeline(query))
 
     print("\n--- Результаты поиска ---")
