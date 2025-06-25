@@ -1,6 +1,6 @@
 # CV-Analyzer
 ### Инструкция / Настройка по инстоляции EdgeDB 😢
-ставим edgedb
+ставим edgedb (mac os)
 ```
 brew tap edgedb/tap
 brew install edgedb-cli
