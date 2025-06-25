@@ -43,6 +43,13 @@ edgedb
 select ResumeMessage;
 ```
 
+активация виртуального окружения и установка зависимостей
+```
+python3 -m venv venv
+source venv/bin/activate
+pip3 install -r requirements.txt
+```
+
 настройки конфигов:
 - убрать sample .. 
 - указать `openai.api_key` в ai_config
