@@ -14,8 +14,10 @@ from telethon.tl.types import (
 
 from configs.telegram_config import (
     API_ID, API_HASH, SESSION_STRING,
-    group_username, output_filename, specific_topic_id, media_dir_parth, last_dump_file
+    group_username, output_filename, specific_topic_id, media_dir_parth, last_dump_file, output_dir, last_dump_dir
 )
+
+downloaded_avatars = {}
 
 
 def json_serial(obj):
@@ -63,6 +65,24 @@ async def save_media(client, message, folder=media_dir_parth):
         return path
     except Exception as e:
         print(f"[ERROR] Ошибка загрузки сообщения с id - {message.id}: {e}")
+        return None
+
+
+async def download_user_avatar(client, user, folder):
+    if not user or not isinstance(user, User):
+        return None
+
+    user_id = user.id
+    if user_id in downloaded_avatars:
+        return downloaded_avatars[user_id]
+
+    os.makedirs(folder, exist_ok=True)
+    try:
+        path = await client.download_profile_photo(user, file=os.path.join(folder, f"{user_id}.jpg"))
+        downloaded_avatars[user_id] = path
+        return path
+    except Exception as e:
+        print(f"[WARNING] Не удалось загрузить аватар для user_id={user_id}: {e}")
         return None
 
 
@@ -123,6 +143,13 @@ async def extract_message_data(message, client):
         else:
             text = caption
     else:
+        sender = await message.get_sender()
+        avatar_path = await download_user_avatar(client, sender, media_dir_parth)
+        if avatar_path:
+            media_info = {
+                'type': 'profile_photo',
+                'path': avatar_path,
+            }
         text = original_text
 
     sender = await message.get_sender()
@@ -162,6 +189,7 @@ def load_last_dump_date(filename=last_dump_file):
 
 def save_last_dump_date(date, filename=last_dump_file):
     try:
+        os.makedirs(last_dump_dir, exist_ok=True)
         with open(filename, 'w', encoding='utf-8') as f:
             f.write(date.isoformat())
     except Exception as e:
@@ -205,11 +233,13 @@ async def main():
         if newest_date is None or message.date > newest_date:
             newest_date = message.date
 
-        print('.', end='', flush=True)
+        print('[PROCESSING DUMP] wait\n', end='', flush=True)
 
     print("\nСтатистика топика:")
     for tid, msgs in topic_messages.items():
         print(f"В топике - {tid}: {len(msgs)} сообщений(-я)")
+
+    os.makedirs(output_dir, exist_ok=True)
 
     with open(output_filename, "w", encoding="utf-8") as f:
         json.dump({"messages": topic_messages},

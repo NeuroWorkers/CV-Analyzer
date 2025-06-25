@@ -5,8 +5,7 @@ from configs.ai_config import relevant_messages_json, relevant_media
 
 
 def copy_media_from_json(json_path: str = relevant_messages_json, destination_folder: str = relevant_media):
-    if not os.path.exists(destination_folder):
-        os.makedirs(destination_folder)
+    os.makedirs(destination_folder, exist_ok=True)
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     copied_count = 0

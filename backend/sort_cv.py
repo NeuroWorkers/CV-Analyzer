@@ -1,7 +1,8 @@
+import os
 import time
 import json
 import openai
-from configs.ai_config import messages_json, relevant_messages_json, max_processing_message_count
+from configs.ai_config import messages_json, relevant_messages_json, max_processing_message_count, relevant_messages_dir
 
 
 PROMPT_TEMPLATE = """
@@ -60,6 +61,8 @@ def sort_cv():
 
             count += 1
             time.sleep(1.2)
+
+    os.makedirs(relevant_messages_dir, exist_ok=True)
 
     with open(relevant_messages_json, "w", encoding="utf-8") as f:
         json.dump(filtered, f, ensure_ascii=False, indent=4)
