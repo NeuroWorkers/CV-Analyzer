@@ -1,0 +1,10 @@
+#!/bin/bash
+cd `dirname $0`;cd ../
+
+export PYTHONPATH=$(pwd):$PYTHONPATH
+
+#python3 database/db/import_to_db.py
+python3 bin/tgrabber.py
+#python3 tg_fetcher/tgrabber.py
+
+
