@@ -2,8 +2,9 @@ import os
 import time
 import json
 import openai
-from configs.ai_config import messages_json, relevant_messages_json, max_processing_message_count, relevant_messages_dir
 
+from configs.ai_config import max_processing_message_count
+from configs.project_paths import tg_dump_text_path, relevant_text_path
 
 PROMPT_TEMPLATE = """
 Ты — помощник, который помогает отбирать сообщения, содержащие CV (резюме) или краткое описание профессионального опыта человека.
@@ -33,10 +34,10 @@ def is_cv_openai(text):
 
 
 def sort_cv():
-    with open(messages_json, "r", encoding="utf-8") as f:
+    with open(os.path.join(tg_dump_text_path, "non_filtered_cv.json"), "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    messages_by_topic = data.get("messages", {})
+    messages_by_topic = data.get("text", {})
     filtered = {}
     count = 0
 
@@ -62,8 +63,8 @@ def sort_cv():
             count += 1
             time.sleep(1.2)
 
-    os.makedirs(relevant_messages_dir, exist_ok=True)
+    os.makedirs(relevant_text_path, exist_ok=True)
 
-    with open(relevant_messages_json, "w", encoding="utf-8") as f:
+    with open(os.path.join(relevant_text_path, "cv.json"), "w", encoding="utf-8") as f:
         json.dump(filtered, f, ensure_ascii=False, indent=4)
 

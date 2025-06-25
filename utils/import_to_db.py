@@ -1,8 +1,10 @@
+import os
+
 import pytz
 import json
 import edgedb
 from datetime import datetime
-from configs.ai_config import relevant_messages_json
+from configs.project_paths import relevant_text_path
 
 
 def make_aware(dt_str):
@@ -13,7 +15,7 @@ def make_aware(dt_str):
     return utc.localize(dt_naive)
 
 
-async def update_messages_to_db(json_path: str = relevant_messages_json):
+async def update_messages_to_db(json_path: str = os.path.join(relevant_text_path, "cv.json")):
     client = edgedb.create_async_client()
 
     with open(json_path, "r", encoding="utf-8") as f:

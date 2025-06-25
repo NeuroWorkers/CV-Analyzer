@@ -2,11 +2,10 @@ import os
 import shutil
 import asyncio
 from backend.sort_cv import sort_cv
-from tg_fetcher.tgrabber import main
+from tg_dumper.tgrabber import main
 from utils.preprocessing_db import copy_media_from_json
-from database.db.import_to_db import update_messages_to_db
-from configs.ai_config import relevant_messages_dir, relevant_media
-from configs.telegram_config import media_dir_parth, output_dir
+from utils.import_to_db import update_messages_to_db
+from configs.project_paths import tg_dump_text_path, tg_dump_media_path, relevant_text_path, relevant_media_path
 
 
 def auto_complete_dump() -> bool:
@@ -25,10 +24,10 @@ def auto_complete_dump() -> bool:
         asyncio.run(update_messages_to_db())
         print("ДАМП В БАЗУ ЗАВЕРШЕН")
 
-        clear_directory(relevant_messages_dir)
-        clear_directory(relevant_media)
-        clear_directory(media_dir_parth)
-        clear_directory(output_dir)
+        clear_directory(relevant_text_path)
+        clear_directory(relevant_media_path)
+        clear_directory(tg_dump_media_path)
+        clear_directory(tg_dump_text_path)
         print("ДИРЕКТОРИИ ОБНОВЛЕНЫ")
     except Exception as e:
         print(f"[ERROR] {e}")

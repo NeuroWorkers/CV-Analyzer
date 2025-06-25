@@ -1,10 +1,10 @@
 import os
 import json
 import shutil
-from configs.ai_config import relevant_messages_json, relevant_media
+from configs.ai_config import relevant_text_path, relevant_media_path
 
 
-def copy_media_from_json(json_path: str = relevant_messages_json, destination_folder: str = relevant_media):
+def copy_media_from_json(json_path: str = os.path.join(relevant_text_path, "cv.json"), destination_folder: str = relevant_media_path):
     os.makedirs(destination_folder, exist_ok=True)
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -23,7 +23,7 @@ def copy_media_from_json(json_path: str = relevant_messages_json, destination_fo
                 skipped_count += 1
                 continue
 
-            src_path = os.path.join('tg_fetcher', media_path)
+            src_path = os.path.join('tg_dumper', media_path)
             if os.path.isfile(src_path):
                 dst_path = os.path.join(destination_folder, os.path.basename(src_path))
                 try:
