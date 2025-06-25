@@ -1,0 +1,177 @@
+.card {
+  display: flex;
+  flex-direction: row;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  max-width: 600px;
+  width: 100%;
+  padding: 20px;
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.skeletonContainer {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.skeletonContent {
+  flex: 1;
+  padding: 1.5rem 1.5rem 1rem 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.skeletonFooter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.imageContainer {
+  flex: 0 0 auto;
+  width: 100px;
+  height: 100px;
+  margin: 20px;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.content {
+  flex: 1;
+  padding: 1.5rem 1.5rem 1rem 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.author {
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.text {
+  margin: 10px 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #666;
+}
+
+.markdownParagraph {
+  margin: 0.5rem 0;
+}
+
+.markdownStrong {
+  font-weight: 700;
+}
+
+.markdownList {
+  padding-left: 20px;
+  margin: 0.5rem 0;
+  list-style-type: disc;
+}
+
+.markdownListItem {
+  margin-bottom: 0.25rem;
+}
+
+.markdownLink {
+  color: teal;
+  text-decoration: underline;
+}
+
+.markdownLink:hover {
+  text-decoration: none;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.date {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: #999;
+}
+
+.button {
+  height: 32px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .card {
+    flex-direction: row;
+    max-width: 100%;
+    padding: 10px;
+  }
+
+  .skeletonContainer {
+    flex-direction: row;
+  }
+
+  .imageContainer {
+    width: 80px;
+    height: 80px;
+    margin: 10px;
+  }
+
+  .skeletonContent {
+    padding: 0.5rem 1rem 0.5rem 0;
+  }
+
+  .skeletonFooter {
+    align-items: flex-end;
+  }
+
+  .content {
+    padding: 0.5rem 1rem 0.5rem 0;
+  }
+
+  .author {
+    font-size: 1rem;
+  }
+
+  .text {
+    font-size: 0.9rem;
+  }
+
+  .markdownList {
+    padding-left: 15px;
+  }
+
+  .markdownParagraph {
+    font-size: 0.9rem;
+  }
+
+  .markdownLink {
+    font-size: 0.9rem;
+  }
+
+  .date {
+    font-size: 0.8rem;
+  }
+
+  .button {
+    font-size: 0.8rem;
+    height: 28px;
+  }
+
+  .footer {
+    align-items: flex-end;
+  }
+}
