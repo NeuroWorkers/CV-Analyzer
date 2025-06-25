@@ -9,7 +9,7 @@ from sentence_transformers import SentenceTransformer
 
 
 model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
-client = edgedb.create_async_client("db")
+client = edgedb.create_async_client("database")
 
 
 async def fetch_all_messages():

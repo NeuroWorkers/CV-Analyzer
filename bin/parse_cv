@@ -6,7 +6,7 @@ export HTTP_PROXY=http://172.29.177.25:3128
 export HTTPS_PROXY=http://172.29.177.25:3128
 
 
-#python3 database/db/import_to_db.py
+#python3 database/database/import_to_db.py
 python3 bin/parse_cv.py
 
 

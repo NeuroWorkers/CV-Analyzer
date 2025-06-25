@@ -15,19 +15,19 @@ def auto_complete_dump() -> bool:
         asyncio.run(main())
 
         # SORT CV
-        sort_cv()
+        # sort_cv()
 
         # MOVE
-        copy_media_from_json()
+        # copy_media_from_json()
 
         # IMPORT
-        asyncio.run(update_messages_to_db())
+        # asyncio.run(update_messages_to_db())
         print("ДАМП В БАЗУ ЗАВЕРШЕН")
 
-        clear_directory(relevant_text_path)
-        clear_directory(relevant_media_path)
-        clear_directory(tg_dump_media_path)
-        clear_directory(tg_dump_text_path)
+        # clear_directory(relevant_text_path)
+        # clear_directory(relevant_media_path)
+        # clear_directory(tg_dump_media_path)
+        # clear_directory(tg_dump_text_path)
         print("ДИРЕКТОРИИ ОБНОВЛЕНЫ")
     except Exception as e:
         print(f"[ERROR] {e}")
@@ -45,3 +45,6 @@ def clear_directory(directory_path):
             shutil.rmtree(item_path)
         else:
             os.remove(item_path)
+
+
+auto_complete_dump()

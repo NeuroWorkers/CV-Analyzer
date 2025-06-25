@@ -17,7 +17,7 @@ tg_dump_text_path = os.path.join(tg_dump_path, "text")
 tg_dump_last_dump_path = os.path.join(tg_dump_path, "last_dump")
 
 
-db_path = os.path.join(DATABASE_PATH, "db")
+db_path = os.path.join(DATABASE_PATH, "database")
 db_schema_path = os.path.join(db_path, "dbschema")
 
 

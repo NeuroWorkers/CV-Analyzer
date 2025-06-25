@@ -1,7 +1,7 @@
 import os
 import json
 import shutil
-from configs.ai_config import relevant_text_path, relevant_media_path
+from configs.project_paths import relevant_text_path, relevant_media_path
 
 
 def copy_media_from_json(json_path: str = os.path.join(relevant_text_path, "cv.json"), destination_folder: str = relevant_media_path):

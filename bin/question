@@ -4,7 +4,7 @@ p=`pwd`
 
 export PYTHONPATH=$(pwd):$PYTHONPATH
 
-#python3 database/db/import_to_db.py
+#python3 database/database/import_to_db.py
 #QUERY="юрист"
 QUERY=$1
 if [ -z "$1" ]; then
