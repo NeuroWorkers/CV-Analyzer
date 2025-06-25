@@ -1,5 +1,5 @@
 # CV-Analyzer
-Деплой db - 
+Старый Деплой db - 
 1) MACOS: brew install edgedb/tap/edgedb-cli или
    (brew tap edgedb/tap
     brew install edgedb-cli) 
@@ -28,11 +28,21 @@ module default {
 
 CHECK: 
 1) edge db
-2) SELECT ResumeMessage {
-    telegram_id
-}
-LIMIT 10;
+2) SELECT ResumeMessage;
 
+
+Новый деплой с гита: 
+
+1) MACOS: brew install edgedb/tap/edgedb-cli или
+   (brew tap edgedb/tap
+    brew install edgedb-cli) 
+LINUX: curl --proto '=https' --tlsv1.2 -sSf https://sh.edgedb.com | sh
+2) cd database/db
+3) edgedb project init
+
+CHECK: 
+1) edge db
+2) SELECT ResumeMessage;
 
 
 Запуск question_analyzer.py: 
