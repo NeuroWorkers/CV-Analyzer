@@ -1,6 +1,9 @@
 # CV-Analyzer
 Деплой db - 
-1) brew install edgedb/tap/edgedb-cli     //     curl --proto '=https' --tlsv1.2 -sSf https://sh.edgedb.com | sh
+1) MACOS: brew install edgedb/tap/edgedb-cli или
+   (brew tap edgedb/tap
+    brew install edgedb-cli) 
+LINUX: curl --proto '=https' --tlsv1.2 -sSf https://sh.edgedb.com | sh
 2) cd database/db
 3) edgedb project init
 4) dbschema/default.esdl: 
