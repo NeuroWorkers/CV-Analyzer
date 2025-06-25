@@ -15,8 +15,8 @@ ENV/
 
 data/relevant/media/
 data/relevant/text/
-tg_dumper/downloaded_media/
-tg_dumper/downloaded_text/
+data/tg_dump/text/
+data/tg_dump/media/
 data/tg_dump/last_dump/
 
 .DS_Store
