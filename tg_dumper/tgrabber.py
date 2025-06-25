@@ -171,7 +171,7 @@ async def extract_message_data(message, client):
         fwd_date, fwd_sender, reply_to_id
     )
 
-    return topic_id, {'Загруженный текст': msg, 'Загруженное медиа': media_info or None}
+    return topic_id, {'downloaded_text': msg, 'downloaded_media': media_info or None}
 
 
 def load_last_dump_date(filename=os.path.join(tg_dump_last_dump_path, "last_dump_date.txt")):
