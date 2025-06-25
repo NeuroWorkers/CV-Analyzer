@@ -1,10 +1,24 @@
 # CV-Analyzer
 ### Инструкция / Настройка по инсталяции EdgeDB 😢
-ставим edgedb (mac os)
+#### установка edgedb
+**(1 вариант) mac os:**
 ```
 brew tap edgedb/tap
 brew install edgedb-cli
 ```
+дополнительно (возможно это еще сработает)
+
+**(2 вариант) mac os:**
+```
+brew install edgedb/tap/edgedb-cli 
+```
+
+**linux:**
+```
+curl --proto '=https' --tlsv1.2 -sSf https://sh.edgedb.com | sh
+```
+
+#### настройки
 далее переходим в папку database/db
 ```
 cd database/db
@@ -20,54 +34,26 @@ edgedb project init
 edgedb instance list   
 ```
 
+проверки
+```
+edgedb
+```
+и там можно ввести запрос (например select)
+```sql
+select ResumeMessage;
+```
+
+настройки конфигов:
+- убрать sample .. 
+- указать `openai.api_key` в ai_config
+- указать `API_ID`, `API_HASH`, `SESSION_STRING` в telegram_config
+
+запуск основной через auto_run
+```
+python3 auto_run.py
+```
 
 ### Остальное
-Старый Деплой db - 
-1) MACOS: brew install edgedb/tap/edgedb-cli или
-   (brew tap edgedb/tap
-    brew install edgedb-cli) 
-LINUX: curl --proto '=https' --tlsv1.2 -sSf https://sh.edgedb.com | sh
-2) cd database/db
-3) edgedb project init
-4) dbschema/default.esdl: 
-module default {
-  type ResumeMessage {
-    required property telegram_id -> int64 {
-      constraint exclusive;
-    };
-    required property created_at -> datetime;
-    required property content -> str;
-    required property author -> str;
-    optional property fwd_date -> datetime;
-    optional property fwd_author -> str;
-    required property topic_id -> int64;
-    optional property media_type -> str;
-    optional property media_path -> str;
-  };
-};
-5) edgedb migration create 
-   edgedb migrate
-6) python3 import_to_db.py
-
-CHECK: 
-1) edge db
-2) SELECT ResumeMessage;
-
-
-Новый деплой с гита: 
-
-1) MACOS: brew install edgedb/tap/edgedb-cli или
-   (brew tap edgedb/tap
-    brew install edgedb-cli) 
-LINUX: curl --proto '=https' --tlsv1.2 -sSf https://sh.edgedb.com | sh
-2) cd database/db
-3) edgedb project init
-
-CHECK: 
-1) edge db
-2) SELECT ResumeMessage;
-
-
 Запуск question_analyzer.py: 
 1) edgedb instance list -> look -> [│ local │ db   │ localhost:10700 │ 6.8+9fb0925 │ running │]
 2) edgedb -I db
