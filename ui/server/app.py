@@ -1,5 +1,4 @@
 import os
-import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -61,20 +60,32 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
 
 
 @app.get("/get_relevant_nodes/{query}/{page_number}")
-async def get_relevant_nodes(query: str, page_number: int = 0):
-    nodes = question_analyzer(query)
+async def get_relevant_nodes(query: str, page_number: int = 0, request: Request = None):
+    nodes = await question_analyzer(query)
     results = []
     count = 0
     for node in nodes:
         if (page_number - 1) * 6 <= count < page_number * 6:
+            media_url = None
+            if node.get("media_path") and os.path.exists(node["media_path"]):
+                filename = os.path.basename(node["media_path"])
+                if request:
+                    media_url = str(request.url_for("media", path=filename))
+                else:
+                    media_url = f"/media/{filename}"
+                    
             results.append({
                 "author": node["author"],
                 "date": node["created_at"],
-                "content": node["content"]
+                "text": node["content"],
+                "photo": media_url
             })
         count += 1
-    return results
+
+    results.append({"count": count})
+    return JSONResponse(results)
 
 
 if __name__ == "__main__":
+    import uvicorn
     uvicorn.run(app, host=SERVER_HOST, port=SERVER_PORT)
