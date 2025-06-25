@@ -2,7 +2,7 @@ import os
 import shutil
 import asyncio
 from backend.sort_cv import sort_cv
-from tg_dumper.tgrabber import main
+from tg_dumper.tgrabber import grabber
 from utils.preprocessing_db import copy_media_from_json
 from utils.import_to_db import update_messages_to_db
 
@@ -11,7 +11,7 @@ def auto_complete_dump() -> bool:
     try:
         print("ВЫПОЛНЯЕТСЯ ДАМП В БАЗУ")
         # DUMP
-        asyncio.run(main())
+        asyncio.run(grabber())
 
         # SORT CV
         sort_cv()

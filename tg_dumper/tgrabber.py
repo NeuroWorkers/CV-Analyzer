@@ -196,7 +196,7 @@ def save_last_dump_date(date, filename=os.path.join(tg_dump_last_dump_path, "las
         print(f"[WARNING] Невозможно сохранить дату последнего дампа!: {e}")
 
 
-async def main():
+async def grabber():
     session = telethon.sessions.StringSession(SESSION_STRING)
     client = TelegramClient(session, API_ID, API_HASH)
     await client.start()
