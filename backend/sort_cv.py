@@ -46,7 +46,7 @@ def sort_cv():
             if count >= max_processing_message_count:
                 break
 
-            text_block = msg.get("Загруженный текст")
+            text_block = msg.get("downloaded_text")
             if not text_block or len(text_block) < 3:
                 continue
 

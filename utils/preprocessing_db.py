@@ -13,7 +13,7 @@ def copy_media_from_json(json_path: str = os.path.join(relevant_text_path, "cv.j
 
     for topic_id, entries in data.items():
         for entry in entries:
-            media = entry.get("Загруженное медиа")
+            media = entry.get("downloaded_media")
             if not media:
                 continue
 
