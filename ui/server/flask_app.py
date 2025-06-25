@@ -21,25 +21,31 @@ def home():
     return "Flask-приложение работает. Задача по расписанию запущена."
 
 
-@app.route("/get_all_nodes", methods=['GET'])
-async def get_all_nodes():
+@app.route("/get_all_nodes/<int:page_number>", methods=['GET'])
+async def get_all_nodes(page_number: int = 0):
     nodes = await fetch_all_messages()
     results = []
+    count = 0
     for node in nodes:
-        results.append({"author": node.author,
-                        "date": node.created_at,
-                        "content": node.content})
+        if (page_number - 1) * 6 <= count < page_number * 6:
+            results.append({"author": node.author,
+                            "date": node.created_at,
+                            "content": node.content})
+        count += 1
     return results
 
 
-@app.route('/get_relevant_nodes/<query>', methods=['GET'])
-def get_relevant_nodes(query: str):
+@app.route('/get_relevant_nodes/<query>/<int:page_number>', methods=['GET'])
+def get_relevant_nodes(query: str, page_number: int = 0):
     nodes = question_analyzer(query)
     results = []
+    count = 0
     for node in nodes:
-        results.append({"author": node["author"],
-                        "date": node["created_at"],
-                        "content": node["content"]})
+        if (page_number - 1) * 6 <= count < page_number * 6:
+            results.append({"author": node["author"],
+                            "date": node["created_at"],
+                            "content": node["content"]})
+        count += 1
     return nodes
 
 
