@@ -1,5 +1,3 @@
-from configs.project_paths import *
-
 API_ID = 0
 API_HASH = ''
 SESSION_STRING = ''
