@@ -7,3 +7,6 @@ pytz~=2025.2
 langchain~=0.3.26
 flask~=3.1.1
 APScheduler~=3.11.0
+langchain_community
+sentence_transformers
+
