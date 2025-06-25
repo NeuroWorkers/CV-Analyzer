@@ -141,7 +141,7 @@ export const CardComponent = ({ data }: ICardProps) => {
                     ),
                   }}
                 >
-                  {truncateMarkdown(data.text, 400)}
+                  {truncateMarkdown(data.text, 200)}
                 </ReactMarkdown>
               </div>
               <div className={styles.footer}>
