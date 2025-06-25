@@ -12,13 +12,13 @@ def auto_complete_dump() -> bool:
     try:
         print("ВЫПОЛНЯЕТСЯ ДАМП В БАЗУ")
         # DUMP
-        asyncio.run(main())
+        # asyncio.run(main())
 
         # SORT CV
         # sort_cv()
 
         # MOVE
-        # copy_media_from_json()
+        copy_media_from_json()
 
         # IMPORT
         # asyncio.run(update_messages_to_db())
