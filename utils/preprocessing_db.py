@@ -1,7 +1,7 @@
 import os
 import json
 import shutil
-from configs.project_paths import relevant_text_path, relevant_media_path
+from configs.project_paths import relevant_text_path, relevant_media_path, tg_dump_media_path
 
 
 def copy_media_from_json(json_path: str = os.path.join(relevant_text_path, "cv.json"), destination_folder: str = relevant_media_path):
@@ -23,17 +23,20 @@ def copy_media_from_json(json_path: str = os.path.join(relevant_text_path, "cv.j
                 skipped_count += 1
                 continue
 
-            src_path = os.path.join('tg_dumper', media_path)
-            if os.path.isfile(src_path):
-                dst_path = os.path.join(destination_folder, os.path.basename(src_path))
+        for filename in os.listdir(tg_dump_media_path):
+            tg_dump_media_file_path = os.path.join(tg_dump_media_path, filename)
+
+            if os.path.isfile(tg_dump_media_file_path):
+                dst_path = os.path.join(destination_folder, filename)
                 try:
-                    shutil.copy2(src_path, dst_path)
+                    shutil.copy2(tg_dump_media_file_path, dst_path)
                     copied_count += 1
-                    print(f"Скопирован: {src_path} → {dst_path}")
+                    print(f"Скопирован: {tg_dump_media_file_path} → {dst_path}")
                 except Exception as e:
-                    print(f"[ERROR] Ошибка при копировании {src_path}: {e}")
+                    print(f"[ERROR] Ошибка при копировании {tg_dump_media_file_path}: {e}")
             else:
-                print(f"Файл не найден: {src_path}")
+                print(f"Пропущено (не файл): {tg_dump_media_file_path}")
                 skipped_count += 1
 
-    print(f"\nИтого скопировано: {copied_count}, пропущено: {skipped_count}")
+        print(f"Копирование завершено. Скопировано: {copied_count}, пропущено: {skipped_count}")
+

@@ -16,15 +16,15 @@ def make_aware(dt_str):
 
 
 async def update_messages_to_db(json_path: str = os.path.join(relevant_text_path, "cv.json")):
-    client = edgedb.create_async_client()
+    client = edgedb.create_async_client("database")
 
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     for topic_id, messages in data.items():
         for message in messages:
-            text_data = message.get("Загруженный текст")
-            media_data = message.get("Загруженное медиа")
+            text_data = message.get("downloaded_text")
+            media_data = message.get("downloaded_media")
 
             if not text_data:
                 continue
@@ -52,8 +52,7 @@ async def update_messages_to_db(json_path: str = os.path.join(relevant_text_path
                         topic_id := <int64>$topic_id,
                         media_type := <optional str>$media_type,
                         media_path := <optional str>$media_path
-                    }
-                    UNLESS CONFLICT ON .telegram_id;
+                    };
                 """,
                                    telegram_id=telegram_id,
                                    created_at=created_at,
