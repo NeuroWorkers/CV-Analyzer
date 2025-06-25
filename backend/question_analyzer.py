@@ -61,9 +61,10 @@ async def main_search(user_query):
     return output
 
 
-def question_analyzer(query: str) -> list[dict[str, str | None | Any]]:
-    results = asyncio.run(main_search(query))
+async def question_analyzer(query: str) -> list[dict[str, str | None | Any]]:
+    results = await main_search(query)
     for r in results:
         print(f"{r['created_at']} - {r['author']}: {r['content']}")
 
     return results
+
