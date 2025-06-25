@@ -5,6 +5,7 @@ let globalConfig: {
 } | null;
 
 try {
+    // @ts-ignore
     ({ globalConfig } = await import("../config/config"));
     console.log('Импорт globalConfig прошел успешно:', globalConfig);
 } catch (error) {
