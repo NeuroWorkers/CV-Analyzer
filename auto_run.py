@@ -22,13 +22,13 @@ def auto_complete_dump() -> bool:
         copy_media_from_json()
 
         # IMPORT
-        #asyncio.run(update_messages_to_db())
+        asyncio.run(update_messages_to_db())
         print("ДАМП В БАЗУ ЗАВЕРШЕН")
 
-        #clear_directory(relevant_messages_dir)
-        #clear_directory(relevant_media)
-        #clear_directory(media_dir_parth)
-        #clear_directory(output_dir)
+        clear_directory(relevant_messages_dir)
+        clear_directory(relevant_media)
+        clear_directory(media_dir_parth)
+        clear_directory(output_dir)
         print("ДИРЕКТОРИИ ОБНОВЛЕНЫ")
     except Exception as e:
         print(f"[ERROR] {e}")
@@ -46,5 +46,3 @@ def clear_directory(directory_path):
             shutil.rmtree(item_path)
         else:
             os.remove(item_path)
-
-auto_complete_dump()
