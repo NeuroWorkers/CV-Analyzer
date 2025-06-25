@@ -1,53 +1,80 @@
-import asyncio
-
-import jsonify
-from flask import Flask
-from configs.server_config import *
-from auto_run import auto_complete_dump
-from apscheduler.schedulers.background import BackgroundScheduler
+import os
+import uvicorn
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from backend.question_analyzer import fetch_all_messages, question_analyzer
+from starlette.requests import Request
+from starlette.responses import RedirectResponse
+from configs.server_config import SERVER_PORT, SERVER_HOST, SERVER_DEBUG_MODE
+
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(BASE_DIR))
+MEDIA_DIR = os.path.join(PROJECT_ROOT, 'database', 'media')
+print(MEDIA_DIR)
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/")
+async def home():
+    return {"message": "FastAPI-приложение работает. Задача по расписанию запущена."}
 
 
-app = Flask(__name__)
-scheduler = BackgroundScheduler()
+app.mount("/media", StaticFiles(directory=MEDIA_DIR), name="media")
 
 
-scheduler.add_job(auto_complete_dump, 'cron', hour=SERVER_DUMP_HOUR, minute=SERVER_DUMP_MINUTE)
-scheduler.start()
-
-
-@app.route("/")
-def home():
-    return "Flask-приложение работает. Задача по расписанию запущена."
-
-
-@app.route("/get_all_nodes/<int:page_number>", methods=['GET'])
-async def get_all_nodes(page_number: int = 0):
+@app.get("/get_all_nodes/{page_number}")
+async def get_all_nodes(page_number: int = 0, request: Request = None):
     nodes = await fetch_all_messages()
     results = []
     count = 0
+
     for node in nodes:
         if (page_number - 1) * 6 <= count < page_number * 6:
-            results.append({"author": node.author,
-                            "date": node.created_at,
-                            "content": node.content})
+            media_url = None
+            if node.media_path and os.path.exists(node.media_path):
+                filename = os.path.basename(node.media_path)
+                if request:
+                    media_url = str(request.url_for("media", path=filename))
+                else:
+                    media_url = f"/media/{filename}"
+
+            results.append({
+                "author": node.author,
+                "date": node.created_at.isoformat() if node.created_at else None,
+                "text": node.content,
+                "photo": media_url
+            })
         count += 1
-    return results
+
+    results.append({"count": count})
+    return JSONResponse(results)
 
 
-@app.route('/get_relevant_nodes/<query>/<int:page_number>', methods=['GET'])
-def get_relevant_nodes(query: str, page_number: int = 0):
+@app.get("/get_relevant_nodes/{query}/{page_number}")
+async def get_relevant_nodes(query: str, page_number: int = 0):
     nodes = question_analyzer(query)
     results = []
     count = 0
     for node in nodes:
         if (page_number - 1) * 6 <= count < page_number * 6:
-            results.append({"author": node["author"],
-                            "date": node["created_at"],
-                            "content": node["content"]})
+            results.append({
+                "author": node["author"],
+                "date": node["created_at"],
+                "content": node["content"]
+            })
         count += 1
-    return nodes
+    return results
 
 
 if __name__ == "__main__":
-    app.run(host=SERVER_HOST, port=SERVER_PORT, debug=SERVER_DEBUG_MODE)
+    uvicorn.run(app, host=SERVER_HOST, port=SERVER_PORT)

@@ -18,7 +18,8 @@ async def fetch_all_messages():
             id,
             content,
             author,
-            created_at
+            created_at,
+            media_path
         }
     """)
 
@@ -53,7 +54,8 @@ async def main_search(user_query):
         output.append({
             "content": doc.page_content,
             "author": doc.metadata.get("author"),
-            "created_at": doc.metadata.get("created_at")
+            "created_at": doc.metadata.get("created_at"),
+            "media_path": doc.metadata.get("media_path")
         })
 
     return output
