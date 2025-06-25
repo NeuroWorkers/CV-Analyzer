@@ -1,9 +1,12 @@
+import asyncio
+
 import jsonify
 from flask import Flask
-from datetime import datetime
+from configs.server_config import *
 from auto_run import auto_complete_dump
 from apscheduler.schedulers.background import BackgroundScheduler
-from configs.server_config import *
+from backend.question_analyzer import fetch_all_messages, question_analyzer
+
 
 app = Flask(__name__)
 scheduler = BackgroundScheduler()
@@ -18,8 +21,26 @@ def home():
     return "Flask-приложение работает. Задача по расписанию запущена."
 
 
-def analyze_answer():
-    return jsonify({'': ''}), 200
+@app.route("/get_all_nodes", methods=['GET'])
+async def get_all_nodes():
+    nodes = await fetch_all_messages()
+    results = []
+    for node in nodes:
+        results.append({"author": node.author,
+                        "date": node.created_at,
+                        "content": node.content})
+    return results
+
+
+@app.route('/get_relevant_nodes/<query>', methods=['GET'])
+def get_relevant_nodes(query: str):
+    nodes = question_analyzer(query)
+    results = []
+    for node in nodes:
+        results.append({"author": node["author"],
+                        "date": node["created_at"],
+                        "content": node["content"]})
+    return nodes
 
 
 if __name__ == "__main__":
