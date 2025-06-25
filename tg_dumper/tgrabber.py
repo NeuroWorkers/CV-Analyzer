@@ -4,7 +4,9 @@ import json
 import telethon.sessions
 from datetime import datetime
 from telethon import TelegramClient
-from tg_fetcher.chatdata import Message
+
+from configs.project_paths import tg_dump_media_path, tg_dump_last_dump_path, tg_dump_text_path
+from tg_dumper.chatdata import Message
 
 from telethon.tl.functions.channels import GetForumTopicsRequest
 from telethon.tl.types import (
@@ -12,10 +14,8 @@ from telethon.tl.types import (
     DocumentAttributeFilename, DocumentAttributeSticker, Channel, User
 )
 
-from configs.telegram_config import (
-    API_ID, API_HASH, SESSION_STRING,
-    group_username, output_filename, specific_topic_id, media_dir_parth, last_dump_file, output_dir, last_dump_dir
-)
+from configs.telegram_config import API_ID, API_HASH, SESSION_STRING, group_username, specific_topic_id
+
 
 downloaded_avatars = {}
 
@@ -56,7 +56,7 @@ def get_duration(document):
     return getattr(attr, 'duration', 'unknown')
 
 
-async def save_media(client, message, folder=media_dir_parth):
+async def save_media(client, message, folder=tg_dump_media_path):
     os.makedirs(folder, exist_ok=True)
     if not message.media:
         return None
@@ -144,7 +144,7 @@ async def extract_message_data(message, client):
             text = caption
     else:
         sender = await message.get_sender()
-        avatar_path = await download_user_avatar(client, sender, media_dir_parth)
+        avatar_path = await download_user_avatar(client, sender, tg_dump_media_path)
         if avatar_path:
             media_info = {
                 'type': 'profile_photo',
@@ -174,7 +174,7 @@ async def extract_message_data(message, client):
     return topic_id, {'Загруженный текст': msg, 'Загруженное медиа': media_info or None}
 
 
-def load_last_dump_date(filename=last_dump_file):
+def load_last_dump_date(filename=os.path.join(tg_dump_last_dump_path, "last_dump_date.txt")):
     if not os.path.exists(filename):
         return None
     try:
@@ -187,9 +187,9 @@ def load_last_dump_date(filename=last_dump_file):
     return None
 
 
-def save_last_dump_date(date, filename=last_dump_file):
+def save_last_dump_date(date, filename=os.path.join(tg_dump_last_dump_path, "last_dump_date.txt")):
     try:
-        os.makedirs(last_dump_dir, exist_ok=True)
+        os.makedirs(tg_dump_last_dump_path, exist_ok=True)
         with open(filename, 'w', encoding='utf-8') as f:
             f.write(date.isoformat())
     except Exception as e:
@@ -239,10 +239,10 @@ async def main():
     for tid, msgs in topic_messages.items():
         print(f"В топике - {tid}: {len(msgs)} сообщений(-я)")
 
-    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(tg_dump_text_path, exist_ok=True)
 
-    with open(output_filename, "w", encoding="utf-8") as f:
-        json.dump({"messages": topic_messages},
+    with open(os.path.join(tg_dump_text_path, "non_filtered_cv.json"), "w", encoding="utf-8") as f:
+        json.dump({"text": topic_messages},
                   f, ensure_ascii=False, indent=4, default=json_serial)
 
     if newest_date:

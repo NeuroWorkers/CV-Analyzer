@@ -1,5 +1,5 @@
 import openai
-from configs.calculated_paths import *
+from configs.project_paths import *
 
 openai.api_key = ""
 

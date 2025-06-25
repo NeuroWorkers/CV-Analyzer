@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
-#from tg_fetcher.tgrabber import main
-#import tg_fetcher
+#from tg_dumper.tgrabber import main
+#import tg_dumper
 from tg_fetcher.tgrabber import main
 from configs.telegram_config import (
     API_ID, API_HASH, SESSION_STRING,
@@ -10,5 +10,5 @@ from configs.telegram_config import (
 
 
 # 
-#tg_fetcher.tgrabber.
+#tg_dumper.tgrabber.
 asyncio.run(main())

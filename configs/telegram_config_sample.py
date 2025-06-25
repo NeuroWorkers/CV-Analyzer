@@ -1,4 +1,4 @@
-from configs.calculated_paths import *
+from configs.project_paths import *
 
 API_ID = 0
 API_HASH = ''

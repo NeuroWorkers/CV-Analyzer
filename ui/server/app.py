@@ -5,7 +5,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from backend.question_analyzer import fetch_all_messages, question_analyzer
 from starlette.requests import Request
-from starlette.responses import RedirectResponse
 from configs.server_config import SERVER_PORT, SERVER_HOST, SERVER_DEBUG_MODE
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -22,6 +21,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 async def home():

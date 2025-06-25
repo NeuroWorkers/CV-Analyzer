@@ -13,11 +13,11 @@ env/
 ENV/
 .venv/
 
-database/media/
-database/messages/
-tg_fetcher/downloaded_media/
-tg_fetcher/downloaded_text/
-tg_fetcher/last_dump/
+data/relevant/media/
+data/relevant/text/
+tg_dumper/downloaded_media/
+tg_dumper/downloaded_text/
+data/tg_dump/last_dump/
 
 .DS_Store
 Thumbs.db

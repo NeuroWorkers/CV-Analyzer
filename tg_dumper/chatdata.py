@@ -15,7 +15,7 @@ Message = namedtuple(
     'Message', ['id', 'date', 'text', 'user', 'forward_date', 'forward_from', 'reply_to_id'],
 )
 MessagesChunk = namedtuple(
-    'Message', ['messages', 'title'],
+    'Message', ['text', 'title'],
 )
 
 topics = None
@@ -62,7 +62,7 @@ def read_chat_file( chat_dump_filename ):
             int(topic_id): [
                 Message(*msg) for msg in messages
             ]
-            for topic_id, messages in tgmessages['messages'].items()
+            for topic_id, messages in tgmessages['text'].items()
         }
 
         topics = tgmessages['topics']
