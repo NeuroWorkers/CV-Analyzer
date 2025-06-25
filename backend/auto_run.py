@@ -5,7 +5,6 @@ from backend.sort_cv import sort_cv
 from tg_dumper.tgrabber import main
 from utils.preprocessing_db import copy_media_from_json
 from utils.import_to_db import update_messages_to_db
-from configs.project_paths import tg_dump_text_path, tg_dump_media_path, relevant_text_path, relevant_media_path
 
 
 def auto_complete_dump() -> bool:

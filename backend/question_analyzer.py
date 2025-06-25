@@ -67,4 +67,3 @@ async def question_analyzer(query: str) -> list[dict[str, str | None | Any]]:
         print(f"{r['created_at']} - {r['author']}: {r['content']}")
 
     return results
-
