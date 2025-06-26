@@ -2,13 +2,13 @@ import os
 from configs.main_paths import DATA_PATH, DATABASE_PATH
 
 if DATA_PATH == "":
-    DATA_PATH = "../data"
+    DATA_PATH = "./data"
 else:
     # не видно иначе при импорте project_paths
     DATA_PATH = DATA_PATH
 
 if DATABASE_PATH == "":
-    DATABASE_PATH = "../database"
+    DATABASE_PATH = "./database"
 
 relevant_path = os.path.join(DATA_PATH, "relevant")
 relevant_media_path = os.path.join(relevant_path, "media")

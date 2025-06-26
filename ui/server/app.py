@@ -1,17 +1,12 @@
-import os
 import uvicorn
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi import FastAPI
+from starlette.requests import Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from configs.server_config import SERVER_PORT, SERVER_HOST
 from backend.question_analyzer import fetch_all_messages, full_pipeline
-from starlette.requests import Request
-from configs.server_config import SERVER_PORT, SERVER_HOST, SERVER_DEBUG_MODE
-
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(os.path.dirname(BASE_DIR))
-MEDIA_DIR = os.path.join(PROJECT_ROOT, 'database', 'media')
-print(MEDIA_DIR)
+from configs.project_paths import *
 
 app = FastAPI()
 
@@ -29,7 +24,7 @@ async def home():
     return {"message": "FastAPI-приложение работает. Задача по расписанию запущена."}
 
 
-app.mount("/media", StaticFiles(directory=MEDIA_DIR), name="media")
+app.mount("/media", StaticFiles(directory=relevant_media_path), name="media")
 
 
 @app.get("/get_all_nodes/{page_number}")
