@@ -1,6 +1,6 @@
 import { Anchor, Button, Skeleton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import styles from './Card.module.css';
 import type { ICardProps } from '../../../core/types/cardTypes';
@@ -8,14 +8,15 @@ import { ModalWindow } from '../modal/ModalWindow';
 
 export const CardComponent = ({ data }: ICardProps) => {
   const [opened, { open, close }] = useDisclosure(false);
-  const [isLoading, setIsLoading] = useState(true);
+  // @ts-ignore
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     setIsLoading(false);
+  //   }, 500);
+  //   return () => clearTimeout(timer);
+  // }, []);
 
   function extractUsername(input: string): string {
     const match = input.match(/^@([^ ]+)/);

@@ -1,3 +1,4 @@
+// @ts-nocheck
 let globalConfig: {
   port: number;
   backendCheckToPath: string;
