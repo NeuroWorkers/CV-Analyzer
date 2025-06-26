@@ -24,8 +24,8 @@
   font-size: 1.2rem;
   font-weight: 600;
   color: #333;
-  text-align: center; /* Center the author name below the image */
-  margin-bottom: 16px; /* Add spacing below the author name */
+  text-align: center; 
+  margin-bottom: 16px; 
 }
 
 .image {
@@ -33,10 +33,10 @@
   max-width: 300px;
   height: auto;
   border-radius: 8px;
-  display: block; /* Center the image */
+  display: block; 
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: 8px; /* Reduce margin to bring author name closer */
+  margin-bottom: 8px;
 }
 
 .text {

@@ -1,7 +1,7 @@
 {
   "basename-frontend": "",
-  "domain": "127.0.0.1",
-  "port": "24637",
+  "domain": "172.29.177.12",
+  "port": "26667",
   "api-path": "restapi",
   "backend-check-to-path": ""
 }
