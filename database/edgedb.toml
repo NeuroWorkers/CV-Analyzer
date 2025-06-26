@@ -1,2 +1,5 @@
 [edgedb]
 server-version = "6.8"
+
+[ai.providers.openai]
+api_key = ""
