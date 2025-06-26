@@ -15,11 +15,14 @@ fi
 #python3 $p/backend/question_analyzer.py $QUERY
 #python3 ./bin/question.py $QUERY
 
-#exit
 python3 -c 'import sys
 import asyncio
-from backend.question_analyzer import analyze_user_query
+from backend.question_analyzer import analyze_user_query,full_pipeline
 print("p=" + sys.argv[1])
-asyncio.run(analyze_user_query(sys.argv[1]))
+#asyncio.run(analyze_user_query(sys.argv[1]))
+results = asyncio.run(full_pipeline(sys.argv[1]))
+print("\n--- Результаты ---")
+for r in results:
+    print(f"{r.created_at} — {r.author}: {r.content}")
 ' $QUERY
 
