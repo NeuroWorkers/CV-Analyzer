@@ -15,22 +15,52 @@ PROMPT_TEMPLATE = """
 \"\"\"{text}\"\"\"
 """
 
+REAL_AUTHOR_PROMPT = """
+Ты — помощник, который анализирует пересланные сообщения в Telegram.
 
-def is_cv_openai(text):
+Вот текст сообщения:
+\"\"\"{text}\"\"\"
+
+Имя отправителя, записанное системой: "{system_author}"
+Имя автора, у которого сообщение было переслано (если есть): "{fwd_author}"
+
+Если в тексте сообщения явно указано настоящее имя автора (например: "Меня зовут Иван", "Я - Ольга Смирнова", "Екатерина Крылова, личное CV"), вытащи его и верни как ответ. 
+Если нет, но указано `fwd_author`, то верни `fwd_author`. 
+Если и это не помогает — верни `system_author`. Ответь одним именем, без объяснений.
+"""
+
+
+def is_cv_openai(text: str) -> bool:
     try:
         prompt = PROMPT_TEMPLATE.format(text=text)
         response = openai.ChatCompletion.create(
             model="gpt-4",
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
+            messages=[{"role": "user", "content": prompt}],
             temperature=0
         )
         result = response['choices'][0]['message']['content'].strip().lower()
         return "yes" in result
     except Exception as e:
-        print(f"[ERROR]: {e}")
+        print(f"[ERROR is_cv]: {e}")
         return False
+
+
+def determine_real_author(text: str, system_author: str, fwd_author: str) -> str:
+    try:
+        prompt = REAL_AUTHOR_PROMPT.format(
+            text=text,
+            system_author=system_author or "",
+            fwd_author=fwd_author or ""
+        )
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2
+        )
+        return response['choices'][0]['message']['content'].strip()
+    except Exception as e:
+        print(f"[ERROR author_detect]: {e}")
+        return system_author
 
 
 def sort_cv():
@@ -47,24 +77,30 @@ def sort_cv():
                 break
 
             text_block = msg.get("downloaded_text")
-            if not text_block or len(text_block) < 3:
+            if not text_block or len(text_block) < 7:
                 continue
 
-            text = text_block[2]
+            telegram_id = text_block[0]
+            created_at = text_block[1]
+            content = text_block[2]
+            system_author = text_block[3]
+            fwd_date = text_block[4]
+            fwd_author = text_block[5]
+            topic = text_block[6]
 
-            if len(text.strip()) < 50:
+            if len(content.strip()) < 50:
                 continue
 
-            print(f"Проверка сообщения: {text_block[0]}")
+            print(f"Проверка сообщения: {telegram_id}")
 
-            if is_cv_openai(text):
+            if is_cv_openai(content):
+                true_author = determine_real_author(content, system_author, fwd_author)
+                text_block[3] = true_author
                 filtered.setdefault(topic_id, []).append(msg)
 
             count += 1
             time.sleep(1.2)
 
     os.makedirs(relevant_text_path, exist_ok=True)
-
     with open(os.path.join(relevant_text_path, "cv.json"), "w", encoding="utf-8") as f:
         json.dump(filtered, f, ensure_ascii=False, indent=4)
-

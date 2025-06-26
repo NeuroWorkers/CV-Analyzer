@@ -45,5 +45,3 @@ def clear_directory(directory_path):
         else:
             os.remove(item_path)
 
-
-auto_complete_dump()
