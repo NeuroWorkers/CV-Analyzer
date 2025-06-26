@@ -30,6 +30,9 @@ async def home():
 
 app.mount("/media", StaticFiles(directory=MEDIA_DIR), name="media")
 
+@app.get("/init437721")
+async def init437721():
+    return {"status": "ok"}
 
 @app.get("/get_all_nodes/{page_number}")
 async def get_all_nodes(page_number: int = 0, request: Request = None):
