@@ -102,7 +102,7 @@ export const CardComponent = ({ data }: ICardProps) => {
               </ReactMarkdown>
             </div>
             <div className={styles.footer}>
-              // {data.date && <p className={styles.date}>{data.date}</p>}
+              {/* {data.date && <p className={styles.date}>{data.date}</p>} */}
               <Button className={styles.button} variant="light" color="teal" onClick={open}>
                 Подробнее
               </Button>
