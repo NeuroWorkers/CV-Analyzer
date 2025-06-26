@@ -1,12 +1,12 @@
 import uvicorn
 from fastapi import FastAPI
+from configs.project_paths import *
 from starlette.requests import Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from configs.server_config import SERVER_PORT, SERVER_HOST
 from backend.question_analyzer import fetch_all_messages, full_pipeline
-from configs.project_paths import *
 
 app = FastAPI()
 
@@ -26,9 +26,11 @@ async def home():
 
 app.mount("/media", StaticFiles(directory=relevant_media_path), name="media")
 
+
 @app.get("/init437721")
 async def init437721():
     return {"status": "ok"}
+
 
 @app.get("/get_all_nodes/{page_number}")
 async def get_all_nodes(page_number: int = 0, request: Request = None):
