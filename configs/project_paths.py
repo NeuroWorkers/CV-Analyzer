@@ -3,6 +3,9 @@ from configs.main_paths import DATA_PATH, DATABASE_PATH
 
 if DATA_PATH == "":
     DATA_PATH = "../data"
+else:
+    # не видно иначе при импорте project_paths
+    DATA_PATH = DATA_PATH
 
 if DATABASE_PATH == "":
     DATABASE_PATH = "../database"

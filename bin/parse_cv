@@ -2,11 +2,17 @@
 cd `dirname $0`;cd ../
 
 export PYTHONPATH=$(pwd):$PYTHONPATH
-export HTTP_PROXY=http://172.29.177.25:3128
-export HTTPS_PROXY=http://172.29.177.25:3128
+if [ -f configs/proxy.sh ]; then
+source configs/proxy.sh
+else
+source configs/proxy.sh.sample
+fi
+#echo $HTTP_PROXY
 
-
-#python3 database/database/import_to_db.py
-python3 bin/parse_cv.py
-
-
+#python3 bin/parse_cv.py
+python3 -c 'from backend.sort_cv import sort_cv
+from utils.preprocessing_db import copy_media_from_json
+# SORT CV
+sort_cv()
+copy_media_from_json()
+'
