@@ -6,6 +6,17 @@ from configs.ai_config import *
 
 client = edgedb.create_async_client("database")
 
+async def fetch_all_messages():
+    return await client.query("""
+        SELECT ResumeMessage {
+            id,
+            content,
+            author,
+            created_at,
+            media_path
+        }
+    """)
+
 
 async def analyze_user_query(user_query: str) -> str:
     system_prompt = (
