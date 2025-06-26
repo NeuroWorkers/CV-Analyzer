@@ -26,9 +26,11 @@ async def home():
 
 app.mount("/media", StaticFiles(directory=relevant_media_path), name="media")
 
+
 @app.get("/init437721")
 async def init437721():
     return {"status": "ok"}
+
 
 @app.get("/get_all_nodes/{page_number}")
 async def get_all_nodes(page_number: int = 0, request: Request = None):
@@ -72,7 +74,7 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
                     media_url = str(request.url_for("media", path=filename))
                 else:
                     media_url = f"/media/{filename}"
-                    
+
             results.append({
                 "author": node["author"],
                 "date": node["created_at"],
