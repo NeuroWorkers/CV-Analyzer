@@ -17,12 +17,14 @@ fi
 
 python3 -c 'import sys
 import asyncio
-from backend.question_analyzer import analyze_user_query,full_pipeline
+from backend.question_analyzer import analyze_user_query,full_pipeline,vector_search
 print("p=" + sys.argv[1])
+result=asyncio.run(vector_search(sys.argv[1]))
+print(result)
 #asyncio.run(analyze_user_query(sys.argv[1]))
-results = asyncio.run(full_pipeline(sys.argv[1]))
-print("\n--- Результаты ---")
-for r in results:
-    print(f"{r.created_at} — {r.author}: {r.content}")
+#results = asyncio.run(full_pipeline(sys.argv[1]))
+#print("\n--- Результаты ---")
+#for r in results:
+#    print(f"{r.created_at} — {r.author}: {r.content}")
 ' $QUERY
 

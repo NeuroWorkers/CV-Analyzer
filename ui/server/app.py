@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from backend.question_analyzer import fetch_all_messages, question_analyzer
+from backend.question_analyzer import fetch_all_messages, analyze_user_query
 from starlette.requests import Request
 from configs.server_config import SERVER_PORT, SERVER_HOST, SERVER_DEBUG_MODE
 
@@ -61,7 +61,7 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
 
 @app.get("/get_relevant_nodes/{query}/{page_number}")
 async def get_relevant_nodes(query: str, page_number: int = 0, request: Request = None):
-    nodes = await question_analyzer(query)
+    nodes = await analyze_user_query(query)
     results = []
     count = 0
     for node in nodes:
