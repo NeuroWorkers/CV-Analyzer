@@ -24,7 +24,7 @@ async def home():
     return {"message": "BACKEND SERVER SUCCESSFULLY STARTED"}
 
 
-app.mount("/media", StaticFiles(directory="../."+relevant_media_path), name="media")
+app.mount("/media", StaticFiles(directory=relevant_media_path), name="media")
 
 
 @app.get("/init437721")
