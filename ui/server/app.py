@@ -21,7 +21,7 @@ app.add_middleware(
 
 @app.get("/")
 async def home():
-    return {"message": "FastAPI-приложение работает. Задача по расписанию запущена."}
+    return {"message": "BACKEND SERVER SUCCESSFULLY STARTED"}
 
 
 app.mount("/media", StaticFiles(directory=relevant_media_path), name="media")
