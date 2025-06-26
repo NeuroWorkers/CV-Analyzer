@@ -15,9 +15,11 @@ fi
 #python3 $p/backend/question_analyzer.py $QUERY
 #python3 ./bin/question.py $QUERY
 
-python3 -c "import sys
-from backend.question_analyzer import question_analyzer
-print('p=' + sys.argv[1])
-question_analyzer(sys.argv[1])
-" $p/backend/question_analyzer.py $QUERY
+#exit
+python3 -c 'import sys
+import asyncio
+from backend.question_analyzer import analyze_user_query
+print("p=" + sys.argv[1])
+asyncio.run(analyze_user_query(sys.argv[1]))
+' $QUERY
 
