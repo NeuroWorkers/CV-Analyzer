@@ -4,7 +4,9 @@ cd `dirname $0`;cd ../
 export PYTHONPATH=$(pwd):$PYTHONPATH
 
 #python3 database/database/import_to_db.py
-python3 bin/tgrabber.py
-#python3 tg_dumper/tgrabber.py
+#python3 bin/tgrabber.py
+python3 -c 'import asyncio
+from tg_dumper.tgrabber import grabber
+asyncio.run(grabber())' tg_dumper/tgrabber.py
 
 

@@ -1,2 +1,2 @@
-DATA_PATH = "../data"
-DATABASE_PATH = "../database"
+DATA_PATH = "./data"
+DATABASE_PATH = "./database"

@@ -5,7 +5,7 @@ import telethon.sessions
 from datetime import datetime
 from telethon import TelegramClient
 
-from configs.project_paths import tg_dump_media_path, tg_dump_last_dump_path, tg_dump_text_path
+from configs.project_paths import tg_dump_media_path, tg_dump_last_dump_path, tg_dump_text_path, DATA_PATH
 from tg_dumper.chatdata import Message
 
 from telethon.tl.functions.channels import GetForumTopicsRequest
@@ -109,6 +109,8 @@ async def extract_message_data(message, client):
         path = await save_media(client, message)
         media_type = message.media.__class__.__name__.lower()
 
+        if path.startswith(DATA_PATH):
+            path=path.replace(DATA_PATH + "/",'', 1)
         media_info = {
             'type': media_type,
             'path': path,
