@@ -109,8 +109,10 @@ async def extract_message_data(message, client):
         path = await save_media(client, message)
         media_type = message.media.__class__.__name__.lower()
 
-        if path.startswith(DATA_PATH):
-            path=path.replace(DATA_PATH + "/",'', 1)
+        if type(path) == str:
+            if path.startswith(DATA_PATH):
+                path=path.replace(DATA_PATH + "/",'', 1)
+
         media_info = {
             'type': media_type,
             'path': path,
