@@ -1,9 +1,10 @@
 import os
+import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from backend.question_analyzer import fetch_all_messages, analyze_user_query
+from backend.question_analyzer import fetch_all_messages, full_pipeline
 from starlette.requests import Request
 from configs.server_config import SERVER_PORT, SERVER_HOST, SERVER_DEBUG_MODE
 
@@ -61,7 +62,7 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
 
 @app.get("/get_relevant_nodes/{query}/{page_number}")
 async def get_relevant_nodes(query: str, page_number: int = 0, request: Request = None):
-    nodes = await analyze_user_query(query)
+    nodes = await full_pipeline(query)
     results = []
     count = 0
     for node in nodes:
@@ -87,5 +88,4 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
 
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host=SERVER_HOST, port=SERVER_PORT)

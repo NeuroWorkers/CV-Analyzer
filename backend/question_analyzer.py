@@ -6,6 +6,7 @@ from configs.ai_config import *
 
 client = edgedb.create_async_client("database")
 
+
 async def fetch_all_messages():
     return await client.query("""
         SELECT ResumeMessage {
@@ -99,7 +100,7 @@ async def full_pipeline(user_query: str) -> list[dict[str, Any]]:
     return filtered
 
 
-if __name__ == "__main__":
+def test():
     query = "Павел"
     results = asyncio.run(full_pipeline(query))
 
