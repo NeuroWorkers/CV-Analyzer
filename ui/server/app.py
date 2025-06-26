@@ -26,11 +26,6 @@ async def home():
 
 app.mount("/media", StaticFiles(directory=relevant_media_path), name="media")
 
-
-@app.get("/init437721")
-async def init437721():
-    return {"status": "ok"}
-
 @app.get("/init437721")
 async def init437721():
     return {"status": "ok"}
