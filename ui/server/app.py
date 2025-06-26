@@ -24,7 +24,7 @@ async def home():
     return {"message": "BACKEND SERVER SUCCESSFULLY STARTED"}
 
 
-app.mount("/media", StaticFiles(directory=relevant_media_path), name="media")
+app.mount("/media", StaticFiles(directory="../."+relevant_media_path), name="media")
 
 
 @app.get("/init437721")
@@ -68,17 +68,17 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
     for node in nodes:
         if (page_number - 1) * 6 <= count < page_number * 6:
             media_url = None
-            if node.get("media_path") and os.path.exists(node["media_path"]):
-                filename = os.path.basename(node["media_path"])
+            if node.media_path and os.path.exists(node.media_path):
+                filename = os.path.basename(node.media_path)
                 if request:
                     media_url = str(request.url_for("media", path=filename))
                 else:
                     media_url = f"/media/{filename}"
 
             results.append({
-                "author": node["author"],
-                "date": node["created_at"],
-                "text": node["content"],
+                "author": node.author,
+                "date": node.created_at.isoformat() if node.created_at else None,
+                "text": node.content,
                 "photo": media_url
             })
         count += 1
