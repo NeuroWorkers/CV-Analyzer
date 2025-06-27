@@ -111,7 +111,7 @@ export const CardComponent = ({ data }: ICardProps) => {
           <>
             {data.photo && (
               <div className={styles.imageContainer}>
-                <img src={`${URL}${data.photo}`} key={data.photo} alt={data.author} className={styles.image} />
+                <img src={data.photo.startsWith('http') ? data.photo : `${URL}${data.photo}`} key={data.photo} alt={data.author} className={styles.image} />
               </div>
             )}
             <div className={styles.content}>
