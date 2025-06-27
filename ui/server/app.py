@@ -44,9 +44,10 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
             if node.media_path and os.path.exists(node.media_path):
                 filename = os.path.basename(node.media_path)
                 media_url = f"/media/{filename}"  
-
+            username, fullname = node.author.split(maxsplit=1)
+            author = f"{username} ({fullname})"
             results.append({
-                "author": node.author,
+                "author": author,
                 "date": node.created_at.isoformat() if node.created_at else None,
                 "text": node.content,
                 "photo": media_url
@@ -68,8 +69,10 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
             if node.media_path and os.path.exists(node.media_path):
                 filename = os.path.basename(node.media_path)
                 media_url = f"/media/{filename}"  
+            username, fullname = node.author.split(maxsplit=1)
+            author = f"{username} ({fullname})"
             results.append({
-                "author": node.author,
+                "author": author,
                 "date": node.created_at.isoformat() if node.created_at else None,
                 "text": node.content,
                 "photo": media_url
