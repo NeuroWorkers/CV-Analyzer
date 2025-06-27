@@ -8,6 +8,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from configs.server_config import SERVER_PORT, SERVER_HOST
 from backend.question_analyzer import fetch_all_messages, full_pipeline
 
+import logging
+
+logger = logging.getLogger(__name__)  
+logger.setLevel(logging.DEBUG)  
+file_handler = logging.FileHandler('app2.log')
+file_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+
 app = FastAPI()
 
 app.add_middleware(
@@ -24,7 +35,10 @@ async def home():
     return {"message": "BACKEND SERVER SUCCESSFULLY STARTED"}
 
 
-app.mount("/media", StaticFiles(directory=relevant_media_path), name="media")
+#app.mount("/media", StaticFiles(directory=relevant_media_path), name="media")
+path1=DATA_PATH
+path1="./data/relevant/media"
+app.mount("/media", StaticFiles(directory=path1), name="media")
 
 
 @app.get("/init437721")
@@ -41,9 +55,13 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
     for node in nodes:
         if (page_number - 1) * 6 <= count < page_number * 6:
             media_url = None
-            if node.media_path and os.path.exists(node.media_path):
-                filename = os.path.basename(node.media_path)
-                media_url = f"/media/{filename}"  
+            logger.info("node.media_path = " + str(node.media_path))
+            curent_media_path=os.path.join(DATA_PATH,str(node.media_path))
+            if node.media_path and os.path.exists(curent_media_path):
+                filename = os.path.basename(curent_media_path)
+                media_url = f"/media/{filename}"
+                logger.info("media_url = " + media_url)
+
             if node.author.startswith("@"):
                 username, fullname = node.author.split(maxsplit=1)
             else:
