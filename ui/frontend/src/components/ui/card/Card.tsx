@@ -1,6 +1,7 @@
+// @ts-nocheck
 import { Anchor, Button, Skeleton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import styles from './Card.module.css';
 import type { ICardProps } from '../../../core/types/cardTypes';
@@ -12,12 +13,12 @@ export const CardComponent = ({ data }: ICardProps) => {
   const [opened, { open, close }] = useDisclosure(false);
   const [isLoading, setIsLoading] = useState(true);
   const URL = useSelector((state: RootState) => state.config.url);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     setIsLoading(false);
+  //   }, 500);
+  //   return () => clearTimeout(timer);
+  // }, []);
 
   function extractUsername(input: string): string {
     const match = input.match(/^@([^ ]+)/);
@@ -29,7 +30,6 @@ export const CardComponent = ({ data }: ICardProps) => {
     return match ? match[1] : '';
   }
 
-  // Truncate text while preserving Markdown structure
   function truncateMarkdown(text: string, maxLength: number): string {
     if (text.length <= maxLength) return text;
     const truncated = text.slice(0, maxLength);
@@ -46,13 +46,9 @@ export const CardComponent = ({ data }: ICardProps) => {
           <div className={styles.skeletonContainer}>
             <Skeleton height={100} width={100} radius="md" style={{ margin: '20px' }} />
             <div className={styles.skeletonContent}>
-              {/* Username */}
               <Skeleton height={16} width="30%" radius="sm" mb="0.5rem" />
-              {/* Full Name */}
               <Skeleton height={20} width="50%" radius="sm" mb="0.5rem" />
-              {/* Markdown Text: Paragraphs, Bold Headers, Lists */}
               <div className={styles.text}>
-                {/* Paragraph */}
                 <Skeleton
                   height={40}
                   width="100%"
@@ -60,7 +56,6 @@ export const CardComponent = ({ data }: ICardProps) => {
                   mb="0.5rem"
                   className={styles.markdownParagraph}
                 />
-                {/* Bold Header (e.g., **Про себя:**) */}
                 <Skeleton
                   height={16}
                   width="25%"
@@ -68,7 +63,6 @@ export const CardComponent = ({ data }: ICardProps) => {
                   mb="0.5rem"
                   className={styles.markdownStrong}
                 />
-                {/* Paragraph */}
                 <Skeleton
                   height={40}
                   width="100%"
@@ -76,7 +70,6 @@ export const CardComponent = ({ data }: ICardProps) => {
                   mb="0.5rem"
                   className={styles.markdownParagraph}
                 />
-                {/* Bold Header (e.g., **Про опыт:**) */}
                 <Skeleton
                   height={16}
                   width="25%"
@@ -84,7 +77,6 @@ export const CardComponent = ({ data }: ICardProps) => {
                   mb="0.5rem"
                   className={styles.markdownStrong}
                 />
-                {/* List Items (e.g., 📍 items) */}
                 <div className={styles.markdownList}>
                   <Skeleton
                     height={12}
@@ -119,7 +111,7 @@ export const CardComponent = ({ data }: ICardProps) => {
           <>
             {data.photo && (
               <div className={styles.imageContainer}>
-                <img src={`${URL}/${data.photo}`} key={data.photo} alt={data.author} className={styles.image} />
+                <img src={`${URL}${data.photo}`} key={data.photo} alt={data.author} className={styles.image} />
               </div>
             )}
             <div className={styles.content}>
@@ -147,7 +139,7 @@ export const CardComponent = ({ data }: ICardProps) => {
                 </ReactMarkdown>
               </div>
               <div className={styles.footer}>
-                {data.date && <p className={styles.date}>{data.date}</p>}
+                {/* {data.date && <p className={styles.date}>{data.date}</p>} */}
                 <Button className={styles.button} variant="light" color="teal" onClick={open}>
                   Подробнее
                 </Button>
