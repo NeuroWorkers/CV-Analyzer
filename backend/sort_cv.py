@@ -4,7 +4,7 @@ import json
 import openai
 
 from configs.ai_config import max_processing_message_count
-from configs.project_paths import tg_dump_text_path, relevant_text_path
+from configs.project_paths import tg_dump_text_path, relevant_text_path, relevant_media_path
 
 PROMPT_TEMPLATE = """
 Ты — помощник, который помогает отбирать сообщения, содержащие CV (резюме) или краткое описание профессионального опыта человека.
@@ -78,6 +78,7 @@ def sort_cv():
                 break
 
             text_block = msg.get("downloaded_text")
+            media_block = msg.get("downloaded_media")
             if not text_block or len(text_block) < 7:
                 continue
 
@@ -87,7 +88,9 @@ def sort_cv():
             system_author = text_block[3]
             fwd_date = text_block[4]
             fwd_author = text_block[5]
-            topic = text_block[6]
+
+            if media_block["path"]:
+                media_block["path"] = os.path.join("relevant", "media", os.path.basename(media_block["path"]))
 
             if len(content.strip()) < 50:
                 continue

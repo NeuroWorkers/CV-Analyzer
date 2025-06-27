@@ -146,8 +146,18 @@ async def extract_message_data(message, client):
         else:
             text = caption
     else:
-        sender = await message.get_sender()
-        avatar_path = await download_user_avatar(client, sender, tg_dump_media_path)
+        # Загружаем аватар оригинального отправителя, если это пересланное сообщение
+        avatar_user = None
+        if message.fwd_from and message.fwd_from.from_id:
+            try:
+                avatar_user = await client.get_entity(message.fwd_from.from_id)
+            except Exception as e:
+                print(f"[WARNING] Не удалось получить entity оригинального отправителя: {e}")
+
+        if not avatar_user:
+            avatar_user = await message.get_sender()
+
+        avatar_path = await download_user_avatar(client, avatar_user, tg_dump_media_path)
         if avatar_path:
             media_info = {
                 'type': 'profile_photo',
