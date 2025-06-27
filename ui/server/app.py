@@ -43,10 +43,7 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
             media_url = None
             if node.media_path and os.path.exists(node.media_path):
                 filename = os.path.basename(node.media_path)
-                if request:
-                    media_url = str(request.url_for("media", path=filename))
-                else:
-                    media_url = f"/media/{filename}"
+                media_url = f"/media/{filename}"  
 
             results.append({
                 "author": node.author,
@@ -70,11 +67,7 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
             media_url = None
             if node.media_path and os.path.exists(node.media_path):
                 filename = os.path.basename(node.media_path)
-                if request:
-                    media_url = str(request.url_for("media", path=filename))
-                else:
-                    media_url = f"/media/{filename}"
-
+                media_url = f"/media/{filename}"  
             results.append({
                 "author": node.author,
                 "date": node.created_at.isoformat() if node.created_at else None,
@@ -85,7 +78,6 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
 
     results.append({"count": count})
     return JSONResponse(results)
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host=SERVER_HOST, port=SERVER_PORT)
