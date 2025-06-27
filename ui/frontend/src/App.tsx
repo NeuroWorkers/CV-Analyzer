@@ -10,8 +10,10 @@ import {Loader} from './components/ui/loader/Loader';
 
 
 export const App = () => {
+  console.log("зашли в компоненту App")
   const dispatch = useDispatch();
   const URL = useSelector ((state: RootState) => state.config.url);
+  console.log("получение url: ", URL)
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,9 +23,11 @@ export const App = () => {
   const searchQuery = useSelector((state: RootState) => state.cards.searchQuery);
 
   const loadCards = async (pageToLoad: number, query: string) => {
+    console.log("запуск функции loadCards")
     setIsLoading(true);
     try {
       const { cards, totalCount } = await fetchCards(URL, pageToLoad, query);
+      console.log("loadCards (cards): ", cards)
       dispatch(setCards(cards));
       dispatch(setTotalCount(totalCount));
     } catch (error) {
