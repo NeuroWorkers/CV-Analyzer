@@ -10,7 +10,7 @@ export const CardComponent = ({ data }: ICardProps) => {
   const [opened, { open, close }] = useDisclosure(false);
   // @ts-ignore
   const [isLoading, setIsLoading] = useState(false);
-
+  console.log(data)
   // useEffect(() => {
   //   const timer = setTimeout(() => {
   //     setIsLoading(false);

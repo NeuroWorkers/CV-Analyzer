@@ -6,6 +6,9 @@ export const fetchCards = async (url: string, pageNum: number, search: string): 
       ? `${url}/get_relevant_nodes/${encodeURIComponent(search)}/${pageNum}`
       : `${url}/get_all_nodes/${pageNum}`;
 
+    console.log("fetchCards (url): ", url)
+    console.log("fetchCards (endpoint): ", endpoint)
+    
     const response = await fetch(endpoint, {
       method: 'GET',
       headers: {
