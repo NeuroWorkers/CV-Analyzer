@@ -8,7 +8,7 @@ export const fetchCards = async (url: string, pageNum: number, search: string): 
 
     console.log("fetchCards (url): ", url)
     console.log("fetchCards (endpoint): ", endpoint)
-    
+
     const response = await fetch(endpoint, {
       method: 'GET',
       headers: {
@@ -24,7 +24,7 @@ export const fetchCards = async (url: string, pageNum: number, search: string): 
 
     const cards = rawData.filter((item, index) => index !== rawData.length - 1 || !('count' in item));
     const totalCount = rawData[rawData.length - 1]?.count ?? 0;
-
+    console.log("fetchCards (cards): ", cards)
     const data = cards.map((card) => ({
       author: card.author ?? 'N/A',
       text: card.text ?? 'No content available.',
