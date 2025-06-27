@@ -77,11 +77,12 @@ export const CardComponent = ({ data }: ICardProps) => {
                 </div>
               )}
               <div className={styles.authorInfo}>
-                {data.author && (
+                {data.author && !data.author.includes('собаки') && (
                   <Anchor href={`https://t.me/${extractUsername(data.author)}`} target="_blank">
                     @{extractUsername(data.author)}
                   </Anchor>
                 )}
+
                 {data.author && <h3 className={styles.author}>{extractFullName(data.author)}</h3>}
               </div>
             </div>
