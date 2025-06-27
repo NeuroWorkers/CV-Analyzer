@@ -1,16 +1,12 @@
-import os
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse, FileResponse
+import uvicorn
+from fastapi import FastAPI
+from configs.project_paths import *
+from starlette.requests import Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from backend.question_analyzer import fetch_all_messages, question_analyzer
-from starlette.requests import Request
-from configs.server_config import SERVER_PORT, SERVER_HOST, SERVER_DEBUG_MODE
-
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT = os.path.dirname(os.path.dirname(BASE_DIR))
-MEDIA_DIR = os.path.join(PROJECT_ROOT, 'database', 'media')
-print(MEDIA_DIR)
+from configs.server_config import SERVER_PORT, SERVER_HOST
+from backend.question_analyzer import fetch_all_messages, full_pipeline
 
 app = FastAPI()
 
@@ -25,14 +21,16 @@ app.add_middleware(
 
 @app.get("/")
 async def home():
-    return {"message": "FastAPI-приложение работает. Задача по расписанию запущена."}
+    return {"message": "BACKEND SERVER SUCCESSFULLY STARTED"}
 
 
-app.mount("/media", StaticFiles(directory=MEDIA_DIR), name="media")
+app.mount("/media", StaticFiles(directory=relevant_media_path), name="media")
+
 
 @app.get("/init437721")
 async def init437721():
     return {"status": "ok"}
+
 
 @app.get("/get_all_nodes/{page_number}")
 async def get_all_nodes(page_number: int = 0, request: Request = None):
@@ -45,10 +43,7 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
             media_url = None
             if node.media_path and os.path.exists(node.media_path):
                 filename = os.path.basename(node.media_path)
-                if request:
-                    media_url = str(request.url_for("media", path=filename))
-                else:
-                    media_url = f"/media/{filename}"
+                media_url = f"/media/{filename}"  
 
             results.append({
                 "author": node.author,
@@ -64,23 +59,20 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
 
 @app.get("/get_relevant_nodes/{query}/{page_number}")
 async def get_relevant_nodes(query: str, page_number: int = 0, request: Request = None):
-    nodes = await question_analyzer(query)
+    nodes = await full_pipeline(query)
     results = []
     count = 0
     for node in nodes:
         if (page_number - 1) * 6 <= count < page_number * 6:
             media_url = None
-            if node.get("media_path") and os.path.exists(node["media_path"]):
-                filename = os.path.basename(node["media_path"])
-                if request:
-                    media_url = str(request.url_for("media", path=filename))
-                else:
-                    media_url = f"/media/{filename}"
-                    
+            if node.media_path and os.path.exists(node.media_path):
+                filename = os.path.basename(node.media_path)
+                media_url = f"/media/{filename}"  
+
             results.append({
-                "author": node["author"],
-                "date": node["created_at"],
-                "text": node["content"],
+                "author": node.author,
+                "date": node.created_at.isoformat() if node.created_at else None,
+                "text": node.content,
                 "photo": media_url
             })
         count += 1
@@ -88,7 +80,5 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
     results.append({"count": count})
     return JSONResponse(results)
 
-
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host=SERVER_HOST, port=SERVER_PORT)
