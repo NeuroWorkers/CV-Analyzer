@@ -14,13 +14,13 @@ def auto_complete_dump() -> bool:
         asyncio.run(grabber())
 
         # SORT CV
-        sort_cv()
+        # sort_cv()
 
         # MOVE
-        copy_media_from_json()
+        # copy_media_from_json()
 
         # IMPORT
-        asyncio.run(update_messages_to_db())
+        # asyncio.run(update_messages_to_db())
         print("ДАМП В БАЗУ ЗАВЕРШЕН")
 
         # clear_directory(relevant_text_path)
@@ -45,3 +45,5 @@ def clear_directory(directory_path):
         else:
             os.remove(item_path)
 
+
+auto_complete_dump()

@@ -16,7 +16,6 @@ from telethon.tl.types import (
 
 from configs.telegram_config import API_ID, API_HASH, SESSION_STRING, group_username, specific_topic_id
 
-
 downloaded_avatars = {}
 
 
@@ -111,7 +110,7 @@ async def extract_message_data(message, client):
 
         if type(path) == str:
             if path.startswith(DATA_PATH):
-                path=path.replace(DATA_PATH + "/",'', 1)
+                path = path.replace(DATA_PATH + "/", '', 1)
 
         media_info = {
             'type': media_type,
@@ -225,8 +224,9 @@ async def grabber():
         if isinstance(message, MessageService):
             continue
 
-        if last_dump_date and message.date <= last_dump_date:
-            continue
+        if last_dump_date:
+            if message.date <= last_dump_date and not message.edit_date:
+                continue
 
         topic_id, entry = await extract_message_data(message, client)
         if not entry:

@@ -1,3 +1,5 @@
+using extension ai;
+
 module default {
   type ResumeMessage {
     required property telegram_id -> int64 {
@@ -11,5 +13,9 @@ module default {
     required property topic_id -> int64;
     optional property media_type -> str;
     optional property media_path -> str;
+
+    deferred index ext::ai::index(
+      embedding_model := 'text-embedding-3-small'
+    ) on (.content);
   };
 };
