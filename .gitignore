@@ -13,11 +13,16 @@ env/
 ENV/
 .venv/
 
+configs/ai_config.py
+configs/server_config.py
+configs/telegram_config.py
+
 data/relevant/media/
 data/relevant/text/
-tg_dumper/downloaded_media/
-tg_dumper/downloaded_text/
+data/tg_dump/media/
 data/tg_dump/last_dump/
+data/tg_dump/text/
+data/tg_dump/text/non_filtered_cv.json
 
 .DS_Store
 Thumbs.db

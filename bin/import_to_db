@@ -5,7 +5,12 @@ p=`pwd`
 export PYTHONPATH=$(pwd):$PYTHONPATH
 
 #python3 database/database/import_to_db.py
-cd database/db
-python3 $p/bin/import_to_db_run.py
+#cd database/
+#python3 $p/bin/import_to_db_run.py
+python3 -c '
+import asyncio
+from utils.import_to_db import update_messages_to_db
+asyncio.run(update_messages_to_db())
+'
 
 

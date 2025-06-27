@@ -1,5 +1,4 @@
 import os
-
 import pytz
 import json
 import edgedb
@@ -16,15 +15,15 @@ def make_aware(dt_str):
 
 
 async def update_messages_to_db(json_path: str = os.path.join(relevant_text_path, "cv.json")):
-    client = edgedb.create_async_client()
+    client = edgedb.create_async_client("database")
 
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     for topic_id, messages in data.items():
         for message in messages:
-            text_data = message.get("Загруженный текст")
-            media_data = message.get("Загруженное медиа")
+            text_data = message.get("downloaded_text")
+            media_data = message.get("downloaded_media")
 
             if not text_data:
                 continue
@@ -53,7 +52,20 @@ async def update_messages_to_db(json_path: str = os.path.join(relevant_text_path
                         media_type := <optional str>$media_type,
                         media_path := <optional str>$media_path
                     }
-                    UNLESS CONFLICT ON .telegram_id;
+                    UNLESS CONFLICT ON .telegram_id
+                    ELSE (
+                        UPDATE ResumeMessage
+                        SET {
+                            content := <str>$content,
+                            created_at := <datetime>$created_at,
+                            author := <str>$author,
+                            fwd_date := <optional datetime>$fwd_date,
+                            fwd_author := <optional str>$fwd_author,
+                            topic_id := <int64>$topic_id,
+                            media_type := <optional str>$media_type,
+                            media_path := <optional str>$media_path
+                        }
+                    );
                 """,
                                    telegram_id=telegram_id,
                                    created_at=created_at,
@@ -63,11 +75,11 @@ async def update_messages_to_db(json_path: str = os.path.join(relevant_text_path
                                    fwd_author=fwd_author,
                                    topic_id=topic_id,
                                    media_type=media_type,
-                                   media_path=media_path)
+                                   media_path=media_path
+                                   )
 
-                print(f"Загружено сообщение {telegram_id}")
+                print(f"Загружено или обновлено сообщение {telegram_id}")
             except Exception as e:
-                print(f"Ошибка при вставке сообщения {telegram_id}: {e}")
+                print(f"Ошибка при вставке/обновлении сообщения {telegram_id}: {e}")
 
     await client.aclose()
-

@@ -5,7 +5,7 @@ import telethon.sessions
 from datetime import datetime
 from telethon import TelegramClient
 
-from configs.project_paths import tg_dump_media_path, tg_dump_last_dump_path, tg_dump_text_path
+from configs.project_paths import tg_dump_media_path, tg_dump_last_dump_path, tg_dump_text_path, DATA_PATH
 from tg_dumper.chatdata import Message
 
 from telethon.tl.functions.channels import GetForumTopicsRequest
@@ -15,7 +15,6 @@ from telethon.tl.types import (
 )
 
 from configs.telegram_config import API_ID, API_HASH, SESSION_STRING, group_username, specific_topic_id
-
 
 downloaded_avatars = {}
 
@@ -109,6 +108,10 @@ async def extract_message_data(message, client):
         path = await save_media(client, message)
         media_type = message.media.__class__.__name__.lower()
 
+        if type(path) == str:
+            if path.startswith(DATA_PATH):
+                path = path.replace(DATA_PATH + "/", '', 1)
+
         media_info = {
             'type': media_type,
             'path': path,
@@ -196,7 +199,7 @@ def save_last_dump_date(date, filename=os.path.join(tg_dump_last_dump_path, "las
         print(f"[WARNING] Невозможно сохранить дату последнего дампа!: {e}")
 
 
-async def main():
+async def grabber():
     session = telethon.sessions.StringSession(SESSION_STRING)
     client = TelegramClient(session, API_ID, API_HASH)
     await client.start()
@@ -221,8 +224,9 @@ async def main():
         if isinstance(message, MessageService):
             continue
 
-        if last_dump_date and message.date <= last_dump_date:
-            continue
+        if last_dump_date:
+            if message.date <= last_dump_date and not message.edit_date:
+                continue
 
         topic_id, entry = await extract_message_data(message, client)
         if not entry:

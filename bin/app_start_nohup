@@ -1,0 +1,16 @@
+#!/bin/bash
+cd `dirname $0`;cd ../; p=`pwd`
+
+export PYTHONPATH=$(pwd):$PYTHONPATH
+
+export PYTHONPATH=$(pwd):$PYTHONPATH
+if [ -f configs/proxy.sh ]; then
+source configs/proxy.sh
+else
+source configs/proxy.sh.sample
+fi
+#echo $HTTP_PROXY
+
+(cd ui/frontend/dist/;python3 -m http.server 18113) 2>&1 | tee -a http_static.log &
+python3 ./ui/server/app.py 2>&1 | tee -a app.log &
+

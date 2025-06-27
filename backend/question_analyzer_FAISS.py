@@ -1,22 +1,17 @@
-import asyncio
-import edgedb
+import json
+import faiss
 import openai
-from typing import Any
-from configs.ai_config import *
+import asyncio
+from typing import List, Dict, Any
+from configs.ai_config import MODEL_NAME
+from sentence_transformers import SentenceTransformer
+from configs.project_paths import faiss_index_path, faiss_metadata_path
 
-client = edgedb.create_async_client("database")
 
-
-async def fetch_all_messages():
-    return await client.query("""
-        SELECT ResumeMessage {
-            id,
-            content,
-            author,
-            created_at,
-            media_path
-        }
-    """)
+model = SentenceTransformer(MODEL_NAME)
+index = faiss.read_index(faiss_index_path)
+with open(faiss_metadata_path, "r", encoding="utf-8") as f:
+    metadata = json.load(f)
 
 
 async def analyze_user_query(user_query: str) -> str:
@@ -40,6 +35,18 @@ async def analyze_user_query(user_query: str) -> str:
     return response.choices[0].message.content.strip()
 
 
+async def vector_search(optimized_query: str, k: int = 10) -> list[dict]:
+    query_vec = model.encode([optimized_query], convert_to_numpy=True).astype("float32")
+    distances, indices = index.search(query_vec, k)
+
+    results = []
+    for idx in indices[0]:
+        if 0 <= idx < len(metadata):
+            results.append(metadata[idx])
+
+    return results
+
+
 async def filter_results_with_gpt(user_query: str, results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     system_prompt = (
         "Ты помощник, фильтрующий резюме по запросу. "
@@ -50,7 +57,10 @@ async def filter_results_with_gpt(user_query: str, results: list[dict[str, Any]]
 
     filtered = []
     for r in results:
-        text = r.content
+        text = r.get("text") or r.get("content")
+        if not text:
+            continue
+
         response = await openai.ChatCompletion.acreate(
             model="gpt-4",
             messages=[
@@ -62,48 +72,29 @@ async def filter_results_with_gpt(user_query: str, results: list[dict[str, Any]]
         decision = response.choices[0].message.content.strip().lower()
         if decision.startswith("да"):
             filtered.append(r)
+
     return filtered
-
-
-async def vector_search(optimized_query: str, k: int = 10):
-    return await client.query(
-        """
-        WITH results := ext::ai::search(ResumeMessage, <str>$q)
-        SELECT results.object {
-            content,
-            author,
-            created_at,
-            media_path
-        }
-        LIMIT <int64>$k;
-        """,
-        q=optimized_query,
-        k=k
-    )
 
 
 async def full_pipeline(user_query: str) -> list[dict[str, Any]]:
     print(f"[INFO] Запрос: {user_query}")
 
-    # Этап 1: Преобразовать запрос
     optimized_query = await analyze_user_query(user_query)
     print(f"[DEBUG] Оптимизированный запрос: {optimized_query}")
 
-    # Этап 2: Найти по эмбеддингам в EdgeDB
     raw_results = await vector_search(optimized_query)
-    print(f"[DEBUG] Получено {len(raw_results)} кандидатов из поиска")
+    print(f"[DEBUG] Найдено {len(raw_results)} кандидатов")
 
-    # Этап 3: Фильтрация через GPT
     filtered = await filter_results_with_gpt(user_query, raw_results)
-    print(f"[INFO] Осталось {len(filtered)} после фильтрации")
+    print(f"[INFO] После фильтрации: {len(filtered)} кандидатов")
 
     return filtered
 
 
 def test():
-    query = "Павел"
+    query = "юристы от 20 до 40 лет"
     results = asyncio.run(full_pipeline(query))
 
     print("\n--- Результаты ---")
     for r in results:
-        print(f"{r.created_at} — {r.author}: {r.content}")
+        print(f"{r.get('timestamp')} — {r.get('author')}: {r.get('text')[:200]}...")
