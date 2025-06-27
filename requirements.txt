@@ -12,3 +12,4 @@ sentence_transformers
 uvicorn~=0.34.3
 fastapi~=0.115.13
 starlette~=0.46.2
+faiss-cpu~=1.11.0
