@@ -11,7 +11,7 @@ import type { RootState } from '../../../core/store';
 
 export const CardComponent = ({ data }: ICardProps) => {
   const [opened, { open, close }] = useDisclosure(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const URL = useSelector((state: RootState) => state.config.url);
   // useEffect(() => {
   //   const timer = setTimeout(() => {
