@@ -2,8 +2,11 @@ import { Modal } from '@mantine/core';
 import ReactMarkdown from 'react-markdown';
 import type { IModalProps } from '../../../core/types/modalTypes';
 import styles from './ModalWindow.module.css';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../../core/store';
 
 export const ModalWindow = ({ opened, close, data }: IModalProps) => {
+  const URL = useSelector((state: RootState) => state.config.url);
   function extractUsername(input: string): string {
     const match = input.match(/^@([^ ]+)/);
     return match ? match[1] : '';
@@ -47,7 +50,7 @@ export const ModalWindow = ({ opened, close, data }: IModalProps) => {
         {data.photo && (
           <>
             <img
-              src={data.photo}
+              src={data.photo.startsWith('http') ? data.photo : `${URL}${data.photo}`}
               alt={data.author}
               className={styles.image}
             />
