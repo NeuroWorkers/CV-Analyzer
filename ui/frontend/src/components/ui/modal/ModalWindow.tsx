@@ -4,19 +4,11 @@ import type { IModalProps } from '../../../core/types/modalTypes';
 import styles from './ModalWindow.module.css';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../../core/store';
+import { extractFullName, extractUsername } from '../../../core/utils/extractFunctions';
 
 export const ModalWindow = ({ opened, close, data }: IModalProps) => {
   const URL = useSelector((state: RootState) => state.config.url);
-  function extractUsername(input: string): string {
-    const match = input.match(/^@([^ ]+)/);
-    return match ? match[1] : '';
-  }
-
-  function extractFullName(input: string): string {
-    const match = input.match(/\(([^)]+)\)/);
-    return match ? match[1] : '';
-  }
-
+  
   return (
     <Modal
       opened={opened}

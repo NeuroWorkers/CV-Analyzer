@@ -5,8 +5,9 @@ import type { RootState } from '../../../core/store';
 import { motion } from 'framer-motion';
 import { FiSearch } from 'react-icons/fi';
 import { useState } from 'react';
+import type { ISearchProps } from '../../../core/types/searchTypes';
 
-export const Search = ({ isLoading }: { isLoading: boolean }) => {
+export const Search = ({ isLoading }: ISearchProps) => {
   const dispatch = useDispatch();
   const searchQuery = useSelector((state: RootState) => state.cards.searchQuery);
   const [inputValue, setInputValue] = useState(searchQuery);
@@ -27,6 +28,11 @@ export const Search = ({ isLoading }: { isLoading: boolean }) => {
         placeholder="Поиск..."
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            handleSearch();
+          }
+        }}
         rightSection={
           <ActionIcon
             onClick={handleSearch}
@@ -53,6 +59,7 @@ export const Search = ({ isLoading }: { isLoading: boolean }) => {
           },
         }}
       />
+
     </motion.div>
   );
 };

@@ -5,6 +5,12 @@ export interface ICardData {
   photo?: string;
 }
 
+export interface CardsState {
+  cards: ICardData[];
+  searchQuery: string;
+  totalCount: number;
+}
+
 export interface ICardProps {
   data: ICardData;
 }

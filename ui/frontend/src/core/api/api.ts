@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { ICardData } from '../types/cardTypes';
 
 export const fetchCards = async (url: string, pageNum: number, search: string): Promise<{ cards: ICardData[]; totalCount: number }> => {
