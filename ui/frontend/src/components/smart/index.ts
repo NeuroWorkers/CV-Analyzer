@@ -1,1 +1,1 @@
-export {}
+export { CardsGrid } from './cards-grid/CardsGrid';

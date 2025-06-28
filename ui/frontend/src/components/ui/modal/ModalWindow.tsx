@@ -1,10 +1,13 @@
 import { Modal } from '@mantine/core';
 import ReactMarkdown from 'react-markdown';
-import type { IModalProps } from '../../../core/types/modalTypes';
-import styles from './ModalWindow.module.css';
 import { useSelector } from 'react-redux';
+
+import type { IModalProps } from '../../../core/types/modalTypes';
 import type { RootState } from '../../../core/store';
 import { extractFullName, extractUsername } from '../../../core/utils/extractFunctions';
+
+import styles from './ModalWindow.module.css';
+
 
 export const ModalWindow = ({ opened, close, data }: IModalProps) => {
   const URL = useSelector((state: RootState) => state.config.url);
