@@ -1,11 +1,13 @@
 import { TextInput, ActionIcon } from '@mantine/core';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setSearchQuery } from '../../../core/store/slices/cardsSlice';
-import type { RootState } from '../../../core/store';
 import { motion } from 'framer-motion';
 import { FiSearch } from 'react-icons/fi';
-import { useState } from 'react';
+
+import { setSearchQuery } from '../../../core/store/slices/cardsSlice';
+import type { RootState } from '../../../core/store';
 import type { ISearchProps } from '../../../core/types/searchTypes';
+
 
 export const Search = ({ isLoading }: ISearchProps) => {
   const dispatch = useDispatch();

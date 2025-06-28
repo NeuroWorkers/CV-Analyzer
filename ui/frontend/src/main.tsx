@@ -1,19 +1,19 @@
 import { createRoot } from 'react-dom/client'
-import './index.css'
-import { App } from './App.tsx'
-import '@mantine/core/styles.css';
 import { MantineProvider } from '@mantine/core';
 import { Provider } from 'react-redux';
-import { store } from './core/store/index.ts';
 
+import { App } from './App.tsx'
+import { store } from './core/store/index.ts';
 import { init } from './core/init/init3419471368.js';
 import { setConfig, setError } from './core/store/slices/initSlice';
 import { globalConfig } from './core/config/config.ts';
 
+import '@mantine/core/styles.css';
+import './index.css'
+
 
 async function main() {
   const url = await init();
-  
   let cleanedUrl = '';
   if (url) {
     console.log('Original URL:', url);
@@ -31,7 +31,6 @@ async function main() {
       basenameFrontend: globalConfig.basenameFrontend,
     }));
   }
-  
   createRoot(document.getElementById('root')!).render(
     <MantineProvider>
       <Provider store={store}>
@@ -39,7 +38,6 @@ async function main() {
       </Provider>
     </MantineProvider>,
   )
-
 }
 
 main();

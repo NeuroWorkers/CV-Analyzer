@@ -1,19 +1,18 @@
 import { Container, Stack } from '@mantine/core';
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+
 import { fetchCards } from './core/api/api';
-import { Pagination, Search } from './components/ui';
-import { CardsGrid } from './components/smart/cards-grid/CardsGrid';
 import { setCards, setTotalCount } from './core/store/slices/cardsSlice';
 import type { RootState } from './core/store';
+import { Pagination, Search } from './components/ui';
 import {Loader} from './components/ui/loader/Loader';
+import { CardsGrid } from './components/smart';
 
 
 export const App = () => {
-  console.log("зашли в компоненту App")
   const dispatch = useDispatch();
   const URL = useSelector ((state: RootState) => state.config.url);
-  console.log("получение url: ", URL)
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,11 +22,9 @@ export const App = () => {
   const searchQuery = useSelector((state: RootState) => state.cards.searchQuery);
 
   const loadCards = async (pageToLoad: number, query: string) => {
-    console.log("запуск функции loadCards")
     setIsLoading(true);
     try {
       const { cards, totalCount } = await fetchCards(URL, pageToLoad, query);
-      console.log("loadCards (cards): ", cards)
       dispatch(setCards(cards));
       dispatch(setTotalCount(totalCount));
     } catch (error) {
