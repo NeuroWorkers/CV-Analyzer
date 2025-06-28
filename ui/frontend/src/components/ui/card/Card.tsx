@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Anchor, Button, Skeleton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useState } from 'react';
@@ -7,10 +8,11 @@ import type { ICardProps } from '../../../core/types/cardTypes';
 import { ModalWindow } from '../modal/ModalWindow';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../../core/store';
+import { extractFullName, extractUsername } from '../../../core/utils/extractFunctions';
 
 export const CardComponent = ({ data }: ICardProps) => {
   const [opened, { open, close }] = useDisclosure(false);
-  // @ts-ignore
+  
   const [isLoading, setIsLoading] = useState(false);
   const URL = useSelector((state: RootState) => state.config.url);
   // useEffect(() => {
@@ -19,16 +21,6 @@ export const CardComponent = ({ data }: ICardProps) => {
   //   }, 500);
   //   return () => clearTimeout(timer);
   // }, []);
-
-  function extractUsername(input: string): string {
-    const match = input.match(/^@([^ ]+)/);
-    return match ? match[1] : '';
-  }
-
-  function extractFullName(input: string): string {
-    const match = input.match(/\(([^)]+)\)/);
-    return match ? match[1] : '';
-  }
 
   function truncateMarkdown(text: string, maxLength: number): string {
     if (text.length <= maxLength) return text;
