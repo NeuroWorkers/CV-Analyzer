@@ -3,3 +3,4 @@ export {Pagination} from './pagination/Pagination';
 export {CardComponent} from './card/Card';
 export {Loader} from './loader/Loader';
 export {ModalWindow} from './modal/ModalWindow';
+export {Highlight} from './hightlight/Hightlight';

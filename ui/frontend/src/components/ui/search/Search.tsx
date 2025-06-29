@@ -6,7 +6,7 @@ import { FiSearch } from 'react-icons/fi';
 
 import { setSearchQuery } from '../../../core/store/slices/cardsSlice';
 import type { RootState } from '../../../core/store';
-import type { ISearchProps } from '../../../core/types/searchTypes';
+import type { ISearchProps } from '../../../core/types/ui-types/searchTypes';
 
 
 export const Search = ({ isLoading }: ISearchProps) => {
@@ -24,6 +24,7 @@ export const Search = ({ isLoading }: ISearchProps) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className="w-full max-w-md mx-auto mt-6"
+      data-testid="search"
     >
       <br />
       <TextInput

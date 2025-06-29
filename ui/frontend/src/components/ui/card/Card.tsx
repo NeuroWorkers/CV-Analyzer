@@ -1,14 +1,14 @@
 // @ts-nocheck
 import { Anchor, Button } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
 
-import type { ICardProps } from '../../../core/types/cardTypes';
+import type { ICardProps } from '../../../core/types/ui-types/cardTypes';
 import type { RootState } from '../../../core/store';
 import { ModalWindow } from '../modal/ModalWindow';
 import { extractFullName, extractUsername } from '../../../core/utils/extractFunctions';
+import { Highlight } from '../hightlight/Hightlight';
 
 import styles from './Card.module.css';
 
@@ -16,7 +16,7 @@ import styles from './Card.module.css';
 export const CardComponent = ({ data }: ICardProps) => {
   const [opened, { open, close }] = useDisclosure(false);
   const URL = useSelector((state: RootState) => state.config.url);
-  
+  console.log(data.highlightText);
   const truncateMarkdown = (text: string, maxLength: number): string => {
     if (text.length <= maxLength) return text;
     const truncated = text.slice(0, maxLength);
@@ -25,7 +25,7 @@ export const CardComponent = ({ data }: ICardProps) => {
     const lastIndex = Math.max(lastPeriod, lastNewline);
     return lastIndex > -1 ? truncated.slice(0, lastIndex + 1) + '...' : truncated + '...';
   }
-
+  
   return (
     <>
       <div className={styles.card}>
@@ -49,7 +49,11 @@ export const CardComponent = ({ data }: ICardProps) => {
             <div className={styles.text}>
               <ReactMarkdown
                 components={{
-                  p: ({ children }) => <p className={styles.markdownParagraph}>{children}</p>,
+                  p: ({ children }) => (
+                    <p className={styles.markdownParagraph}>
+                      <Highlight text={children?.toString() ?? ''} highlights={data.highlightText} />
+                    </p>
+                  ),
                   strong: ({ children }) => <strong className={styles.markdownStrong}>{children}</strong>,
                   ul: ({ children }) => <ul className={styles.markdownList}>{children}</ul>,
                   li: ({ children }) => <li className={styles.markdownListItem}>{children}</li>,
