@@ -40,7 +40,7 @@ export const Search = ({ isLoading, clearSignal, handleResetSearch }: ISearchPro
           variant="filled"
           radius="xl"
           size="sm"
-          onClick={handleResetSearch}
+          onClick={() => window.location.reload()}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
           <FaHome size={20} />
