@@ -1,4 +1,3 @@
-// src/tests/pages-tests/home.spec.tsx
 import { render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
@@ -8,7 +7,7 @@ import cardsReducer from '../../core/store/slices/cardsSlice';
 import '@mantine/core/styles.css';
 import { vi } from 'vitest';
 
-// Mock window.matchMedia
+
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation(query => ({
@@ -23,7 +22,7 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-// Создаем мокнутый store
+
 const mockStore = configureStore({
   reducer: {
     cards: cardsReducer,
@@ -38,7 +37,7 @@ const mockStore = configureStore({
   },
 });
 
-// Пропсы по умолчанию
+
 const defaultProps = {
   isLoading: false,
   page: 1,
