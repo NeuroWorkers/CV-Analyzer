@@ -73,11 +73,13 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
 
 @app.get("/get_relevant_nodes/{query}/{page_number}")
 async def get_relevant_nodes(query: str, page_number: int = 0, request: Request = None):
-    nodes, ht = await full_pipeline(query)
+    nodes, query = await full_pipeline(query)
     results = []
     count = 0
 
     idx = 0 
+
+    ht = query.split()
 
     start = (page_number - 1) * 6
     end = page_number * 6
