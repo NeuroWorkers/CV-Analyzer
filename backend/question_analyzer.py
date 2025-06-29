@@ -1,4 +1,6 @@
 import asyncio
+import re
+
 import edgedb
 import openai
 from typing import Any, Tuple, List, Dict
@@ -98,7 +100,7 @@ async def highlight_matches_with_gpt(optimized_query: str, filtered: list[dict[s
             model="gpt-4",
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Запрос: {optimized_query}\nТекст: {r['content']}"}
+                {"role": "user", "content": f"Запрос: {optimized_query}\nТекст: {r.content}"}
             ],
             temperature=0
         )
@@ -109,8 +111,7 @@ async def highlight_matches_with_gpt(optimized_query: str, filtered: list[dict[s
         except Exception:
             highlights = []
 
-        r["highlights"] = highlights
-        results_with_highlights.append(r)
+        results_with_highlights.append(highlights)
 
     return results_with_highlights
 
@@ -134,14 +135,21 @@ async def full_pipeline(user_query: str) -> tuple[list[dict[str, Any]], list[dic
     highlighted = await highlight_matches_with_gpt(optimized_query, filtered)
     print(f"[DEBUG] Подсветка выполнена")
 
-    return filtered, highlighted
+    re_highlighted = [
+        re.findall(r'\w+', row[0])
+        for row in highlighted
+    ]
+
+    return filtered, re_highlighted
 
 
 def test():
-    query = "Павел"
-    results, _ = asyncio.run(full_pipeline(query))
+    query = "Юрист основатель"
+    results, highlights = asyncio.run(full_pipeline(query))
 
     print("\n--- Результаты ---")
     for r in results:
-        print(f"{r['created_at']} — {r['author']}: {r['content']}")
-        print(f"[Подсветка]: {r['highlights']}\n")
+        print(f"{r.created_at} — {r.author}: {r.content}")
+        print(f"[Подсветка]: {highlights}\n")
+
+test()
