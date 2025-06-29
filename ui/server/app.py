@@ -75,6 +75,9 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
 async def get_relevant_nodes(query: str, page_number: int = 0, request: Request = None):
     nodes, ht = await full_pipeline(query)
     results = []
+    count = 0
+
+    idx = 0
 
     start = (page_number - 1) * 6
     end = page_number * 6
@@ -92,6 +95,7 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
             "highlight_text": ht[idx] if idx < len(ht) else [],
             "photo": media_url
         })
+        idx += 1
 
     results.append({"count": len(nodes)})
     return JSONResponse(results)
