@@ -89,7 +89,7 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
             "author": node.author,
             "date": node.created_at.isoformat() if node.created_at else None,
             "text": node.content,
-            "highlight_text": ht,
+            "highlight_text": ht[idx] if idx < len(ht) else [],
             "photo": media_url
         })
 
