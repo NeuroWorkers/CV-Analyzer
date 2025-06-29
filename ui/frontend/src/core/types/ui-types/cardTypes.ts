@@ -2,6 +2,7 @@ export interface ICardData {
   author: string;
   text: string;
   date?: string;
+  highlightText?: string[] | null;
   photo?: string;
 }
 

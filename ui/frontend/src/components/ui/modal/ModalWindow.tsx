@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import type { IModalProps } from '../../../core/types/ui-types/modalTypes';
 import type { RootState } from '../../../core/store';
 import { extractFullName, extractUsername } from '../../../core/utils/extractFunctions';
+import { Highlight } from '../hightlight/Hightlight';
 
 import styles from './ModalWindow.module.css';
 
@@ -55,7 +56,11 @@ export const ModalWindow = ({ opened, close, data }: IModalProps) => {
         <div className={styles.text}>
           <ReactMarkdown
             components={{
-              p: ({ children }) => <p className={styles.markdownParagraph}>{children}</p>,
+              p: ({ children }) => (
+                <p className={styles.markdownParagraph}>
+                  <Highlight text={children?.toString() ?? ''} highlights={data.highlightText} />
+                </p>
+              ),
               strong: ({ children }) => <strong className={styles.markdownStrong}>{children}</strong>,
               ul: ({ children }) => <ul className={styles.markdownList}>{children}</ul>,
               li: ({ children }) => <li className={styles.markdownListItem}>{children}</li>,
