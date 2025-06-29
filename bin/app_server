@@ -3,4 +3,4 @@ cd `dirname $0`;cd ../; p=`pwd`
 
 export PYTHONPATH=$(pwd):$PYTHONPATH
 
-python3 ./ui/server/app.py
+python3 ./ui/server/app.py 2>&1 | tee -a app-nonsystemd.log
