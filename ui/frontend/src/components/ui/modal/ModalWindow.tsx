@@ -56,19 +56,19 @@ export const ModalWindow = ({ opened, close, data }: IModalProps) => {
         )}
         <div className={styles.text}>
           {data.highlightText ? (
-                  <p className={styles.markdownParagraph}>
-                   
-                   <Highlight 
-  text={data.text ?? ''} 
-  highlights={data.highlightText} 
-/>
+            <p className={styles.markdownParagraph}>
+              
+              <Highlight 
+              text={data.text ?? ''} 
+              highlights={data.highlightText} 
+            />
 
-                  </p>
-                ) : (
-                  <ReactMarkdown>
-                    {data.text}
-                  </ReactMarkdown>
-                )}
+            </p>
+          ) : (
+            <ReactMarkdown>
+              {data.text}
+            </ReactMarkdown>
+          )}
         </div>
         {data.date && (
           <p className={styles.date}>

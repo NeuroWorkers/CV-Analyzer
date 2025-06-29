@@ -1,3 +1,5 @@
 export interface ISearchProps {
-  isLoading: boolean
+  isLoading: boolean,
+  clearSignal: boolean,
+  handleResetSearch: () => void
 }

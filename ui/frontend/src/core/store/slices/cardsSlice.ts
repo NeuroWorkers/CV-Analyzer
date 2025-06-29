@@ -17,11 +17,12 @@ const cardsSlice = createSlice({
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
     },
+    resetSearch: () => initialState,
     setTotalCount: (state, action: PayloadAction<number>) => {
       state.totalCount = action.payload;
     },
   },
 });
 
-export const { setCards, setSearchQuery, setTotalCount } = cardsSlice.actions;
+export const { setCards, setSearchQuery, resetSearch, setTotalCount } = cardsSlice.actions;
 export default cardsSlice.reducer;
