@@ -73,23 +73,10 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
 
 @app.get("/get_relevant_nodes/{query}/{page_number}")
 async def get_relevant_nodes(query: str, page_number: int = 0, request: Request = None):
-    nodes = await full_pipeline(query)
+    nodes, ht = await full_pipeline(query)
     results = []
-    # ht - это массив массивов подсветок текста вероятно будет из какой то ф-ии приходить;
-    # пока захардкоженный ..
-    # каждлый под-массив [i] массива основного [[i],[i],..] относится к конкретной карточке 
-    # card1, card2, .. cardN
-
-    ht = [
-        ["Привет", "опыт в области IT"], 
-        ["открыли новый офис"],
-        ["инсайты по кибербезопасности"],
-        ["стратегии развития"],
-        ["налоговое законодательство"]
-    ]
     count = 0
 
-    # индекс для ht массива нужен;
     idx = 0 
 
     start = (page_number - 1) * 6

@@ -1,7 +1,7 @@
 import asyncio
 import edgedb
 import openai
-from typing import Any
+from typing import Any, Tuple, List, Dict
 from configs.ai_config import *
 
 client = edgedb.create_async_client("database")
@@ -82,7 +82,7 @@ async def vector_search(optimized_query: str, k: int = 10):
     )
 
 
-async def full_pipeline(user_query: str) -> list[dict[str, Any]]:
+async def full_pipeline(user_query: str) -> tuple[list[dict[str, Any]], str]:
     print(f"[INFO] Запрос: {user_query}")
 
     # Этап 1: Преобразовать запрос
@@ -97,7 +97,7 @@ async def full_pipeline(user_query: str) -> list[dict[str, Any]]:
     filtered = await filter_results_with_gpt(user_query, raw_results)
     print(f"[INFO] Осталось {len(filtered)} после фильтрации")
 
-    return filtered
+    return filtered, optimized_query
 
 
 def test():
