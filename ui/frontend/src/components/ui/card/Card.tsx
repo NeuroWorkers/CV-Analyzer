@@ -39,7 +39,7 @@ export const CardComponent = ({ data }: ICardProps) => {
               <div className={styles.authorInfo}>
                 {data.author && !data.author.includes('собаки') && (
                   <Anchor href={`https://t.me/${extractUsername(data.author)}`} target="_blank">
-                    @{extractUsername(data.author)}
+                    {extractUsername(data.author)}
                   </Anchor>
                 )}
                 {data.author && <h3 className={styles.author}>{extractFullName(data.author)}</h3>}
@@ -47,26 +47,20 @@ export const CardComponent = ({ data }: ICardProps) => {
             </div>
             <hr className={styles.divider} />
             <div className={styles.text}>
-              <ReactMarkdown
-                components={{
-                  p: ({ children }) => (
-                    <p className={styles.markdownParagraph}>
-                      <Highlight text={children?.toString() ?? ''} highlights={data.highlightText} />
-                    </p>
-                  ),
-                  strong: ({ children }) => <strong className={styles.markdownStrong}>{children}</strong>,
-                  ul: ({ children }) => <ul className={styles.markdownList}>{children}</ul>,
-                  li: ({ children }) => <li className={styles.markdownListItem}>{children}</li>,
-                  a: ({ href, children }) => (
-                    <a href={href} className={styles.markdownLink} target="_blank" rel="noopener noreferrer">
-                      {children}
-                    </a>
-                  ),
-                }}
-              >
-                {truncateMarkdown(data.text, 200)}
-              </ReactMarkdown>
+              {data.highlightText ? (
+                <p className={styles.markdownParagraph}>
+                  <Highlight 
+                    text={children?.toString() ?? ''} 
+                    highlights={data.highlightText} 
+                  />
+                </p>
+              ) : (
+                <ReactMarkdown>
+                  {truncateMarkdown(data.text, 200)}
+                </ReactMarkdown>
+              )}
             </div>
+
             <div className={styles.footer}>
               {/* {data.date && <p className={styles.date}>{data.date}</p>} */}
               <Button className={styles.button} variant="light" color="teal" onClick={open}>

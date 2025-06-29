@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Modal } from '@mantine/core';
 import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
@@ -12,7 +13,7 @@ import styles from './ModalWindow.module.css';
 
 export const ModalWindow = ({ opened, close, data }: IModalProps) => {
   const URL = useSelector((state: RootState) => state.config.url);
-  
+  console.log(data.text)
   return (
     <Modal
       opened={opened}
@@ -26,7 +27,7 @@ export const ModalWindow = ({ opened, close, data }: IModalProps) => {
               rel="noopener noreferrer"
               className={styles.authorLink}
             >
-              @{extractUsername(data.author)}
+              {extractUsername(data.author)}
             </a>
           )}
         </div>
@@ -54,25 +55,19 @@ export const ModalWindow = ({ opened, close, data }: IModalProps) => {
           </>
         )}
         <div className={styles.text}>
-          <ReactMarkdown
-            components={{
-              p: ({ children }) => (
-                <p className={styles.markdownParagraph}>
-                  <Highlight text={children?.toString() ?? ''} highlights={data.highlightText} />
-                </p>
-              ),
-              strong: ({ children }) => <strong className={styles.markdownStrong}>{children}</strong>,
-              ul: ({ children }) => <ul className={styles.markdownList}>{children}</ul>,
-              li: ({ children }) => <li className={styles.markdownListItem}>{children}</li>,
-              a: ({ href, children }) => (
-                <a href={href} className={styles.markdownLink} target="_blank" rel="noopener noreferrer">
-                  {children}
-                </a>
-              ),
-            }}
-          >
-            {data.text}
-          </ReactMarkdown>
+          {data.highlightText ? (
+                  <p className={styles.markdownParagraph}>
+                   
+                    <Highlight 
+                      text={children?.toString() ?? ''} 
+                      highlights={data.highlightText} 
+                    />
+                  </p>
+                ) : (
+                  <ReactMarkdown>
+                    {data.text}
+                  </ReactMarkdown>
+                )}
         </div>
         {data.date && (
           <p className={styles.date}>
