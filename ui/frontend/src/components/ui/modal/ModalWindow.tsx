@@ -1,19 +1,18 @@
 import { Modal } from '@mantine/core';
 import ReactMarkdown from 'react-markdown';
-import type { IModalProps } from '../../../core/types/modalTypes';
+import { useSelector } from 'react-redux';
+
+import type { IModalProps } from '../../../core/types/ui-types/modalTypes';
+import type { RootState } from '../../../core/store';
+import { extractFullName, extractUsername } from '../../../core/utils/extractFunctions';
+import { Highlight } from '../hightlight/Hightlight';
+
 import styles from './ModalWindow.module.css';
 
+
 export const ModalWindow = ({ opened, close, data }: IModalProps) => {
-  function extractUsername(input: string): string {
-    const match = input.match(/^@([^ ]+)/);
-    return match ? match[1] : '';
-  }
-
-  function extractFullName(input: string): string {
-    const match = input.match(/\(([^)]+)\)/);
-    return match ? match[1] : '';
-  }
-
+  const URL = useSelector((state: RootState) => state.config.url);
+  
   return (
     <Modal
       opened={opened}
@@ -47,7 +46,7 @@ export const ModalWindow = ({ opened, close, data }: IModalProps) => {
         {data.photo && (
           <>
             <img
-              src={data.photo}
+              src={data.photo.startsWith('http') ? data.photo : `${URL}${data.photo}`}
               alt={data.author}
               className={styles.image}
             />
@@ -57,7 +56,11 @@ export const ModalWindow = ({ opened, close, data }: IModalProps) => {
         <div className={styles.text}>
           <ReactMarkdown
             components={{
-              p: ({ children }) => <p className={styles.markdownParagraph}>{children}</p>,
+              p: ({ children }) => (
+                <p className={styles.markdownParagraph}>
+                  <Highlight text={children?.toString() ?? ''} highlights={data.highlightText} />
+                </p>
+              ),
               strong: ({ children }) => <strong className={styles.markdownStrong}>{children}</strong>,
               ul: ({ children }) => <ul className={styles.markdownList}>{children}</ul>,
               li: ({ children }) => <li className={styles.markdownListItem}>{children}</li>,

@@ -1,6 +1,9 @@
 import { Pagination as MantinePagination } from '@mantine/core';
 
-export const Pagination = ({ total, page, onChange }: { total: number; page: number; onChange: (page: number) => void }) => (
+import type { IPaginationProps } from '../../../core/types/ui-types/paginationTypes';
+
+
+export const Pagination = ({ total, page, onChange }: IPaginationProps) => (
   <div style={{ display: 'flex', justifyContent: 'center' }}>
     <MantinePagination 
       total={total} 

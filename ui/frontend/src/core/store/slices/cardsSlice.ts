@@ -1,11 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { ICardData } from '../../types/cardTypes';
-
-interface CardsState {
-  cards: ICardData[];
-  searchQuery: string;
-  totalCount: number;
-}
+import type { CardsState, ICardData } from '../../types/ui-types/cardTypes';
 
 const initialState: CardsState = {
   cards: [],

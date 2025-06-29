@@ -59,15 +59,8 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
                 media_url = f"/media/{filename}"
                 logger.info("media_url = " + media_url)
 
-            if node.author.startswith("@"):
-                username, fullname = node.author.split(maxsplit=1)
-            else:
-                username = "@"
-                fullname = node.author
-            
-            author = f"{username} ({fullname})"
             results.append({
-                "author": author,
+                "author": node.author,
                 "date": node.created_at.isoformat() if node.created_at else None,
                 "text": node.content,
                 "photo": media_url
@@ -82,30 +75,66 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
 async def get_relevant_nodes(query: str, page_number: int = 0, request: Request = None):
     nodes = await full_pipeline(query)
     results = []
-    count = 0
-    for node in nodes:
-        if (page_number - 1) * 6 <= count < page_number * 6:
-            media_url = None
-            if node.media_path and os.path.exists(node.media_path):
-                filename = os.path.basename(node.media_path)
-                media_url = f"/media/{filename}"  
-            if node.author.startswith("@"):
-                username, fullname = node.author.split(maxsplit=1)
-            else:
-                username = "@"
-                fullname = node.author
-            
-            author = f"{username} ({fullname})"
-            results.append({
-                "author": author,
-                "date": node.created_at.isoformat() if node.created_at else None,
-                "text": node.content,
-                "photo": media_url
-            })
-        count += 1
+    # ht - это массив массивов подсветок текста вероятно будет из какой то ф-ии приходить;
+    # пока захардкоженный ..
+    # каждлый под-массив [i] массива основного [[i],[i],..] относится к конкретной карточке 
+    # card1, card2, .. cardN
 
-    results.append({"count": count})
+    ht = [
+        ["Привет", "опыт в области IT"], 
+        ["открыли новый офис"],
+        ["инсайты по кибербезопасности"],
+        ["стратегии развития"],
+        ["налоговое законодательство"]
+    ]
+    count = 0
+
+    # индекс для ht массива нужен;
+    idx = 0 
+
+    start = (page_number - 1) * 6
+    end = page_number * 6
+
+    for node in nodes[start:end]:
+        media_url = None
+        if node.media_path and os.path.exists(node.media_path):
+            filename = os.path.basename(node.media_path)
+            media_url = f"/media/{filename}" 
+
+        results.append({
+            "author": node.author,
+            "date": node.created_at.isoformat() if node.created_at else None,
+            "text": node.content,
+            "highlight_text": ht[idx] if idx < len(ht) else [],
+            "photo": media_url
+        })
+        idx += 1
+
+    results.append({"count": len(nodes)})
     return JSONResponse(results)
+    
+    # __old__ version code ...
+
+    # count = 0
+    # for node in nodes:
+    #     if (page_number - 1) * 6 <= count < page_number * 6:
+    #         media_url = None
+    #         if node.media_path and os.path.exists(node.media_path):
+    #             filename = os.path.basename(node.media_path)
+    #             media_url = f"/media/{filename}"  
+
+    #         results.append({
+    #             "author": node.author,
+    #             "date": node.created_at.isoformat() if node.created_at else None,
+    #             "text": node.content,
+    #             "highlight_text": ht[idx] if idx < len(ht) else [],
+    #             "photo": media_url
+    #         })
+    #         idx += 1
+    #     count += 1
+
+    # results.append({"count": count})
+    # return JSONResponse(results)
 
 if __name__ == "__main__":
     uvicorn.run(app, host=SERVER_HOST, port=SERVER_PORT)

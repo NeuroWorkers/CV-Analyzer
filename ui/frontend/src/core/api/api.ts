@@ -1,4 +1,5 @@
-import type { ICardData } from '../types/cardTypes';
+// @ts-nocheck
+import type { ICardData } from '../types/ui-types/cardTypes';
 
 export const fetchCards = async (url: string, pageNum: number, search: string): Promise<{ cards: ICardData[]; totalCount: number }> => {
   try {
@@ -28,6 +29,7 @@ export const fetchCards = async (url: string, pageNum: number, search: string): 
     const data = cards.map((card) => ({
       author: card.author ?? 'N/A',
       text: card.text ?? 'No content available.',
+      highlightText: card.highlight_text ?? null,
       photo: card.photo ? `${card.photo}` : 'https://i0.wp.com/zblibrary.info/wp-content/uploads/sites/76/2017/03/default-user.png',
       date: card.date ?? new Date().toISOString(),
     }));

@@ -1,12 +1,15 @@
 import { TextInput, ActionIcon } from '@mantine/core';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setSearchQuery } from '../../../core/store/slices/cardsSlice';
-import type { RootState } from '../../../core/store';
 import { motion } from 'framer-motion';
 import { FiSearch } from 'react-icons/fi';
-import { useState } from 'react';
 
-export const Search = ({ isLoading }: { isLoading: boolean }) => {
+import { setSearchQuery } from '../../../core/store/slices/cardsSlice';
+import type { RootState } from '../../../core/store';
+import type { ISearchProps } from '../../../core/types/ui-types/searchTypes';
+
+
+export const Search = ({ isLoading }: ISearchProps) => {
   const dispatch = useDispatch();
   const searchQuery = useSelector((state: RootState) => state.cards.searchQuery);
   const [inputValue, setInputValue] = useState(searchQuery);
@@ -21,12 +24,18 @@ export const Search = ({ isLoading }: { isLoading: boolean }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className="w-full max-w-md mx-auto mt-6"
+      data-testid="search"
     >
       <br />
       <TextInput
         placeholder="Поиск..."
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            handleSearch();
+          }
+        }}
         rightSection={
           <ActionIcon
             onClick={handleSearch}
@@ -53,6 +62,7 @@ export const Search = ({ isLoading }: { isLoading: boolean }) => {
           },
         }}
       />
+
     </motion.div>
   );
 };

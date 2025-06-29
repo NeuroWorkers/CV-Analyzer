@@ -1,36 +1,23 @@
-import { Anchor, Button, Skeleton } from '@mantine/core';
+// @ts-nocheck
+import { Anchor, Button } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import styles from './Card.module.css';
-import type { ICardProps } from '../../../core/types/cardTypes';
-import { ModalWindow } from '../modal/ModalWindow';
 import { useSelector } from 'react-redux';
+
+import type { ICardProps } from '../../../core/types/ui-types/cardTypes';
 import type { RootState } from '../../../core/store';
+import { ModalWindow } from '../modal/ModalWindow';
+import { extractFullName, extractUsername } from '../../../core/utils/extractFunctions';
+import { Highlight } from '../hightlight/Hightlight';
+
+import styles from './Card.module.css';
+
 
 export const CardComponent = ({ data }: ICardProps) => {
   const [opened, { open, close }] = useDisclosure(false);
-  // @ts-ignore
-  const [isLoading, setIsLoading] = useState(false);
   const URL = useSelector((state: RootState) => state.config.url);
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //     setIsLoading(false);
-  //   }, 500);
-  //   return () => clearTimeout(timer);
-  // }, []);
-
-  function extractUsername(input: string): string {
-    const match = input.match(/^@([^ ]+)/);
-    return match ? match[1] : '';
-  }
-
-  function extractFullName(input: string): string {
-    const match = input.match(/\(([^)]+)\)/);
-    return match ? match[1] : '';
-  }
-
-  function truncateMarkdown(text: string, maxLength: number): string {
+  console.log(data.highlightText);
+  const truncateMarkdown = (text: string, maxLength: number): string => {
     if (text.length <= maxLength) return text;
     const truncated = text.slice(0, maxLength);
     const lastPeriod = truncated.lastIndexOf('.');
@@ -38,38 +25,11 @@ export const CardComponent = ({ data }: ICardProps) => {
     const lastIndex = Math.max(lastPeriod, lastNewline);
     return lastIndex > -1 ? truncated.slice(0, lastIndex + 1) + '...' : truncated + '...';
   }
-
+  
   return (
     <>
       <div className={styles.card}>
-        {isLoading ? (
-          <div className={styles.skeletonContainer}>
-            <Skeleton height={100} width={100} radius="md" style={{ margin: '20px' }} />
-            <div className={styles.skeletonContent}>
-              <div className={styles.skeletonHeader}>
-                <Skeleton height={16} width="30%" radius="sm" mb="0.5rem" />
-                <Skeleton height={20} width="50%" radius="sm" mb="0.5rem" />
-              </div>
-              <Skeleton height={1} width="100%" radius="sm" mb="1rem" />
-              <div className={styles.text}>
-                <Skeleton height={40} width="100%" radius="sm" mb="0.5rem" className={styles.markdownParagraph} />
-                <Skeleton height={16} width="25%" radius="sm" mb="0.5rem" className={styles.markdownStrong} />
-                <Skeleton height={40} width="100%" radius="sm" mb="0.5rem" className={styles.markdownParagraph} />
-                <Skeleton height={16} width="25%" radius="sm" mb="0.5rem" className={styles.markdownStrong} />
-                <div className={styles.markdownList}>
-                  <Skeleton height={12} width="80%" radius="sm" mb="0.25rem" className={styles.markdownListItem} />
-                  <Skeleton height={12} width="85%" radius="sm" mb="0.25rem" className={styles.markdownListItem} />
-                  <Skeleton height={12} width="75%" radius="sm" mb="0.25rem" className={styles.markdownListItem} />
-                </div>
-              </div>
-              <div className={styles.skeletonFooter}>
-                <Skeleton height={16} width="30%" radius="sm" mb="0.5rem" />
-                <Skeleton height={32} width={100} radius="sm" />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className={styles.content}>
+        <div className={styles.content}>
             <div className={styles.header}>
               {data.photo && (
                 <div className={styles.imageContainer}>
@@ -77,7 +37,7 @@ export const CardComponent = ({ data }: ICardProps) => {
                 </div>
               )}
               <div className={styles.authorInfo}>
-                {data.author && (
+                {data.author && !data.author.includes('собаки') && (
                   <Anchor href={`https://t.me/${extractUsername(data.author)}`} target="_blank">
                     @{extractUsername(data.author)}
                   </Anchor>
@@ -89,7 +49,11 @@ export const CardComponent = ({ data }: ICardProps) => {
             <div className={styles.text}>
               <ReactMarkdown
                 components={{
-                  p: ({ children }) => <p className={styles.markdownParagraph}>{children}</p>,
+                  p: ({ children }) => (
+                    <p className={styles.markdownParagraph}>
+                      <Highlight text={children?.toString() ?? ''} highlights={data.highlightText} />
+                    </p>
+                  ),
                   strong: ({ children }) => <strong className={styles.markdownStrong}>{children}</strong>,
                   ul: ({ children }) => <ul className={styles.markdownList}>{children}</ul>,
                   li: ({ children }) => <li className={styles.markdownListItem}>{children}</li>,
@@ -110,7 +74,6 @@ export const CardComponent = ({ data }: ICardProps) => {
               </Button>
             </div>
           </div>
-        )}
       </div>
       <ModalWindow opened={opened} close={close} data={data} />
     </>
