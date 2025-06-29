@@ -1,6 +1,6 @@
 import { Pagination as MantinePagination } from '@mantine/core';
 
-import type { IPaginationProps } from '../../../core/types/paginationTypes';
+import type { IPaginationProps } from '../../../core/types/ui-types/paginationTypes';
 
 
 export const Pagination = ({ total, page, onChange }: IPaginationProps) => (
