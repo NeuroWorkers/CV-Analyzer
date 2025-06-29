@@ -116,7 +116,7 @@ async def highlight_matches_with_gpt(optimized_query: str, filtered: list[dict[s
     return results_with_highlights
 
 
-async def full_pipeline(user_query: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+async def full_pipeline(user_query: str) -> tuple[list[dict[str, Any]], list[list[Any]]]:
     print(f"[INFO] Запрос: {user_query}")
 
     # Этап 1: Преобразовать запрос
@@ -151,5 +151,3 @@ def test():
     for r in results:
         print(f"{r.created_at} — {r.author}: {r.content}")
         print(f"[Подсветка]: {highlights}\n")
-
-test()
