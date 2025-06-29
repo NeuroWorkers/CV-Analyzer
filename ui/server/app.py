@@ -73,13 +73,8 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
 
 @app.get("/get_relevant_nodes/{query}/{page_number}")
 async def get_relevant_nodes(query: str, page_number: int = 0, request: Request = None):
-    nodes, query = await full_pipeline(query)
+    nodes, ht = await full_pipeline(query)
     results = []
-    count = 0
-
-    idx = 0 
-
-    ht = query.split()
 
     start = (page_number - 1) * 6
     end = page_number * 6
@@ -94,10 +89,9 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
             "author": node.author,
             "date": node.created_at.isoformat() if node.created_at else None,
             "text": node.content,
-            "highlight_text": ht[idx] if idx < len(ht) else [],
+            "highlight_text": ht,
             "photo": media_url
         })
-        idx += 1
 
     results.append({"count": len(nodes)})
     return JSONResponse(results)

@@ -23,7 +23,7 @@ async def analyze_user_query(user_query: str) -> str:
     system_prompt = (
         "Ты помощник, который преобразует пользовательский запрос в оптимизированную строку "
         "для полнотекстового поиска в базе данных резюме. "
-        "Выделяй ключевые слова, связанные термины, и если упомянет числовой диапазон — укажи все числа в нём. "
+        "Выделяй ключевые слова, связанные термины, и если упомянут числовой диапазон — укажи все числа в нём. "
         "Например, 'от 20 до 25' превращай в '20 21 22 23 24 25'. "
         "Также добавляй синонимы: 'молодой' → 'начинающий, без опыта, джун'. "
         "Не добавляй лишних слов. Верни одну строку — готовую поисковую фразу."
@@ -82,14 +82,47 @@ async def vector_search(optimized_query: str, k: int = 10):
     )
 
 
-async def full_pipeline(user_query: str) -> tuple[list[dict[str, Any]], str]:
+async def highlight_matches_with_gpt(optimized_query: str, filtered: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    system_prompt = (
+        "Ты помогаешь выделить в тексте слова и фразы, которые соответствуют запросу. "
+        "Используй только точные совпадения по смыслу (синонимы, разные формы слова, склонения, времена и т.п.). "
+        "Игнорируй совпадения, которые не связаны с запросом.\n\n"
+        "Формат: Верни список слов или фраз из текста, которые соответствуют запросу.\n"
+        "Пример ответа: ['начинающий', 'без опыта', 'джуниор']"
+    )
+
+    results_with_highlights = []
+
+    for r in filtered:
+        response = await openai.ChatCompletion.acreate(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Запрос: {optimized_query}\nТекст: {r['content']}"}
+            ],
+            temperature=0
+        )
+
+        highlights_raw = response.choices[0].message.content.strip()
+        try:
+            highlights = eval(highlights_raw) if highlights_raw.startswith("[") else []
+        except Exception:
+            highlights = []
+
+        r["highlights"] = highlights
+        results_with_highlights.append(r)
+
+    return results_with_highlights
+
+
+async def full_pipeline(user_query: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     print(f"[INFO] Запрос: {user_query}")
 
     # Этап 1: Преобразовать запрос
     optimized_query = await analyze_user_query(user_query)
     print(f"[DEBUG] Оптимизированный запрос: {optimized_query}")
 
-    # Этап 2: Найти по эмбеддингам в EdgeDB
+    # Этап 2: Найти по эмбеддингам
     raw_results = await vector_search(optimized_query)
     print(f"[DEBUG] Получено {len(raw_results)} кандидатов из поиска")
 
@@ -97,13 +130,18 @@ async def full_pipeline(user_query: str) -> tuple[list[dict[str, Any]], str]:
     filtered = await filter_results_with_gpt(user_query, raw_results)
     print(f"[INFO] Осталось {len(filtered)} после фильтрации")
 
-    return filtered, optimized_query
+    # Этап 4: Подсветка совпадений
+    highlighted = await highlight_matches_with_gpt(optimized_query, filtered)
+    print(f"[DEBUG] Подсветка выполнена")
+
+    return filtered, highlighted
 
 
 def test():
     query = "Павел"
-    results = asyncio.run(full_pipeline(query))
+    results, _ = asyncio.run(full_pipeline(query))
 
     print("\n--- Результаты ---")
     for r in results:
-        print(f"{r.created_at} — {r.author}: {r.content}")
+        print(f"{r['created_at']} — {r['author']}: {r['content']}")
+        print(f"[Подсветка]: {r['highlights']}\n")
