@@ -1,10 +1,12 @@
-import { Container, Stack } from '@mantine/core';
+import {  Container, Stack } from '@mantine/core';
+import { useDispatch } from 'react-redux';
 
-import { Pagination, Search } from '../../components/ui';
-import {Loader} from '../../components/ui';
+import { resetSearch } from '../../core/store/slices/cardsSlice';
+import { Pagination, Search, Loader } from '../../components/ui';
 import { CardsGrid } from '../../components/smart';
 import type { IHomeProps } from '../../core/types/pages-types/homeTypes';
 
+import { useState } from 'react'; 
 
 export const Home = ({ 
   isLoading, 
@@ -12,31 +14,47 @@ export const Home = ({
   handlePageChange, 
   totalCount 
 }: IHomeProps) => {
-  return <Container style={{ position: 'relative' }}>
-    <Stack>
-      <Search isLoading={isLoading} />
-      {isLoading && (
-        <Loader
-          color="lime"
-          size="md"
-          style={{ alignSelf: 'center' }}
-        />
-      )}
-      <div
-        style={{
-          transition: 'filter 0.3s ease',
-          filter: isLoading ? 'blur(4px)' : 'none',
-        }}
-      >
-        <CardsGrid />
-        <br/>
-        <Pagination
-          total={Math.ceil(totalCount / 6)}
-          page={page}
-          onChange={handlePageChange}
-        />
-        <br/>
-      </div>
-    </Stack>
-  </Container>
-}
+  const dispatch = useDispatch();
+  
+  const [clearSignal, setClearSignal] = useState(false); 
+
+  const handleResetSearch = () => {
+    dispatch(resetSearch());
+    setClearSignal(true); 
+    setTimeout(() => setClearSignal(false), 100); 
+  };
+
+  return (
+    <Container style={{ position: 'relative' }}>
+      <Stack>
+        
+        <Search isLoading={isLoading} clearSignal={clearSignal} handleResetSearch={handleResetSearch}/>
+     
+        {isLoading && (
+          <Loader
+            color="lime"
+            size="md"
+            style={{ alignSelf: 'center' }}
+          />
+        )}
+
+        <div
+          style={{
+            transition: 'filter 0.3s ease',
+            filter: isLoading ? 'blur(4px)' : 'none',
+          }}
+        >
+          <CardsGrid />
+          <br />
+          <Pagination
+            total={Math.ceil(totalCount / 6)}
+            page={page}
+            onChange={handlePageChange}
+          />
+          <br />
+        </div>
+      </Stack>
+    </Container>
+  );
+};
+
