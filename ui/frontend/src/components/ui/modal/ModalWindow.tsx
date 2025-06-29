@@ -58,10 +58,11 @@ export const ModalWindow = ({ opened, close, data }: IModalProps) => {
           {data.highlightText ? (
                   <p className={styles.markdownParagraph}>
                    
-                    <Highlight 
-                      text={children?.toString() ?? ''} 
-                      highlights={data.highlightText} 
-                    />
+                   <Highlight 
+  text={data.text ?? ''} 
+  highlights={data.highlightText} 
+/>
+
                   </p>
                 ) : (
                   <ReactMarkdown>

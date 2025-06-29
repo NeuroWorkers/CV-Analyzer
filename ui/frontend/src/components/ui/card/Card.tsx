@@ -50,9 +50,10 @@ export const CardComponent = ({ data }: ICardProps) => {
               {data.highlightText ? (
                 <p className={styles.markdownParagraph}>
                   <Highlight 
-                    text={children?.toString() ?? ''} 
+                    text={data.text ?? ''} 
                     highlights={data.highlightText} 
                   />
+
                 </p>
               ) : (
                 <ReactMarkdown>
