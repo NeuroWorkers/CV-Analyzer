@@ -24,6 +24,7 @@ export const Search = ({ isLoading }: ISearchProps) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className="w-full max-w-md mx-auto mt-6"
+      data-testid="search"
     >
       <br />
       <TextInput
