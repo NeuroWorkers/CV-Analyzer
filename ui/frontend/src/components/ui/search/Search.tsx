@@ -35,16 +35,26 @@ export const Search = ({ isLoading, clearSignal, handleResetSearch }: ISearchPro
     >
       <br/>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <Button
+          color="dark"
+          variant="filled"
+          radius="xl"
+          size="sm"
+          onClick={handleResetSearch}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <FaHome size={20} />
+        </Button>
         {searchQuery && (
           <Button
-            color="dark"
+            color="gray"
             variant="filled"
             radius="xl"
             size="sm"
             onClick={handleResetSearch}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <FaHome size={14} />
+            Отменить поиск
           </Button>
         )}
   
