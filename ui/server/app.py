@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from configs.server_config import SERVER_PORT, SERVER_HOST
-from backend.question_analyzer import fetch_all_messages, full_pipeline
+from backend.question_analyzer_llm import fetch_all_messages, full_pipeline
 
 import logging
 

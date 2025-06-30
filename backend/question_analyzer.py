@@ -140,8 +140,6 @@ async def full_pipeline(user_query: str) -> tuple[list[dict[str, Any]], list[lis
         for row in highlighted
     ]
 
-
-
     return filtered, re_highlighted
 
 
