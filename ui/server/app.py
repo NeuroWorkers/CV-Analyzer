@@ -1,14 +1,22 @@
+import logging
 import uvicorn
+import backend
 from fastapi import FastAPI
 from configs.project_paths import *
 from starlette.requests import Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from configs.server_config import SERVER_PORT, SERVER_HOST
-from backend.question_analyzer_llm import fetch_all_messages, full_pipeline
+from configs.server_config import SERVER_PORT, SERVER_HOST, SEARCH_MODE
 
-import logging
+if SEARCH_MODE == "" or not hasattr(backend, "SEARCH_MODE"):
+    from backend.question_analyzer_llm import fetch_all_messages, full_pipeline
+if SEARCH_MODE == "LLM":
+    from backend.question_analyzer_llm import fetch_all_messages, full_pipeline
+if SEARCH_MODE == "EDGE_EMBED":
+    from backend.question_analyzer import fetch_all_messages, full_pipeline
+if SEARCH_MODE == "FAISS":
+    from backend.question_analyzer_FAISS import fetch_all_messages, full_pipeline
 
 logger = logging.getLogger(__name__)  
 logger.setLevel(logging.DEBUG)  

@@ -1,9 +1,8 @@
 import asyncio
 import re
+import httpx
 import edgedb
 from typing import Any
-
-import httpx
 
 from configs.ai_config import *
 
