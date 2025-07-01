@@ -1,0 +1,15 @@
+[Unit]
+Description=cv-0-2 user service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=GIT_ROOT/
+ExecStart=/bin/bash -c 'GIT_ROOT/bin/app_start_systemd'
+Restart=on-failure
+KillSignal=SIGQUIT
+TimeoutStopSec=90
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target
