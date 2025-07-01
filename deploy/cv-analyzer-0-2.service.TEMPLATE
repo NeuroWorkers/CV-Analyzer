@@ -1,3 +1,4 @@
+# HOME/.config/systemd/user
 [Unit]
 Description=cv-0-2 user service
 After=network.target
