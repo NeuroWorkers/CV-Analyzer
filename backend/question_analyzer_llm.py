@@ -1,6 +1,6 @@
 import asyncio
 import httpx
-from typing import Any, List, Tuple
+from typing import Any, List
 import edgedb
 from configs.ai_config import *
 
@@ -20,10 +20,6 @@ async def fetch_all_messages() -> List[dict[str, Any]]:
 
 
 async def semantic_search_with_gpt(user_query: str, messages: List[dict[str, Any]]) -> tuple[list[dict[str, Any]], list]:
-    """
-    Фильтрует релевантные резюме с помощью GPT через OpenRouter, включая выделение ключевых фраз.
-    Возвращает список слов для подсветки в каждом сообщении.
-    """
     system_prompt = (
         "Ты ИИ-помощник, который помогает искать релевантные резюме. "
         "На входе у тебя есть пользовательский запрос и текст резюме. "
@@ -88,7 +84,3 @@ def test():
     for r in results:
         print(f"{r.created_at} — {r.author}: {r.content}")
         print(f"[Подсветка]: {highlights}\n")
-
-
-if __name__ == "__main__":
-    test()

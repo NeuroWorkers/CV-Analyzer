@@ -1,9 +1,10 @@
 import asyncio
 import re
-
 import edgedb
-import openai
-from typing import Any, Tuple, List, Dict
+from typing import Any
+
+import httpx
+
 from configs.ai_config import *
 
 client = edgedb.create_async_client("database")
@@ -23,55 +24,43 @@ async def fetch_all_messages():
 
 async def analyze_user_query(user_query: str) -> str:
     system_prompt = (
-        "Ты помощник, который преобразует пользовательский запрос в оптимизированную строку "
-        "для полнотекстового поиска в базе данных резюме. "
-        "Выделяй ключевые слова, связанные термины, и если упомянут числовой диапазон — укажи все числа в нём. "
-        "Например, 'от 20 до 25' превращай в '20 21 22 23 24 25'. "
-        "Также добавляй синонимы: 'молодой' → 'начинающий, без опыта, джун'. "
-        "Не добавляй лишних слов. Верни одну строку — готовую поисковую фразу."
+        "Ты ИИ-ассистент по поиску резюме. Преобразуй запрос пользователя в короткий список ключевых слов, "
+        "синонимов и связанных терминов. Добавляй формы слов, синонимы, аббревиатуры, связанные роли. "
+        "Игнорируй нерелевантные слова. Верни одну строку."
     )
 
-    response = await openai.ChatCompletion.acreate(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_query}
-        ],
-        temperature=0.2
-    )
-    return response.choices[0].message.content.strip()
+    response = await chat_completion_openrouter([
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_query},
+    ])
+    return response.strip()
 
 
 async def filter_results_with_gpt(user_query: str, results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     system_prompt = (
-        "Ты помощник, фильтрующий резюме по запросу. "
-        "Если текст резюме явно соответствует запросу — ответь 'Да', иначе — 'Нет'. "
-        "Не додумывай, оцени только на основе явных фактов.\n\n"
-        "Формат ответа: Да / Нет. Без объяснений."
+        "Ты ассистент по оценке релевантности резюме. На входе пользовательский запрос и текст резюме.\n"
+        "Отвечай 'Да' только если соответствие явно выражено. Не фантазируй.\n"
+        "Примеры релевантности: упоминаются нужные технологии, профессия, опыт."
     )
 
     filtered = []
     for r in results:
-        text = r.content
-        response = await openai.ChatCompletion.acreate(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Запрос: {user_query}\nРезюме: {text}"}
-            ],
-            temperature=0
-        )
-        decision = response.choices[0].message.content.strip().lower()
-        if decision.startswith("да"):
+        prompt = f"Запрос: {user_query}\nРезюме: {r.content}"
+        response = await chat_completion_openrouter([
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ])
+        if response.lower().startswith("да"):
             filtered.append(r)
     return filtered
 
 
-async def vector_search(optimized_query: str, k: int = 10):
+async def edge_search(optimized_query: str, k: int = 20):
     return await client.query(
         """
         WITH results := ext::ai::search(ResumeMessage, <str>$q)
         SELECT results.object {
+            id,
             content,
             author,
             created_at,
@@ -84,70 +73,74 @@ async def vector_search(optimized_query: str, k: int = 10):
     )
 
 
-async def highlight_matches_with_gpt(optimized_query: str, filtered: list[dict[str, Any]]) -> list[dict[str, Any]]:
+async def highlight_matches_with_gpt(user_query: str, filtered: list[dict[str, Any]]) -> list[list[str]]:
     system_prompt = (
-        "Ты помогаешь выделить в тексте слова и фразы, которые соответствуют запросу. "
-        "Используй только точные совпадения по смыслу (синонимы, разные формы слова, склонения, времена и т.п.). "
-        "Игнорируй совпадения, которые не связаны с запросом.\n\n"
-        "Формат: Верни список слов или фраз из текста, которые соответствуют запросу.\n"
-        "Пример ответа: ['начинающий', 'без опыта', 'джуниор']"
+        "Ты подсвечиваешь ключевые фразы в тексте, которые связаны с запросом.\n"
+        "Выделяй только точные и смысловые совпадения. Возвращай список слов или фраз."
     )
 
-    results_with_highlights = []
-
+    highlights = []
     for r in filtered:
-        response = await openai.ChatCompletion.acreate(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Запрос: {optimized_query}\nТекст: {r.content}"}
-            ],
-            temperature=0
-        )
+        prompt = f"Запрос: {user_query}\nРезюме: {r.content}"
+        response = await chat_completion_openrouter([
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ])
 
-        highlights_raw = response.choices[0].message.content.strip()
         try:
-            highlights = eval(highlights_raw) if highlights_raw.startswith("[") else []
+            words = eval(response) if response.startswith("[") else []
+            highlights.append([w for w in words if len(w) >= 3])
         except Exception:
-            highlights = []
+            highlights.append([])
 
-        results_with_highlights.append(highlights)
-
-    return results_with_highlights
+    return highlights
 
 
-async def full_pipeline(user_query: str) -> tuple[list[dict[str, Any]], list[list[Any]]]:
+async def chat_completion_openrouter(messages: list[dict], model="openai/gpt-4") -> str:
+    headers = {
+        "Authorization": f"Bearer {openrouter_api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0
+    }
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json=payload
+        )
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"].strip()
+
+
+async def full_pipeline(user_query: str) -> tuple[list[dict[str, Any]], list[list[str]]]:
     print(f"[INFO] Запрос: {user_query}")
-
-    # Этап 1: Преобразовать запрос
     optimized_query = await analyze_user_query(user_query)
     print(f"[DEBUG] Оптимизированный запрос: {optimized_query}")
 
-    # Этап 2: Найти по эмбеддингам
-    raw_results = await vector_search(optimized_query)
-    print(f"[DEBUG] Получено {len(raw_results)} кандидатов из поиска")
+    raw_results = await edge_search(optimized_query)
+    print(f"[DEBUG] Найдено кандидатов: {len(raw_results)}")
 
-    # Этап 3: Фильтрация через GPT
     filtered = await filter_results_with_gpt(user_query, raw_results)
-    print(f"[INFO] Осталось {len(filtered)} после фильтрации")
+    print(f"[INFO] Отфильтровано: {len(filtered)}")
 
-    # Этап 4: Подсветка совпадений
-    highlighted = await highlight_matches_with_gpt(optimized_query, filtered)
-    print(f"[DEBUG] Подсветка выполнена")
+    highlighted = await highlight_matches_with_gpt(user_query, filtered)
+    print(f"[INFO] Подсветка завершена")
 
-    re_highlighted = [
-        [word for word in re.findall(r'\w+', row[0]) if len(word) >= 3]
-        for row in highlighted
-    ]
-
-    return filtered, re_highlighted
+    return filtered, highlighted
 
 
 def test():
-    query = "Юрист основатель"
+    query = "искусственный интеллект"
     results, highlights = asyncio.run(full_pipeline(query))
 
-    print("\n--- Результаты ---")
-    for r in results:
+    for r, hl in zip(results, highlights):
         print(f"{r.created_at} — {r.author}: {r.content}")
-        print(f"[Подсветка]: {highlights}\n")
+        print(f"[Подсветка]: {hl}\n")
+
+
+if __name__ == "__main__":
+    test()

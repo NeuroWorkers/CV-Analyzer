@@ -1,17 +1,26 @@
 import os
 import time
 import json
-import openai
+import asyncio
+import httpx
 
-from configs.ai_config import max_processing_message_count
+from configs.ai_config import max_processing_message_count, openrouter_api_key
 from configs.project_paths import tg_dump_text_path, relevant_text_path, relevant_media_path
 
 PROMPT_TEMPLATE = """
-Ты — помощник, который помогает отбирать сообщения, содержащие CV (резюме) или краткое описание профессионального опыта человека.
+Ты — помощник, который отбирает сообщения, содержащие резюме (CV) или любые описания профессионального опыта, навыков, достижений, карьерного пути человека.
 
-Ответь только "YES" если текст — это CV, или "NO" если это обычное сообщение.
+Твоя задача — ответить только "YES" или "NO".
 
-Пример сообщения:
+Ответь "YES", если сообщение:
+- Похоже на CV, даже если оно неформальное
+- Содержит перечень навыков, технологий, сфер деятельности
+- Описывает, где человек работал, какие у него компетенции, что он умеет
+- Может использоваться для оценки кандидата или как отклик на вакансию
+
+Ответь "NO", если в сообщении нет информации о профессиональных качествах или опыте.
+
+Сообщение:
 \"\"\"{text}\"\"\"
 """
 
@@ -31,34 +40,52 @@ REAL_AUTHOR_PROMPT = """
 """
 
 
-def is_cv_openai(text: str) -> bool:
+HEADERS = {
+    "Authorization": f"Bearer {openrouter_api_key}",
+    "Content-Type": "application/json"
+}
+
+
+async def chat_completion(messages: list[dict], model: str = "openai/gpt-4") -> str:
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0.2
+    }
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=HEADERS,
+            json=payload
+        )
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"].strip()
+
+
+def is_cv(text: str) -> bool:
     try:
         prompt = PROMPT_TEMPLATE.format(text=text)
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0
-        )
-        result = response['choices'][0]['message']['content'].strip().lower()
-        return "yes" in result
+        result = asyncio.run(chat_completion([
+            {"role": "user", "content": prompt}
+        ]))
+        return "yes" in result.lower()
     except Exception as e:
         print(f"[ERROR is_cv]: {e}")
         return False
 
 
-def determine_real_author(text: str, system_author: str, fwd_author: str) -> str:
+def detect_real_author(text: str, system_author: str, fwd_author: str) -> str:
     try:
         prompt = REAL_AUTHOR_PROMPT.format(
             text=text,
             system_author=system_author or "",
             fwd_author=fwd_author or ""
         )
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2
-        )
-        return response['choices'][0]['message']['content'].strip()
+        result = asyncio.run(chat_completion([
+            {"role": "user", "content": prompt}
+        ]))
+        return result if result else system_author
     except Exception as e:
         print(f"[ERROR author_detect]: {e}")
         return system_author
@@ -95,10 +122,10 @@ def sort_cv():
             if len(content.strip()) < 50:
                 continue
 
-            print(f"Проверка сообщения: {telegram_id}")
+            print(f"\nОбрабатывается сообщение: {telegram_id}\n")
 
-            if is_cv_openai(content):
-                true_author = determine_real_author(content, system_author, fwd_author)
+            if is_cv(content):
+                true_author = detect_real_author(content, system_author, fwd_author)
                 text_block[3] = true_author
                 filtered.setdefault(topic_id, []).append(msg)
 
