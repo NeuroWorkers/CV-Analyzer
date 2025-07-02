@@ -115,7 +115,7 @@ async def semantic_search(user_query: str, messages: List[Any]) -> Tuple[List[di
                 "media_path": msg.media_path
             })
             highlights.append(current_highlights)
-    print(relevant[0]['media_path'])
+    
     return relevant, highlights
 
 
