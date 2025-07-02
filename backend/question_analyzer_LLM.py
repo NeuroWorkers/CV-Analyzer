@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import re
 from typing import Any, List, Tuple
 
@@ -99,7 +100,7 @@ async def semantic_search(user_query: str, messages: List[Any]) -> Tuple[List[di
 
     relevant = []
     highlights = []
-
+    logging.info("\n\n\nPARSED_LIST:", parsed_list)
     for res in sorted(parsed_list, key=lambda x: x.get("index", -1)):
         idx = res.get("index")
         if idx is None or idx >= len(messages):
