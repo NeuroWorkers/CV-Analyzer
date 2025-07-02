@@ -142,11 +142,10 @@ async def extract_message_data(message, client):
             caption = f"[{media_type.upper()} saved to {path}]"
 
         if original_text:
-            text = f"{original_text}\n\n{caption}"
+            text = original_text
         else:
-            text = caption
+            text = ""
     else:
-        # Загружаем аватар оригинального отправителя, если это пересланное сообщение
         avatar_user = None
         if message.fwd_from and message.fwd_from.from_id:
             try:

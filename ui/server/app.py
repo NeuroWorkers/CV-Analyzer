@@ -77,29 +77,32 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
     Returns:
         JSONResponse: Список узлов с автором, датой, текстом и ссылкой на фото.
     """
-    nodes = await fetch_all_messages()
-    results = []
-    start = (page_number - 1) * 6
-    end = page_number * 6
+    try:
+        nodes = await fetch_all_messages()
+        results = []
+        start = (page_number - 1) * 6
+        end = page_number * 6
 
-    for idx, node in enumerate(nodes[start:end]):
-        media_url = None
-        media_path = node.get('media_path')
-        if media_path:
-            current_media_path = os.path.join(DATA_PATH, str(media_path))
-            if os.path.exists(current_media_path):
-                media_url = f"/media/{os.path.basename(current_media_path)}"
-                logger.info(f"media_url = {media_url}")
+        for idx, node in enumerate(nodes[start:end]):
+            media_url = None
+            media_path = node['media_path']
+            if media_path:
+                current_media_path = os.path.join(DATA_PATH, str(media_path))
+                if os.path.exists(current_media_path):
+                    media_url = f"/media/{os.path.basename(current_media_path)}"
+                    logger.info(f"media_url = {media_url}")
 
-        results.append({
-            "author": node['author'],
-            "date": node['created_at'].isoformat() if node['created_at'] else None,
-            "text": node['content'],
-            "photo": media_url
-        })
+            results.append({
+                "author": node['author'],
+                "date": node['created_at'].isoformat() if node['created_at'] else None,
+                "text": node['content'],
+                "photo": media_url
+            })
 
-    results.append({"count": len(nodes)})
-    return JSONResponse(results)
+        results.append({"count": len(nodes)})
+        return JSONResponse(results)
+    except Exception as e:
+        logger.error(e)
 
 
 @app.get("/get_relevant_nodes/{query}/{page_number}")
@@ -116,29 +119,32 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
         JSONResponse: Список релевантных узлов с автором, датой, текстом,
                       подсветкой и ссылкой на фото.
     """
-    nodes, highlights = await full_pipeline(query)
-    results = []
-    start = (page_number - 1) * 6
-    end = page_number * 6
+    try:
+        nodes, highlights = await full_pipeline(query)
+        results = []
+        start = (page_number - 1) * 6
+        end = page_number * 6
 
-    for idx, node in enumerate(nodes[start:end]):
-        media_url = None
-        media_path = node.get('media_path')
-        if media_path:
-            current_media_path = os.path.join(DATA_PATH, str(media_path))
-            if os.path.exists(current_media_path):
-                media_url = f"/media/{os.path.basename(current_media_path)}"
+        for idx, node in enumerate(nodes[start:end]):
+            media_url = None
+            media_path = node['media_path']
+            if media_path:
+                current_media_path = os.path.join(DATA_PATH, str(media_path))
+                if os.path.exists(current_media_path):
+                    media_url = f"/media/{os.path.basename(current_media_path)}"
 
-        results.append({
-            "author": node['author'],
-            "date": node['created_at'].isoformat() if node['created_at'] else None,
-            "text": node['content'],
-            "highlight_text": highlights[start + idx] if start + idx < len(highlights) else [],
-            "photo": media_url
-        })
+            results.append({
+                "author": node['author'],
+                "date": node['created_at'].isoformat() if node['created_at'] else None,
+                "text": node['content'],
+                "highlight_text": highlights[start + idx] if start + idx < len(highlights) else [],
+                "photo": media_url
+            })
 
-    results.append({"count": len(nodes)})
-    return JSONResponse(results)
+        results.append({"count": len(nodes)})
+        return JSONResponse(results)
+    except Exception as e:
+        logger.error(e)
 
 
 if __name__ == "__main__":
