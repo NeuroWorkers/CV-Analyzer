@@ -52,7 +52,7 @@ async def analyze_user_query(user_query: str) -> str:
     return await chat_completion_openrouter([
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_query},
-    ], model="google/gemini-2.5-flash")
+    ], model=openai_model)
 
 
 async def semantic_search(user_query: str, messages: List[Any]) -> Tuple[List[dict[str, Any]], List[List[str]]]:
@@ -80,7 +80,7 @@ async def semantic_search(user_query: str, messages: List[Any]) -> Tuple[List[di
     )
 
     payload = {
-        "model": "google/gemini-2.5-flash",
+        "model": openai_model,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_content}
@@ -135,7 +135,7 @@ async def semantic_search(user_query: str, messages: List[Any]) -> Tuple[List[di
     return relevant, highlights
 
 
-async def chat_completion_openrouter(messages: List[Dict[str, str]], model: str = "google/gemini-2.5-flash") -> str:
+async def chat_completion_openrouter(messages: List[Dict[str, str]], model: str = openai_model) -> str:
     """
     Отправляет запрос к OpenRouter API и возвращает ответ модели.
 

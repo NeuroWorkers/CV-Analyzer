@@ -7,7 +7,7 @@ from typing import List, Any, Tuple, Dict
 import httpx
 
 from configs.project_paths import faiss_index_path, faiss_metadata_path
-from configs.ai_config import MODEL_NAME
+from configs.ai_config import faiss_model, openai_model
 
 model = None
 index = None
@@ -58,7 +58,7 @@ async def init_resources():
         import faiss
 
         device = "mps" if torch.backends.mps.is_available() else "cpu"
-        model = SentenceTransformer(MODEL_NAME, device=device)
+        model = SentenceTransformer(faiss_model, device=device)
 
         index = faiss.read_index(faiss_index_path)
         with open(faiss_metadata_path, "r", encoding="utf-8") as f:
@@ -84,7 +84,7 @@ async def analyze_user_query(user_query: str) -> str:
     return await chat_completion_openrouter([
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_query},
-    ], model="google/gemini-2.5-flash")
+    ], model=openai_model)
 
 
 async def vector_search(optimized_query: str, k: int = 20) -> List[Dict[str, Any]]:
@@ -141,7 +141,7 @@ async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -
         {"role": "user", "content": user_content}
     ]
 
-    response_text = await chat_completion_openrouter(payload_messages, model="google/gemini-2.5-flash")
+    response_text = await chat_completion_openrouter(payload_messages, model=openai_model)
 
     clean_response = re.sub(r"```json\s*|```", "", response_text).strip()
     try:
@@ -168,7 +168,7 @@ async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -
     return filtered, highlights
 
 
-async def chat_completion_openrouter(messages: List[Dict[str, str]], model: str = "google/gemini-2.5-flash") -> str:
+async def chat_completion_openrouter(messages: List[Dict[str, str]], model: str = openai_model) -> str:
     """
     Отправляет запрос к OpenRouter API и получает ответ от модели.
 

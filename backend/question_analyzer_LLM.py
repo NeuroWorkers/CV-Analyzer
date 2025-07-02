@@ -69,7 +69,7 @@ async def semantic_search(user_query: str, messages: List[Any]) -> Tuple[List[di
     )
 
     payload = {
-        "model": "google/gemini-2.5-flash",
+        "model": openai_model,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_content}
