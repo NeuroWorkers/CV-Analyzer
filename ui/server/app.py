@@ -103,7 +103,7 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
         results.append({"count": len(nodes)})
         return JSONResponse(results)
     except Exception as e:
-        logger.error(traceback.print_exc())
+        logging.error("Произошла ошибка:\n%s", traceback.format_exc())
 
 
 @app.get("/get_relevant_nodes/{query}/{page_number}")
@@ -145,7 +145,7 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
         results.append({"count": len(nodes)})
         return JSONResponse(results)
     except Exception as e:
-        logger.error(traceback.print_exc())
+        logging.error("Произошла ошибка:\n%s", traceback.format_exc())
 
 
 if __name__ == "__main__":
