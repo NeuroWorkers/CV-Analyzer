@@ -8,11 +8,22 @@ from sentence_transformers import SentenceTransformer
 from configs.ai_config import MODEL_NAME
 from configs.project_paths import relevant_text_path, faiss_index_path, faiss_metadata_path
 
-
 model = SentenceTransformer(MODEL_NAME)
 
 
 def extract_texts_and_metadata(json_data: dict) -> Tuple[List[str], List[Dict]]:
+    """
+    Извлекает тексты резюме и соответствующие метаданные из JSON-данных.
+
+    Args:
+        json_data (dict): Словарь, содержащий данные с резюме, где ключи — topic_id, значения — списки сообщений.
+
+    Returns:
+        Tuple[List[str], List[Dict]]: Кортеж из двух списков:
+            - texts: список текстов резюме (str),
+            - metadata: список словарей с метаданными, содержащими ключи:
+              'telegram_id', 'created_at', 'content', 'author', 'fwd_date', 'fwd_author', 'topic_id'.
+    """
     texts = []
     metadata = []
 
@@ -40,7 +51,25 @@ def extract_texts_and_metadata(json_data: dict) -> Tuple[List[str], List[Dict]]:
     return texts, metadata
 
 
-def build_or_update_index(json_path=os.path.join(relevant_text_path, "cv.json"), index_path=faiss_index_path, metadata_path=faiss_metadata_path):
+def build_or_update_index(
+    json_path: str = os.path.join(relevant_text_path, "cv.json"),
+    index_path: str = faiss_index_path,
+    metadata_path: str = faiss_metadata_path
+) -> None:
+    """
+    Создаёт новый FAISS-индекс или обновляет существующий только новыми записями из файла JSON.
+
+    Если индекс и метаданные не найдены, создаёт новый индекс с эмбеддингами всех текстов.
+    Если индекс найден, добавляет эмбеддинги только для новых записей (на основе telegram_id).
+
+    Args:
+        json_path (str): Путь к JSON-файлу с резюме (по умолчанию "cv.json" из relevant_text_path).
+        index_path (str): Путь к файлу FAISS-индекса.
+        metadata_path (str): Путь к JSON-файлу с метаданными для индекса.
+
+    Returns:
+        None
+    """
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 

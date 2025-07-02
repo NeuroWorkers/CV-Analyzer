@@ -4,16 +4,17 @@ export PYTHONPATH=$(pwd):$PYTHONPATH
 
 python3 -c '
 import asyncio
-from backend.question_analyzer_FAISS import full_pipeline
+from backend.question_analyzer_EDGE import full_pipeline
 
 async def main():
     query = "искусственный интеллект"
     results, highlights = await full_pipeline(query)
-
+    print(results)
+    print(highlights)
     print("\n--- Результаты ---\n")
-    for r, hl in zip(results, highlights):
-        print(f"{r.created_at} — {r.author}: {r.content}")
-        print(f"[Подсветка]: {hl}\n")
+    #for r, hl in zip(results, highlights):
+        #print(f"{r}")
+        #print(f"[Подсветка]: {hl}\n")
 
 asyncio.run(main())
 '

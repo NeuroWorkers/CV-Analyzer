@@ -47,6 +47,16 @@ HEADERS = {
 
 
 async def chat_completion(messages: list[dict], model: str = "openai/gpt-4") -> str:
+    """
+    Отправляет запрос в OpenRouter API для генерации ответа модели чат-ИИ.
+
+    Args:
+        messages (list[dict]): Список сообщений (словарей с ролями и контентом) для диалога.
+        model (str): Название модели ИИ (по умолчанию "openai/gpt-4").
+
+    Returns:
+        str: Текст ответа модели.
+    """
     payload = {
         "model": model,
         "messages": messages,
@@ -64,6 +74,15 @@ async def chat_completion(messages: list[dict], model: str = "openai/gpt-4") -> 
 
 
 def is_cv(text: str) -> bool:
+    """
+    Определяет, является ли текст резюме (CV) с помощью модели ИИ.
+
+    Args:
+        text (str): Текст сообщения для проверки.
+
+    Returns:
+        bool: True, если текст похож на резюме (ответ модели содержит "yes"), иначе False.
+    """
     try:
         prompt = PROMPT_TEMPLATE.format(text=text)
         result = asyncio.run(chat_completion([
@@ -76,6 +95,17 @@ def is_cv(text: str) -> bool:
 
 
 def detect_real_author(text: str, system_author: str, fwd_author: str) -> str:
+    """
+    Определяет реальное имя автора пересланного сообщения на основе текста и метаданных.
+
+    Args:
+        text (str): Текст сообщения.
+        system_author (str): Имя автора, записанное системой.
+        fwd_author (str): Имя автора, у которого сообщение было переслано.
+
+    Returns:
+        str: Имя реального автора в формате "@ник Имя Фамилия" или одно из переданных имён.
+    """
     try:
         prompt = REAL_AUTHOR_PROMPT.format(
             text=text,
@@ -91,7 +121,19 @@ def detect_real_author(text: str, system_author: str, fwd_author: str) -> str:
         return system_author
 
 
-def sort_cv():
+def sort_cv() -> None:
+    """
+    Загружает сообщения из файла non_filtered_cv.json, фильтрует резюме с помощью ИИ,
+    определяет реального автора и сохраняет отфильтрованные данные в cv.json.
+
+    Ограничивает обработку максимальным количеством сообщений, заданным в конфиге.
+    Для каждого сообщения с резюме сохраняет обновлённые данные.
+
+    Side Effects:
+        Создает папку relevant_text_path, если её нет.
+        Записывает файл cv.json с отфильтрованными резюме.
+        Выводит в консоль прогресс обработки и ошибки.
+    """
     with open(os.path.join(tg_dump_text_path, "non_filtered_cv.json"), "r", encoding="utf-8") as f:
         data = json.load(f)
 
@@ -116,7 +158,7 @@ def sort_cv():
             fwd_date = text_block[4]
             fwd_author = text_block[5]
 
-            if media_block["path"]:
+            if media_block and media_block.get("path"):
                 media_block["path"] = os.path.join("relevant", "media", os.path.basename(media_block["path"]))
 
             if len(content.strip()) < 50:

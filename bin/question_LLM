@@ -1,0 +1,19 @@
+#!/bin/bash
+cd "$(dirname "$0")/../"
+export PYTHONPATH=$(pwd):$PYTHONPATH
+
+python3 -c '
+import asyncio
+from backend.question_analyzer_LLM import full_pipeline
+
+async def main():
+    query = "искусственный интеллект"
+    results, highlights = await full_pipeline(query)
+    print(results)
+    print(highlights)
+    #for r in results:
+        #print(f"{r.created_at} — {r.author}: {r.content}")
+        #print(f"[Подсветка]: {highlights}\n")
+
+asyncio.run(main())
+'

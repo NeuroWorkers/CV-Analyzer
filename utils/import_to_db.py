@@ -6,7 +6,17 @@ from datetime import datetime
 from configs.project_paths import relevant_text_path
 
 
-def make_aware(dt_str):
+def make_aware(dt_str: str | None) -> datetime | None:
+    """
+    Преобразует строку с датой и временем в timezone-aware datetime объект UTC.
+
+    Args:
+        dt_str (str | None): Строка с датой и временем в формате "%Y-%m-%d %H:%M:%S"
+                             или None.
+
+    Returns:
+        datetime | None: Объект datetime с привязкой к UTC или None, если вход None.
+    """
     if dt_str is None:
         return None
     dt_naive = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
@@ -14,7 +24,20 @@ def make_aware(dt_str):
     return utc.localize(dt_naive)
 
 
-async def update_messages_to_db(json_path: str = os.path.join(relevant_text_path, "cv.json")):
+async def update_messages_to_db(json_path: str = os.path.join(relevant_text_path, "cv.json")) -> None:
+    """
+    Асинхронно загружает или обновляет сообщения с резюме из JSON файла в базу данных EdgeDB.
+
+    Если запись с таким telegram_id уже существует, обновляет поля,
+    иначе создаёт новую запись.
+
+    Args:
+        json_path (str): Путь к JSON файлу с данными резюме. По умолчанию
+                         "<relevant_text_path>/cv.json".
+
+    Returns:
+        None
+    """
     client = edgedb.create_async_client("database")
 
     with open(json_path, "r", encoding="utf-8") as f:
@@ -77,7 +100,6 @@ async def update_messages_to_db(json_path: str = os.path.join(relevant_text_path
                                    media_type=media_type,
                                    media_path=media_path
                                    )
-
                 print(f"Загружено или обновлено сообщение {telegram_id}")
             except Exception as e:
                 print(f"Ошибка при вставке/обновлении сообщения {telegram_id}: {e}")

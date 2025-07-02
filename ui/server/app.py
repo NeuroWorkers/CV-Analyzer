@@ -2,30 +2,32 @@ import logging
 import uvicorn
 import backend
 from fastapi import FastAPI
-from configs.project_paths import *
 from starlette.requests import Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+
+from configs.project_paths import *
 from configs.server_config import SERVER_PORT, SERVER_HOST, SEARCH_MODE
 
 if SEARCH_MODE == "" or not hasattr(backend, "SEARCH_MODE"):
-    from backend.question_analyzer_llm import fetch_all_messages, full_pipeline
-if SEARCH_MODE == "LLM":
-    from backend.question_analyzer_llm import fetch_all_messages, full_pipeline
-if SEARCH_MODE == "EDGE_EMBED":
-    from backend.question_analyzer import fetch_all_messages, full_pipeline
-if SEARCH_MODE == "FAISS":
+    from backend.question_analyzer_LLM import fetch_all_messages, full_pipeline
+elif SEARCH_MODE == "LLM":
+    from backend.question_analyzer_LLM import fetch_all_messages, full_pipeline
+elif SEARCH_MODE == "EDGE_EMBED":
+    from backend.question_analyzer_EDGE import fetch_all_messages, full_pipeline
+elif SEARCH_MODE == "FAISS":
+    from backend.create_FAISS import build_or_update_index
+
+    build_or_update_index()
     from backend.question_analyzer_FAISS import fetch_all_messages, full_pipeline
 
-logger = logging.getLogger(__name__)  
-logger.setLevel(logging.DEBUG)  
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 file_handler = logging.FileHandler('app2.log')
 file_handler.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
 logger.addHandler(file_handler)
-
 
 app = FastAPI()
 
@@ -40,6 +42,12 @@ app.add_middleware(
 
 @app.get("/")
 async def home():
+    """
+    Корневая точка API для проверки статуса сервера.
+
+    Returns:
+        dict: Сообщение о успешном запуске сервера.
+    """
     return {"message": "BACKEND SERVER SUCCESSFULLY STARTED"}
 
 
@@ -48,88 +56,90 @@ app.mount("/media", StaticFiles(directory=relevant_media_path), name="media")
 
 @app.get("/init437721")
 async def init437721():
+    """
+    Тестовая точка API для проверки статуса.
+
+    Returns:
+        dict: Статус "ok".
+    """
     return {"status": "ok"}
 
 
 @app.get("/get_all_nodes/{page_number}")
 async def get_all_nodes(page_number: int = 0, request: Request = None):
+    """
+    Возвращает страницу с узлами (резюме) с пагинацией.
+
+    Args:
+        page_number (int): Номер страницы (начинается с 1).
+        request (Request, optional): Объект запроса (не используется).
+
+    Returns:
+        JSONResponse: Список узлов с автором, датой, текстом и ссылкой на фото.
+    """
     nodes = await fetch_all_messages()
     results = []
-    count = 0
+    start = (page_number - 1) * 6
+    end = page_number * 6
 
-    for node in nodes:
-        if (page_number - 1) * 6 <= count < page_number * 6:
-            media_url = None
-            logger.info("node.media_path = " + str(node.media_path))
-            curent_media_path=os.path.join(DATA_PATH,str(node.media_path))
-            if node.media_path and os.path.exists(curent_media_path):
-                filename = os.path.basename(curent_media_path)
-                media_url = f"/media/{filename}"
-                logger.info("media_url = " + media_url)
+    for idx, node in enumerate(nodes[start:end]):
+        media_url = None
+        media_path = node.get('media_path')
+        if media_path:
+            current_media_path = os.path.join(DATA_PATH, str(media_path))
+            if os.path.exists(current_media_path):
+                media_url = f"/media/{os.path.basename(current_media_path)}"
+                logger.info(f"media_url = {media_url}")
 
-            results.append({
-                "author": node.author,
-                "date": node.created_at.isoformat() if node.created_at else None,
-                "text": node.content,
-                "photo": media_url
-            })
-        count += 1
+        results.append({
+            "author": node['author'],
+            "date": node['created_at'].isoformat() if node['created_at'] else None,
+            "text": node['content'],
+            "photo": media_url
+        })
 
-    results.append({"count": count})
+    results.append({"count": len(nodes)})
     return JSONResponse(results)
 
 
 @app.get("/get_relevant_nodes/{query}/{page_number}")
 async def get_relevant_nodes(query: str, page_number: int = 0, request: Request = None):
-    nodes, ht = await full_pipeline(query)
+    """
+    Возвращает релевантные узлы (резюме) по запросу с подсветкой и пагинацией.
+
+    Args:
+        query (str): Текст поискового запроса.
+        page_number (int): Номер страницы (начинается с 1).
+        request (Request, optional): Объект запроса (не используется).
+
+    Returns:
+        JSONResponse: Список релевантных узлов с автором, датой, текстом,
+                      подсветкой и ссылкой на фото.
+    """
+    nodes, highlights = await full_pipeline(query)
     results = []
-    count = 0
-
-    idx = 0
-
     start = (page_number - 1) * 6
     end = page_number * 6
 
-    for node in nodes[start:end]:
+    for idx, node in enumerate(nodes[start:end]):
         media_url = None
-        if node.media_path and os.path.exists(node.media_path):
-            filename = os.path.basename(node.media_path)
-            media_url = f"/media/{filename}" 
+        media_path = node.get('media_path')
+        if media_path:
+            current_media_path = os.path.join(DATA_PATH, str(media_path))
+            if os.path.exists(current_media_path):
+                media_url = f"/media/{os.path.basename(current_media_path)}"
 
         results.append({
-            "author": node.author,
-            "date": node.created_at.isoformat() if node.created_at else None,
-            "text": node.content,
-            "highlight_text": ht[idx] if idx < len(ht) else [],
+            "author": node['author'],
+            "date": node['created_at'].isoformat() if node['created_at'] else None,
+            "text": node['content'],
+            "highlight_text": highlights[start + idx] if start + idx < len(highlights) else [],
             "photo": media_url
         })
-        idx += 1
 
     results.append({"count": len(nodes)})
     return JSONResponse(results)
-    
-    # __old__ version code ...
 
-    # count = 0
-    # for node in nodes:
-    #     if (page_number - 1) * 6 <= count < page_number * 6:
-    #         media_url = None
-    #         if node.media_path and os.path.exists(node.media_path):
-    #             filename = os.path.basename(node.media_path)
-    #             media_url = f"/media/{filename}"  
-
-    #         results.append({
-    #             "author": node.author,
-    #             "date": node.created_at.isoformat() if node.created_at else None,
-    #             "text": node.content,
-    #             "highlight_text": ht[idx] if idx < len(ht) else [],
-    #             "photo": media_url
-    #         })
-    #         idx += 1
-    #     count += 1
-
-    # results.append({"count": count})
-    # return JSONResponse(results)
 
 if __name__ == "__main__":
     uvicorn.run(app, host=SERVER_HOST, port=SERVER_PORT)
