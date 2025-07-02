@@ -135,9 +135,9 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
                     media_url = f"/media/{os.path.basename(current_media_path)}"
 
             results.append({
-                "author": node.author,
-                "date": node.created_at.isoformat() if node.created_at else None,
-                "text": node.content,
+                "author": node['author'],
+                "date": node['created_at'].isoformat() if node['created_at'] else None,
+                "text": node['content'],
                 "highlight_text": highlights[start + idx] if start + idx < len(highlights) else [],
                 "photo": media_url
             })
