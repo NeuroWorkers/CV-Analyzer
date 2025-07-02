@@ -128,7 +128,7 @@ async def semantic_search(user_query: str, messages: List[Any]) -> Tuple[List[di
                 "content": msg.content,
                 "author": msg.author,
                 "created_at": msg.created_at,
-                "media_path": msg['media_path']
+                "media_path": msg.media_path
             })
             highlights.append(current_highlights)
 
