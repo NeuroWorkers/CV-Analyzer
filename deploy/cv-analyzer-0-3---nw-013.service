@@ -1,0 +1,16 @@
+# HOME/.config/systemd/user
+[Unit]
+Description=cv-0-2 user service nw-013
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/srv/deploy10002/cv-analyzer-0/CV-Analyzer-3/
+ExecStart=/bin/bash -c '/srv/deploy10002/cv-analyzer-0/CV-Analyzer-3/bin/app_start_systemd'
+Restart=on-failure
+KillSignal=SIGQUIT
+TimeoutStopSec=90
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target

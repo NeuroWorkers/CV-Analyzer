@@ -20,6 +20,7 @@ fi
 
 echo HTTP_PROXY=$HTTP_PROXY | tee -a app.log
 echo VENV_DIR=$VENV_DIR | tee -a app.log
+echo HTTP_SERVER_PORT=$HTTP_SERVER_PORT | tee -a app.log
 #exit
 
 source ${VENV_DIR}/bin/activate
