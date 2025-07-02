@@ -11,8 +11,19 @@ source configs/proxy.sh
 else
 source configs/proxy.sh.sample
 fi
-#echo $HTTP_PROXY
+
+if [ -f configs/config.sh ]; then
+source configs/config.sh
+else
+source configs/config.sh.sample
+fi
+
+echo HTTP_PROXY=$HTTP_PROXY | tee -a app.log
+echo VENV_DIR=$VENV_DIR | tee -a app.log
+#exit
+
+source ${VENV_DIR}/bin/activate
 
 
-(cd ui/frontend/dist/;python3 -m http.server 18113) 2>&1 | tee -a http_static.log &
+(cd ui/frontend/dist/;python3 -m http.server $HTTP_SERVER_PORT) 2>&1 | tee -a http_static.log &
 python3 ./ui/server/app.py 2>&1 | tee -a app.log
