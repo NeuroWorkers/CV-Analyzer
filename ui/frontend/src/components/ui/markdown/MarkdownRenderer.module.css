@@ -1,0 +1,52 @@
+.link {
+  color: #0ea5e9;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.link:hover {
+  color: #0284c7;
+  text-decoration: underline;
+}
+
+.bold {
+  font-weight: 600;
+  color: inherit;
+}
+
+.paragraph {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.list {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.listItem {
+  margin: 0.25rem 0;
+  line-height: 1.4;
+}
+
+.heading1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem 0;
+  color: inherit;
+}
+
+.heading2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0.25rem 0;
+  color: inherit;
+}
+
+.heading3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0.5rem 0 0.25rem 0;
+  color: inherit;
+}

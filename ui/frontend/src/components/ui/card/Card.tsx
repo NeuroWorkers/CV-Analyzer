@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { Anchor, Button } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
 
 import type { ICardProps } from '../../../core/types/ui-types/cardTypes';
@@ -9,6 +8,8 @@ import type { RootState } from '../../../core/store';
 import { ModalWindow } from '../modal/ModalWindow';
 import { extractFullName, extractUsername } from '../../../core/utils/extractFunctions';
 import { Highlight } from '../hightlight/Hightlight';
+import { HighlightWithMarkdown } from '../hightlight/HighlightWithMarkdown';
+import { MarkdownRenderer } from '../markdown/MarkdownRenderer';
 
 import styles from './Card.module.css';
 
@@ -48,17 +49,16 @@ export const CardComponent = ({ data }: ICardProps) => {
             <hr className={styles.divider} />
             <div className={styles.text}>
               {data.highlightText ? (
-                <p className={styles.markdownParagraph}>
-                  <Highlight 
-                    text={data.text ?? ''} 
+                <div className={styles.markdownParagraph}>
+                  <HighlightWithMarkdown 
+                    text={truncateMarkdown(data.text ?? '', 200)} 
                     highlights={data.highlightText} 
                   />
-
-                </p>
+                </div>
               ) : (
-                <ReactMarkdown>
+                <MarkdownRenderer className={styles.markdownParagraph}>
                   {truncateMarkdown(data.text, 200)}
-                </ReactMarkdown>
+                </MarkdownRenderer>
               )}
             </div>
 

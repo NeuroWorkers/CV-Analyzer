@@ -4,3 +4,5 @@ export {CardComponent} from './card/Card';
 export {Loader} from './loader/Loader';
 export {ModalWindow} from './modal/ModalWindow';
 export {Highlight} from './hightlight/Hightlight';
+export {HighlightWithMarkdown} from './hightlight/HighlightWithMarkdown';
+export {MarkdownRenderer} from './markdown/MarkdownRenderer';
