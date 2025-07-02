@@ -86,8 +86,8 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
 
         for idx, node in enumerate(nodes[start:end]):
             media_url = None
-            media_path = node.media_path
-            if media_path:
+            if node.media_path:
+                media_path = node.media_path
                 current_media_path = os.path.join(DATA_PATH, str(media_path))
                 if os.path.exists(current_media_path):
                     media_url = f"/media/{os.path.basename(current_media_path)}"
@@ -128,8 +128,8 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
 
         for idx, node in enumerate(nodes[start:end]):
             media_url = None
-            media_path = node.media_path
-            if media_path:
+            if node.media_path:
+                media_path = node.media_path
                 current_media_path = os.path.join(DATA_PATH, str(media_path))
                 if os.path.exists(current_media_path):
                     media_url = f"/media/{os.path.basename(current_media_path)}"
