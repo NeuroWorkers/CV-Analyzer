@@ -44,7 +44,7 @@ export const Home = ({
             filter: isLoading ? 'blur(4px)' : 'none',
           }}
         >
-          <CardsGrid />
+          <CardsGrid isLoading={isLoading} />
           <br />
           <Pagination
             total={Math.ceil(totalCount / 6)}
