@@ -31,28 +31,35 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
 
       // Преобразуем markdown в HTML (используем синхронную версию parse)
       const rawHtml = marked.parse(text, { async: false }) as string;
-      
+
       // Очищаем HTML с помощью DOMPurify
       let cleanHtml = DOMPurify.sanitize(rawHtml, {
         ALLOWED_TAGS: [
-          'p', 'br', 'strong', 'em', 'b', 'i', 'u', 's', 
+          'p', 'br', 'strong', 'em', 'b', 'i', 'u', 's',
           'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-          'blockquote', 'code', 'pre', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'mark'
+          'blockquote', 'code', 'pre', 'table', 'thead', 'tbody', 'tr', 'td', 'th',
+          'mark'
         ],
         ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
       }) as string;
 
       // Если есть слова для подсветки, применяем их
       if (normalizedHighlights.length > 0) {
-        // Создаем регулярное выражение для поиска слов
-        const escapedHighlights = normalizedHighlights.map(h => 
+        // Отфильтруем короткие слова (например, < 3 символов)
+        const filtered = normalizedHighlights.filter(w => w.length >= 3);
+
+        // Экранируем слова для RegExp
+        const escapedHighlights = filtered.map(h =>
           h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         );
 
-        // Ищем слова, но не внутри HTML тегов
-        const regex = new RegExp(`\\b(${escapedHighlights.join('|')})\\b`, 'gi');
+        // Собираем RegExp для точного совпадения слов с поддержкой кириллицы
+        // \p{L} — любой символ Unicode из категории "буквы" (включает кириллицу)
+        const regex = new RegExp(
+          `(?<!\\p{L})(${escapedHighlights.join('|')})(?!\\p{L})`,
+          'giu' // u — Unicode mode, i — регистронезависимо
+        );
 
-        // Применяем подсветку только к тексту, не к HTML тегам
         cleanHtml = cleanHtml.replace(regex, (match) => {
           return `<mark class="${styles.highlight}">${match}</mark>`;
         });
