@@ -36,7 +36,8 @@ logger.addHandler(file_handler)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_resources()
+    if SEARCH_MODE == "FAISS":
+        init_resources()
     yield
 
 
