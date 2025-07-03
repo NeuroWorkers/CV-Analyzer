@@ -69,7 +69,7 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
 
   return (
     <div 
-      className={styles.markdownContainer}
+      className={styles.highlight}
       dangerouslySetInnerHTML={{ __html: processedHtml }}
     />
   );
