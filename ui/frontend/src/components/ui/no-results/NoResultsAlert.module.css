@@ -1,0 +1,30 @@
+.noResultsAlert {
+  text-align: center;
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+}
+
+.icon {
+  color: #868e96;
+  margin-bottom: 0.5rem;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 1rem;
+}
+
+.description {
+  color: #868e96;
+  line-height: 1.5;
+}
+
+.suggestion {
+  color: #868e96;
+  line-height: 1.5;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}

@@ -1,7 +1,102 @@
-
 .highlight {
-  background-color: #fff3a8;
-  padding: 0 2px;
-  border-radius: 3px;
+  background-color: #ffff00 !important;
+  padding: 2px 4px !important;
+  border-radius: 3px !important;
+  font-weight: 600 !important;
+  color: #000 !important;
+  display: inline !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 0, 0.5) !important;
+}
+
+.container {
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.link {
+  color: #0ea5e9;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.link:hover {
+  color: #0284c7;
+  text-decoration: underline;
+}
+
+.bold {
   font-weight: 600;
+  color: inherit;
+}
+
+.paragraph {
+  margin: 0.25rem 0;
+  line-height: 1.4;
+}
+
+.list {
+  margin: 0.25rem 0;
+  padding-left: 1.5rem;
+}
+
+.listItem {
+  margin: 0.1rem 0;
+  line-height: 1.3;
+}
+
+.container {
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.container strong {
+  font-weight: 600;
+  color: inherit;
+}
+
+.container a {
+  color: #0ea5e9;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.container a:hover {
+  color: #0284c7;
+  text-decoration: underline;
+}
+
+.link {
+  color: #0ea5e9;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.link:hover {
+  color: #0284c7;
+  text-decoration: underline;
+}
+
+.bold {
+  font-weight: 600;
+  color: inherit;
+}
+
+.paragraph {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.list {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.listItem {
+  margin: 0.25rem 0;
+  line-height: 1.4;
 }

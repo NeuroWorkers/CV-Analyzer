@@ -27,7 +27,6 @@ export const Home = ({
   return (
     <Container style={{ position: 'relative' }}>
       <Stack>
-        
         <Search isLoading={isLoading} clearSignal={clearSignal} handleResetSearch={handleResetSearch}/>
      
         {isLoading && (
@@ -44,7 +43,7 @@ export const Home = ({
             filter: isLoading ? 'blur(4px)' : 'none',
           }}
         >
-          <CardsGrid />
+          <CardsGrid isLoading={isLoading} />
           <br />
           <Pagination
             total={Math.ceil(totalCount / 6)}

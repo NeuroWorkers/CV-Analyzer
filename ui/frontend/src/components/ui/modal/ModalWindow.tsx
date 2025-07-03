@@ -1,19 +1,20 @@
 // @ts-nocheck
 import { Modal } from '@mantine/core';
-import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
 
 import type { IModalProps } from '../../../core/types/ui-types/modalTypes';
 import type { RootState } from '../../../core/store';
 import { extractFullName, extractUsername } from '../../../core/utils/extractFunctions';
 import { Highlight } from '../hightlight/Hightlight';
+import { HighlightWithMarkdown } from '../hightlight/HighlightWithMarkdown';
+import { MarkdownRenderer } from '../markdown/MarkdownRenderer';
 
 import styles from './ModalWindow.module.css';
 
 
 export const ModalWindow = ({ opened, close, data }: IModalProps) => {
   const URL = useSelector((state: RootState) => state.config.url);
-  console.log(data.text)
+  
   return (
     <Modal
       opened={opened}
@@ -55,19 +56,17 @@ export const ModalWindow = ({ opened, close, data }: IModalProps) => {
           </>
         )}
         <div className={styles.text}>
-          {data.highlightText ? (
-            <p className={styles.markdownParagraph}>
-              
-              <Highlight 
-              text={data.text ?? ''} 
-              highlights={data.highlightText} 
-            />
-
-            </p>
+          {data.highlight_text ? (
+            <div className={styles.markdownParagraph}>
+              <HighlightWithMarkdown 
+                text={data.text ?? ''} 
+                highlights={data.highlight_text} 
+              />
+            </div>
           ) : (
-            <ReactMarkdown>
+            <MarkdownRenderer className={styles.markdownParagraph}>
               {data.text}
-            </ReactMarkdown>
+            </MarkdownRenderer>
           )}
         </div>
         {data.date && (

@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { Anchor, Button } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
 
 import type { ICardProps } from '../../../core/types/ui-types/cardTypes';
@@ -9,6 +8,8 @@ import type { RootState } from '../../../core/store';
 import { ModalWindow } from '../modal/ModalWindow';
 import { extractFullName, extractUsername } from '../../../core/utils/extractFunctions';
 import { Highlight } from '../hightlight/Hightlight';
+import { HighlightWithMarkdown } from '../hightlight/HighlightWithMarkdown';
+import { MarkdownRenderer } from '../markdown/MarkdownRenderer';
 
 import styles from './Card.module.css';
 
@@ -16,7 +17,7 @@ import styles from './Card.module.css';
 export const CardComponent = ({ data }: ICardProps) => {
   const [opened, { open, close }] = useDisclosure(false);
   const URL = useSelector((state: RootState) => state.config.url);
-  console.log(data.highlightText);
+  
   const truncateMarkdown = (text: string, maxLength: number): string => {
     if (text.length <= maxLength) return text;
     const truncated = text.slice(0, maxLength);
@@ -47,18 +48,17 @@ export const CardComponent = ({ data }: ICardProps) => {
             </div>
             <hr className={styles.divider} />
             <div className={styles.text}>
-              {data.highlightText ? (
-                <p className={styles.markdownParagraph}>
-                  <Highlight 
-                    text={data.text ?? ''} 
-                    highlights={data.highlightText} 
+              {data.highlight_text ? (
+                <div className={styles.markdownParagraph}>
+                  <HighlightWithMarkdown 
+                    text={truncateMarkdown(data.text ?? '', 200)} 
+                    highlights={data.highlight_text} 
                   />
-
-                </p>
+                </div>
               ) : (
-                <ReactMarkdown>
+                <MarkdownRenderer className={styles.markdownParagraph}>
                   {truncateMarkdown(data.text, 200)}
-                </ReactMarkdown>
+                </MarkdownRenderer>
               )}
             </div>
 

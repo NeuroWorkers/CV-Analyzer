@@ -39,15 +39,19 @@ export const App = () => {
   }
 
   useEffect(() => {
-    if (cards.length === 0 && !status) {
+    // Загружаем карточки только при инициализации (когда нет карточек и не было загрузки)
+    if (cards.length === 0 && !status && !searchQuery) {
       setStatus(true)
       loadCards(page, searchQuery)
     }
-  }, [cards.length, status])
+  }, [cards.length, status, searchQuery])
 
   useEffect(() => {
-    setPage(1)
-    loadCards(1, searchQuery)
+    // Загружаем карточки только при изменении поискового запроса (не при инициализации)
+    if (searchQuery) {
+      setPage(1)
+      loadCards(1, searchQuery)
+    }
   }, [searchQuery])
 
   return <Home 
