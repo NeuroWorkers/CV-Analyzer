@@ -215,12 +215,7 @@ async def full_pipeline(user_query: str) -> Tuple[List[Dict[str, Any]], List[Lis
     print(f"[INFO] Отфильтровано: {len(filtered)}")
     print(f"[INFO] Подсветка завершена")
 
-    re_highlighted = [
-        [word for word in re.findall(r'\w+', row[0]) if len(word) >= 3]
-        for row in highlighted
-    ]
-
-    return filtered, re_highlighted
+    return filtered, highlighted
 
 
 def test() -> None:
