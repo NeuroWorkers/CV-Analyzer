@@ -122,6 +122,8 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
     """
     try:
         nodes, highlights = await full_pipeline(query)
+        parsed_hl = [word for sublist in highlights for phrase in sublist for word in phrase.split()]
+
         results = []
         start = (page_number - 1) * 6
         end = page_number * 6
@@ -138,11 +140,11 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
                 "author": node['author'],
                 "date": node['created_at'].isoformat() if node['created_at'] else None,
                 "text": node['content'],
-                "highlight_text": highlights[start + idx] if start + idx < len(highlights) else [],
                 "photo": media_url
             })
 
         results.append({"count": len(nodes)})
+        results.append({"highlight_text": parsed_hl})
         return JSONResponse(results)
     except Exception as e:
         logging.error("Произошла ошибка:\n%s", traceback.format_exc())

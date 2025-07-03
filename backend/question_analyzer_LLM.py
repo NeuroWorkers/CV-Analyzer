@@ -51,11 +51,12 @@ async def semantic_search(user_query: str, messages: List[Any]) -> Tuple[List[di
             List[List[str]]          # Списки подсвеченных ключевых слов для каждого релевантного резюме
         ]
     """
+
     system_prompt = (
         "Ты ИИ-помощник, который помогает искать релевантные резюме. "
-        "На входе у тебя есть пользовательский запрос и список резюме с их индексами. "
-        "Если резюме подходит, верни JSON-массив объектов вида:\n"
-        "[{'index': 0, 'match': true, 'highlights': ['ключ1', 'ключ2']}, ...]\n"
+        "На входе у тебя есть пользовательский запрос и список резюме, каждый из которых представлен в формате "
+        "'telegram_id: текст'. Если резюме подходит, верни JSON-массив объектов вида:\n"
+        "[{'telegram_id': 123456789, 'match': true, 'highlights': ['ключ1', 'ключ2']}, ...]\n"
         "Если не подходит — {'match': false, 'highlights': []}.\n"
         "Выделяй только осмысленные совпадения — по смыслу и форме (синонимы, склонения и т.д.)."
     )
@@ -66,7 +67,7 @@ async def semantic_search(user_query: str, messages: List[Any]) -> Tuple[List[di
     }
 
     user_content = f"Запрос: {user_query}\nРезюме:\n" + "".join(
-        f"{i}: {msg.content}\n" for i, msg in enumerate(messages)
+        f"{msg.telegram_id}: {msg.content}\n" for msg in messages
     )
 
     payload = {
@@ -98,16 +99,19 @@ async def semantic_search(user_query: str, messages: List[Any]) -> Tuple[List[di
             parsed_list = []
             print(e)
 
+    msg_by_tid = {msg.telegram_id: msg for msg in messages}
+
     relevant = []
     highlights = []
-    
-    for res in sorted(parsed_list, key=lambda x: x.get("index", -1)):
-        idx = res.get("index")
-        if idx is None or idx >= len(messages):
+
+    for res in parsed_list:
+        tid = res.get("telegram_id")
+        if tid is None or tid not in msg_by_tid:
             continue
+
         if res.get("match"):
             current_highlights = [w for w in res.get("highlights", []) if len(w) >= 3]
-            msg = messages[idx]
+            msg = msg_by_tid[tid]
             relevant.append({
                 "telegram_id": msg.telegram_id,
                 "content": msg.content,

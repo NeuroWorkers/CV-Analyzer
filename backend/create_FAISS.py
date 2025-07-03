@@ -5,10 +5,10 @@ import numpy as np
 from typing import List, Dict, Tuple
 from sentence_transformers import SentenceTransformer
 
-from configs.ai_config import MODEL_NAME
+from configs.ai_config import faiss_model
 from configs.project_paths import relevant_text_path, faiss_index_path, faiss_metadata_path
 
-model = SentenceTransformer(MODEL_NAME)
+model = SentenceTransformer(faiss_model)
 
 
 def extract_texts_and_metadata(json_data: dict) -> Tuple[List[str], List[Dict]]:
