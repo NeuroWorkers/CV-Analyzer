@@ -128,7 +128,9 @@
 .footer {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: stretch;
+  margin-top: auto;
+  padding-top: 1rem;
 }
 
 .date {
