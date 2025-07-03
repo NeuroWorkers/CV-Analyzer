@@ -4,7 +4,10 @@ import asyncio
 import edgedb
 from typing import List, Any, Tuple, Dict
 
+import faiss
 import httpx
+import torch
+from sentence_transformers import SentenceTransformer
 
 from configs.project_paths import faiss_index_path, faiss_metadata_path
 from configs.ai_config import faiss_model, openai_model
@@ -39,7 +42,7 @@ async def fetch_all_messages() -> List[dict[str, Any]]:
     """)
 
 
-async def init_resources():
+def init_resources():
     """
     Инициализирует глобальные ресурсы: модель SentenceTransformer,
     индекс FAISS и метаданные.
@@ -51,17 +54,13 @@ async def init_resources():
         None
     """
     global model, index, metadata
-    if model is None or index is None or metadata is None:
-        import torch
-        from sentence_transformers import SentenceTransformer
-        import faiss
 
-        device = "mps" if torch.backends.mps.is_available() else "cpu"
-        model = SentenceTransformer(faiss_model, device=device)
+    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    model = SentenceTransformer(faiss_model, device=device)
 
-        index = faiss.read_index(faiss_index_path)
-        with open(faiss_metadata_path, "r", encoding="utf-8") as f:
-            metadata = json.load(f)
+    index = faiss.read_index(faiss_index_path)
+    with open(faiss_metadata_path, "r", encoding="utf-8") as f:
+        metadata = json.load(f)
 
 
 async def analyze_user_query(user_query: str) -> str:
@@ -97,8 +96,6 @@ async def vector_search(optimized_query: str, k: int = 20) -> List[Dict[str, Any
     Returns:
         List[Dict[str, Any]]: Список метаданных наиболее релевантных резюме.
     """
-    await init_resources()
-
     query_vec = model.encode([optimized_query], convert_to_numpy=True).astype("float32")
     distances, indices = index.search(query_vec, k)
     return [metadata[idx] for idx in indices[0] if 0 <= idx < len(metadata)]

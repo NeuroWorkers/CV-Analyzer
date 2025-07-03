@@ -4,9 +4,12 @@ import backend
 import traceback
 from fastapi import FastAPI
 from starlette.requests import Request
+from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+
+from backend.question_analyzer_FAISS import init_resources
 
 from configs.project_paths import *
 from configs.server_config import SERVER_PORT, SERVER_HOST, SEARCH_MODE
@@ -30,7 +33,14 @@ file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
 logger.addHandler(file_handler)
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_resources()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
