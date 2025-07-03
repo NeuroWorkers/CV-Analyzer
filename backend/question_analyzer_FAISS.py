@@ -149,8 +149,8 @@ async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -
             continue
         if item.get("релевантно", "").lower().startswith("да"):
             phrases = [w for w in item.get("подсветка", []) if len(w) >= 3]
-            highlights.append([" ".join(phrases)])
             filtered.append(result_by_tid[tid])
+            highlights.append(phrases)
 
     return filtered, highlights
 
@@ -215,7 +215,12 @@ async def full_pipeline(user_query: str) -> Tuple[List[Dict[str, Any]], List[Lis
     print(f"[INFO] Отфильтровано: {len(filtered)}")
     print(f"[INFO] Подсветка завершена")
 
-    return filtered, highlighted
+    re_highlighted = [
+        [word for word in re.findall(r'\w+', row[0]) if len(word) >= 3]
+        for row in highlighted
+    ]
+
+    return filtered, re_highlighted
 
 
 def test() -> None:
