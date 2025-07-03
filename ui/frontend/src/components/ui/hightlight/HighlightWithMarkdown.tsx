@@ -10,13 +10,15 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
     if (!text) return '';
     
     // Нормализуем highlights в массив слов
-    const normalizedHighlights = !highlights 
-      ? [] 
-      : typeof highlights === 'string' 
-        ? highlights.split(/\s+/).filter(word => word.length > 0) // Разбиваем строку на слова
-        : Array.isArray(highlights) 
-          ? highlights.flatMap(h => h.split(/\s+/).filter(word => word.length > 0)) // Разбиваем каждую строку на слова
-          : [];
+    const normalizedHighlights = Array.isArray(highlights)
+  ? highlights.flatMap(h =>
+      typeof h === 'string'
+        ? h.split(/\s+/).filter(word => word.length > 0)
+        : []
+    )
+  : typeof highlights === 'string'
+    ? highlights.split(/\s+/).filter(word => word.length > 0)
+    : [];
 
     try {
       // Настраиваем marked для правильного рендеринга
