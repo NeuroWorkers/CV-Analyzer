@@ -42,20 +42,15 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
         ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
       }) as string;
 
-      // Если есть слова для подсветки, применяем их
       if (normalizedHighlights.length > 0) {
-        // Создаем регулярное выражение для поиска слов
         const escapedHighlights = normalizedHighlights.map(h => 
           h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         );
-        
-        // Ищем слова, но не внутри HTML тегов
-        const regex = new RegExp(
-  `(^|\\s|[^\\wА-Яа-яёЁ])(${escapedHighlights.join('|')})(?=[^\\wА-Яа-яёЁ]|\\s|$)`,
+
+     const regex = new RegExp(
+  `(?<![\\wА-Яа-яёЁ])(${escapedHighlights.join('|')})(?![\\wА-Яа-яёЁ])`,
   'gi'
 );
-        
-        // Применяем подсветку только к тексту, не к HTML тегам
         // @ts-ignore
         cleanHtml = cleanHtml.replace(regex, (match, prefix, word) =>
   `${prefix}<mark class="${styles.highlight}">${word}</mark>`
