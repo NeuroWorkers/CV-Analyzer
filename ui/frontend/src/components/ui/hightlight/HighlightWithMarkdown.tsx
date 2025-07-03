@@ -37,7 +37,7 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
         ALLOWED_TAGS: [
           'p', 'br', 'strong', 'em', 'b', 'i', 'u', 's', 
           'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-          'blockquote', 'code', 'pre', 'table', 'thead', 'tbody', 'tr', 'td', 'th'
+          'blockquote', 'code', 'pre', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'mark'
         ],
         ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
       }) as string;
@@ -50,12 +50,15 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
         );
         
         // Ищем слова, но не внутри HTML тегов
-        const regex = new RegExp(`\\b(${escapedHighlights.join('|')})\\b`, 'gi');
+        const regex = new RegExp(
+  `(^|\\s|[^\\wА-Яа-яёЁ])(${escapedHighlights.join('|')})(?=[^\\wА-Яа-яёЁ]|\\s|$)`,
+  'gi'
+);
         
         // Применяем подсветку только к тексту, не к HTML тегам
-        cleanHtml = cleanHtml.replace(regex, (match) => {
-          return `<mark class="${styles.highlight}">${match}</mark>`;
-        });
+        cleanHtml = cleanHtml.replace(regex, (match, prefix, word) =>
+  `${prefix}<mark class="${styles.highlight}">${word}</mark>`
+);
       }
 
       return cleanHtml;
@@ -69,7 +72,7 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
 
   return (
     <div 
-      className={styles.highlight}
+      className={styles.markdownContainer}
       dangerouslySetInnerHTML={{ __html: processedHtml }}
     />
   );
