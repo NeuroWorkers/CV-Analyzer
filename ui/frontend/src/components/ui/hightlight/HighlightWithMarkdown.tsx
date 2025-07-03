@@ -52,8 +52,8 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
   'gi'
 );
         // @ts-ignore
-        cleanHtml = cleanHtml.replace(regex, (match, prefix, word) =>
-  `${prefix}<mark class="${styles.highlight}">${word}</mark>`
+        cleanHtml = cleanHtml.replace(regex, (match) =>
+  `<mark class="${styles.highlight}">${match}</mark>`
 );
       }
 
