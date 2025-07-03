@@ -138,6 +138,10 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
         start = (page_number - 1) * 6
         end = page_number * 6
 
+        logger.info("\n\n\n HIGHLIGHTS (МАССИВ): \n\n\n")
+        logger.info(highlights)
+        logger.info("\n\n\n HIGHLIGHTS (МАССИВ): \n\n\n")
+
         for idx, node in enumerate(nodes[start:end]):
             media_url = None
             if node['media_path']:
@@ -153,6 +157,9 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
                 "highlight_text": highlights[start + idx] if start + idx < len(highlights) else [],
                 "photo": media_url
             })
+            logger.info("\n\n\n HIGHLIGHTS (ИНДЕКС): \n\n\n")
+            logger.info(highlights[start + idx])
+            logger.info("\n\n\n HIGHLIGHTS (ИНДЕКС): \n\n\n")
 
         results.append({"count": len(nodes)})
 
