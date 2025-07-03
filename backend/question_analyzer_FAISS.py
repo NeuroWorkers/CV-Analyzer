@@ -104,8 +104,7 @@ async def vector_search(optimized_query: str, k: int = 20) -> List[Dict[str, Any
     return [metadata[idx] for idx in indices[0] if 0 <= idx < len(metadata)]
 
 
-async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -> Tuple[
-    List[Dict[str, Any]], List[List[str]]]:
+async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], List[List[str]]]:
     """
     Фильтрует результаты поиска, используя OpenRouter для подтверждения релевантности,
     а также выделяет ключевые слова, подтверждающие релевантность.
