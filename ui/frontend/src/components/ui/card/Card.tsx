@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Anchor, Button } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useSelector } from 'react-redux';
@@ -7,7 +6,6 @@ import type { ICardProps } from '../../../core/types/ui-types/cardTypes';
 import type { RootState } from '../../../core/store';
 import { ModalWindow } from '../modal/ModalWindow';
 import { extractFullName, extractUsername } from '../../../core/utils/extractFunctions';
-import { Highlight } from '../hightlight/Hightlight';
 import { HighlightWithMarkdown } from '../hightlight/HighlightWithMarkdown';
 import { MarkdownRenderer } from '../markdown/MarkdownRenderer';
 
