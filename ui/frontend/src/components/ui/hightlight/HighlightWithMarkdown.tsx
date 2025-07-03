@@ -9,30 +9,33 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
   const processedHtml = useMemo(() => {
     if (!text) return '';
 
-    // Нормализуем highlights в массив слов
-    const normalizedHighlights = !highlights
-      ? []
-      : typeof highlights === 'string'
-        ? highlights.split(/\s+/).filter(word => word.length > 0)
-        : Array.isArray(highlights)
-          ? highlights.flatMap(h => h.split(/\s+/).filter(word => word.length > 0)) // Разбиваем каждую строку на слова
-          : [];
+    const normalizeHighlights = (input: string | string[] | undefined): string[] => {
+      if (!input) return [];
+
+      const rawList = typeof input === 'string' ? [input] : Array.isArray(input) ? input : [];
+
+      return rawList
+        .flatMap(item =>
+          item
+            .split(/[\s,;|]+/)       
+            .map(word => word.trim())
+            .filter(word => word.length >= 3)
+        );
+    };
+
+    const normalizedHighlights = normalizeHighlights(highlights);
 
     console.log("Исходный input: " + JSON.stringify(highlights));
-    console.log("Тип highlights: " + typeof highlights);
     console.log("Итог normalizedHighlights: " + JSON.stringify(normalizedHighlights));
 
     try {
-      // Настраиваем marked для правильного рендеринга
       marked.setOptions({
-        breaks: true, // Преобразуем переносы строк в <br>
-        gfm: true,    // Поддержка GitHub Flavored Markdown
+        breaks: true,
+        gfm: true,
       });
 
-      // Преобразуем markdown в HTML (используем синхронную версию parse)
       const rawHtml = marked.parse(text, { async: false }) as string;
 
-      // Очищаем HTML с помощью DOMPurify
       let cleanHtml = DOMPurify.sanitize(rawHtml, {
         ALLOWED_TAGS: [
           'p', 'br', 'strong', 'em', 'b', 'i', 'u', 's',
@@ -43,21 +46,14 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
         ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
       }) as string;
 
-      // Если есть слова для подсветки, применяем их
       if (normalizedHighlights.length > 0) {
-        // Отфильтруем короткие слова (например, < 3 символов)
-        const filtered = normalizedHighlights.filter(w => w.length >= 3);
-
-        // Экранируем слова для RegExp
-        const escapedHighlights = filtered.map(h =>
+        const escapedHighlights = normalizedHighlights.map(h =>
           h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         );
 
-        // Собираем RegExp для точного совпадения слов с поддержкой кириллицы
-        // \p{L} — любой символ Unicode из категории "буквы" (включает кириллицу)
         const regex = new RegExp(
           `(?<!\\p{L})(${escapedHighlights.join('|')})(?!\\p{L})`,
-          'giu' // u — Unicode mode, i — регистронезависимо
+          'giu'
         );
 
         cleanHtml = cleanHtml.replace(regex, (match) => {
@@ -68,14 +64,14 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
       return cleanHtml;
     } catch (error) {
       console.error('Error processing markdown with highlights:', error);
-      return text; // Возвращаем исходный текст в случае ошибки
+      return text;
     }
   }, [text, highlights]);
 
   if (!processedHtml) return null;
 
   return (
-    <div 
+    <div
       className={styles.markdownContainer}
       dangerouslySetInnerHTML={{ __html: processedHtml }}
     />
