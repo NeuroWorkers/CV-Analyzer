@@ -13,7 +13,6 @@ model = None
 index = None
 metadata = None
 
-
 client = edgedb.create_async_client("database")
 
 
@@ -111,29 +110,19 @@ async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -
     Фильтрует результаты поиска, используя OpenRouter для подтверждения релевантности,
     а также выделяет ключевые слова, подтверждающие релевантность.
 
-    Args:
-        user_query (str): Исходный запрос пользователя.
-        results (List[Dict[str, Any]]): Список резюме с метаданными.
-
-    Returns:
-        Tuple[List[Dict[str, Any]], List[List[str]]]:
-            - Список отфильтрованных релевантных резюме.
-            - Список списков ключевых слов/фраз для каждого релевантного резюме.
+    Теперь модель возвращает telegram_id вместо index.
     """
     system_prompt = (
         "Ты ИИ-ассистент по отбору резюме.\n"
-        "На входе — запрос пользователя и список резюме с их индексами.\n"
-        "Для каждого резюме верни JSON объект с ключами:\n"
-        "'index' — индекс резюме,\n"
-        "'релевантно' — 'Да' или 'Нет',\n"
-        "'подсветка' — список ключевых слов или фраз длиной 3+ символа, подтверждающих релевантность.\n"
-        "Верни JSON-массив таких объектов.\n"
-        "Пример:\n"
-        "[{'index': 0, 'релевантно': 'Да', 'подсветка': ['машинное обучение', 'python']}, ...]"
+        "На входе — запрос пользователя и список резюме, каждый из которых имеет telegram_id.\n"
+        "Для каждого релевантного резюме верни JSON-объект:\n"
+        "{'telegram_id': 123456789, 'релевантно': 'Да', 'подсветка': ['ключ1', 'ключ2']}.\n"
+        "Если не релевантно — не включай в ответ.\n"
+        "Верни JSON-массив таких объектов."
     )
 
     user_content = f"Запрос: {user_query}\nРезюме:\n" + "".join(
-        f"{i}: {r['content']}\n" for i, r in enumerate(results)
+        f"{r['telegram_id']}: {r['content']}\n" for r in results
     )
 
     payload_messages = [
@@ -153,16 +142,18 @@ async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -
             print(f"Error parsing response: {e}")
             parsed_list = []
 
+    result_by_tid = {r["telegram_id"]: r for r in results}
+
     filtered = []
     highlights = []
 
-    for item in sorted(parsed_list, key=lambda x: x.get("index", -1)):
-        idx = item.get("index")
-        if idx is None or idx >= len(results):
+    for item in parsed_list:
+        tid = item.get("telegram_id")
+        if tid is None or tid not in result_by_tid:
             continue
         if item.get("релевантно", "").lower().startswith("да"):
             phrases = [w for w in item.get("подсветка", []) if len(w) >= 3]
-            filtered.append(results[idx])
+            filtered.append(result_by_tid[tid])
             highlights.append(phrases)
 
     return filtered, highlights
