@@ -9,33 +9,18 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
   const processedHtml = useMemo(() => {
     if (!text) return '';
 
-const normalizedHighlights = !highlights
-  ? []
-  : typeof highlights === 'string'
-    ? highlights.split(/\s+/).filter(word => word.length > 0)
-    : Array.isArray(highlights)
-      ? highlights.flatMap(h => h.split(/\s+/).filter(word => word.length > 0))
-      : [];
+    // Нормализуем highlights в массив слов
+    const normalizedHighlights = !highlights
+      ? []
+      : typeof highlights === 'string'
+        ? highlights.split(/\s+/).filter(word => word.length > 0)
+        : Array.isArray(highlights)
+          ? highlights.flatMap(h => h.split(/\s+/).filter(word => word.length > 0)) // Разбиваем каждую строку на слова
+          : [];
 
-// Показываем шаги
-alert("Исходный input: " + JSON.stringify(highlights));
-alert("Тип highlights: " + typeof highlights);
-
-if (!highlights) {
-  alert("highlights отсутствует ⇒ возвращается []");
-} else if (typeof highlights === 'string') {
-  alert("highlights — строка\nРазбиваем по пробелам и фильтруем пустые: " + JSON.stringify(
-    highlights.split(/\s+/).filter(word => word.length > 0)
-  ));
-} else if (Array.isArray(highlights)) {
-  alert("highlights — массив строк\nДля каждой строки: split и filter\nРезультат: " + JSON.stringify(
-    highlights.flatMap(h => h.split(/\s+/).filter(word => word.length > 0))
-  ));
-} else {
-  alert("highlights — неизвестного типа ⇒ возвращается []");
-}
-
-alert("Итог normalizedHighlights: " + JSON.stringify(normalizedHighlights));
+    console.log("Исходный input: " + JSON.stringify(highlights));
+    console.log("Тип highlights: " + typeof highlights);
+    console.log("Итог normalizedHighlights: " + JSON.stringify(normalizedHighlights));
 
     try {
       // Настраиваем marked для правильного рендеринга
