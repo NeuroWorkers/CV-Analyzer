@@ -9,7 +9,7 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
   const processedHtml = useMemo(() => {
     if (!text) return '';
 
-    const normalizeHighlights = (input: string | string[] | undefined): string[] => {
+    const normalizeHighlights = (input: string | string[] | null | undefined): string[] => {
       if (!input) return [];
 
       const rawList = typeof input === 'string' ? [input] : Array.isArray(input) ? input : [];
@@ -17,7 +17,7 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
       return rawList
         .flatMap(item =>
           item
-            .split(/[\s,;|]+/)       
+            .split(/[\s,;|]+/)
             .map(word => word.trim())
             .filter(word => word.length >= 3)
         );
