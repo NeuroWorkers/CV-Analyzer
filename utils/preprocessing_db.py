@@ -1,6 +1,8 @@
 import os
 import json
 import shutil
+import traceback
+
 from configs.project_paths import relevant_text_path, relevant_media_path, tg_dump_media_path
 
 
@@ -26,41 +28,39 @@ def copy_media_from_json(
         Создает папку назначения, если её нет.
         Копирует файлы, выводит в консоль информацию о процессе копирования и ошибках.
     """
-    os.makedirs(destination_folder, exist_ok=True)
+    try:
+        os.makedirs(destination_folder, exist_ok=True)
 
-    with open(json_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
 
-    copied_count = 0
-    skipped_count = 0
+        media_filenames = set()
 
-    # Итерация по всем темам и сообщениям, чтобы проверить наличие медиа
-    for topic_id, entries in data.items():
-        for entry in entries:
-            media = entry.get("downloaded_media")
-            if not media:
-                continue
+        for entries in data.values():
+            for entry in entries:
+                media = entry.get("downloaded_media")
+                if media and media.get("path"):
+                    filename = os.path.basename(media["path"])
+                    media_filenames.add(filename)
 
-            media_path = media.get("path")
-            if not media_path:
-                print(f"Пропущено: путь к медиа отсутствует (media = {media})")
-                skipped_count += 1
-                continue
+        copied_count = 0
+        skipped_count = 0
 
-    # Копирование всех файлов из tg_dump_media_path в папку назначения
-    for filename in os.listdir(tg_dump_media_path):
-        tg_dump_media_file_path = os.path.join(tg_dump_media_path, filename)
-
-        if os.path.isfile(tg_dump_media_file_path):
+        for filename in media_filenames:
+            src_path = os.path.join(tg_dump_media_path, filename)
             dst_path = os.path.join(destination_folder, filename)
-            try:
-                shutil.copy2(tg_dump_media_file_path, dst_path)
-                copied_count += 1
-                print(f"Скопирован: {tg_dump_media_file_path} → {dst_path}")
-            except Exception as e:
-                print(f"[ERROR] Ошибка при копировании {tg_dump_media_file_path}: {e}")
-        else:
-            print(f"Пропущено (не файл): {tg_dump_media_file_path}")
-            skipped_count += 1
 
-    print(f"Копирование завершено. Скопировано: {copied_count}, пропущено: {skipped_count}")
+            if os.path.exists(src_path):
+                try:
+                    shutil.copy2(src_path, dst_path)
+                    copied_count += 1
+                    print(f"Скопирован: {src_path} → {dst_path}")
+                except Exception as e:
+                    print(f"[ERROR] Ошибка при копировании {src_path}: {e}")
+            else:
+                print(f"[WARNING] Файл не найден в tg_dump: {src_path}")
+                skipped_count += 1
+
+        print(f"Копирование завершено. Скопировано: {copied_count}, пропущено: {skipped_count}")
+    except:
+        print(traceback.format_exc())

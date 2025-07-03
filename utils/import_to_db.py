@@ -4,6 +4,11 @@ import json
 import edgedb
 from datetime import datetime
 from configs.project_paths import relevant_text_path
+from backend.create_FAISS import build_or_update_index
+
+
+def update_FAISS():
+    build_or_update_index()
 
 
 def make_aware(dt_str: str | None) -> datetime | None:

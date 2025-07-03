@@ -9,6 +9,6 @@ source configs/proxy.sh.sample
 fi
 
 #python3 bin/parse_cv.py
-python3 -c 'from backend.create_FAISS import build_or_update_index
-build_or_update_index()
+python3 -c 'from utils.import_to_db import update_FAISS
+update_FAISS()
 '
