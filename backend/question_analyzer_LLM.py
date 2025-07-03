@@ -3,7 +3,7 @@ import json
 import logging
 import re
 from typing import Any, List, Tuple
-
+from ui.server.app import logger
 import httpx
 import edgedb
 
@@ -100,16 +100,16 @@ async def semantic_search(user_query: str, messages: List[Any]) -> Tuple[List[di
 
     relevant = []
     highlights = []
-    logging.info("\n\n\nPARSED_LIST: ", parsed_list)
+    logger.info("\n\n\nPARSED_LIST: ", parsed_list)
     for res in sorted(parsed_list, key=lambda x: x.get("index", -1)):
-        logging.info("\n\n\nRES: ", res)
+        logger.info("\n\n\nRES: ", res)
         idx = res.get("index")
         if idx is None or idx >= len(messages):
             continue
         if res.get("match"):
             current_highlights = [w for w in res.get("highlights", []) if len(w) >= 3]
             msg = messages[idx]
-            logging.info("\n\n\nidx: ", idx)
+            logger.info("\n\n\nidx: ", idx)
             relevant.append({
                 "telegram_id": msg.telegram_id,
                 "content": msg.content,
