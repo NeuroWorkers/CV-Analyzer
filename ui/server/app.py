@@ -154,11 +154,11 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
                 "author": node['author'],
                 "date": node['created_at'].isoformat() if node['created_at'] else None,
                 "text": node['content'],
-                "highlight_text": highlights[start + idx] if start + idx < len(highlights) else [],
+                "highlight_text": highlights,
                 "photo": media_url
             })
             logger.info("\n\n\n HIGHLIGHTS (ИНДЕКС): \n\n\n")
-            logger.info(highlights[start + idx])
+            logger.info(highlights)
             logger.info("\n\n\n HIGHLIGHTS (ИНДЕКС): \n\n\n")
 
         results.append({"count": len(nodes)})

@@ -8,7 +8,7 @@ import styles from './Highlight.module.css';
 export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps) => {
   const processedHtml = useMemo(() => {
     if (!text) return '';
-    
+
 const normalizedHighlights = !highlights
   ? []
   : typeof highlights === 'string'
