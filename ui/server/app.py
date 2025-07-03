@@ -145,6 +145,8 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
 
         results.append({"count": len(nodes)})
         results.append({"highlight_text": parsed_hl})
+        logger.info("\n\n\n\n\nCARD: ", results)
+        logger.info("\n\n\n\n")
         return JSONResponse(results)
     except Exception as e:
         logging.error("Произошла ошибка:\n%s", traceback.format_exc())
