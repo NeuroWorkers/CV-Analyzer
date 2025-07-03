@@ -56,6 +56,7 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
 );
         
         // Применяем подсветку только к тексту, не к HTML тегам
+        // @ts-ignore
         cleanHtml = cleanHtml.replace(regex, (match, prefix, word) =>
   `${prefix}<mark class="${styles.highlight}">${word}</mark>`
 );
