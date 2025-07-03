@@ -17,13 +17,6 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
         ? highlights.flatMap(h => h.split(/\s+/).filter(word => word.length > 0)) // Разбиваем каждую строку на слова
         : [];
   
-  // Отладочная информация
-  console.log('HighlightWithMarkdown Debug:', {
-    originalHighlights: highlights,
-    normalizedHighlights,
-    text: text?.substring(0, 100) + '...'
-  });
-  
   if (normalizedHighlights.length === 0) {
     // Если нет подсветки, показываем как markdown
     return (
