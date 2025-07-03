@@ -14,7 +14,7 @@ import styles from './ModalWindow.module.css';
 
 export const ModalWindow = ({ opened, close, data }: IModalProps) => {
   const URL = useSelector((state: RootState) => state.config.url);
-  console.log(data.text)
+  
   return (
     <Modal
       opened={opened}
@@ -56,11 +56,11 @@ export const ModalWindow = ({ opened, close, data }: IModalProps) => {
           </>
         )}
         <div className={styles.text}>
-          {data.highlightText ? (
+          {data.highlight_text ? (
             <div className={styles.markdownParagraph}>
               <HighlightWithMarkdown 
                 text={data.text ?? ''} 
-                highlights={data.highlightText} 
+                highlights={data.highlight_text} 
               />
             </div>
           ) : (

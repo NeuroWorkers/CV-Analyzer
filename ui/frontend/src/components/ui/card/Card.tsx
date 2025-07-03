@@ -17,7 +17,7 @@ import styles from './Card.module.css';
 export const CardComponent = ({ data }: ICardProps) => {
   const [opened, { open, close }] = useDisclosure(false);
   const URL = useSelector((state: RootState) => state.config.url);
-  console.log(data.highlightText);
+  
   const truncateMarkdown = (text: string, maxLength: number): string => {
     if (text.length <= maxLength) return text;
     const truncated = text.slice(0, maxLength);
@@ -48,11 +48,11 @@ export const CardComponent = ({ data }: ICardProps) => {
             </div>
             <hr className={styles.divider} />
             <div className={styles.text}>
-              {data.highlightText ? (
+              {data.highlight_text ? (
                 <div className={styles.markdownParagraph}>
                   <HighlightWithMarkdown 
                     text={truncateMarkdown(data.text ?? '', 200)} 
-                    highlights={data.highlightText} 
+                    highlights={data.highlight_text} 
                   />
                 </div>
               ) : (

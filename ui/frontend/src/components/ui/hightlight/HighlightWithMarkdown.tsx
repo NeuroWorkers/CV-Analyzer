@@ -8,7 +8,23 @@ import styles from './Highlight.module.css';
 export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps) => {
   if (!text) return null;
   
-  if (!Array.isArray(highlights) || highlights.length === 0) {
+  // Нормализуем highlights в массив слов
+  const normalizedHighlights = !highlights 
+    ? [] 
+    : typeof highlights === 'string' 
+      ? highlights.split(/\s+/).filter(word => word.length > 0) // Разбиваем строку на слова
+      : Array.isArray(highlights) 
+        ? highlights.flatMap(h => h.split(/\s+/).filter(word => word.length > 0)) // Разбиваем каждую строку на слова
+        : [];
+  
+  // Отладочная информация
+  console.log('HighlightWithMarkdown Debug:', {
+    originalHighlights: highlights,
+    normalizedHighlights,
+    text: text?.substring(0, 100) + '...'
+  });
+  
+  if (normalizedHighlights.length === 0) {
     // Если нет подсветки, показываем как markdown
     return (
       <ReactMarkdown
@@ -44,12 +60,13 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
 
   // Если есть подсветка, используем простую текстовую подсветку с базовой markdown поддержкой
   const highlightText = (content: string) => {
-    const escapedHighlights = highlights.map(h => h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const escapedHighlights = normalizedHighlights.map(h => h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    // Для кириллицы используем более простой подход без \b
     const regex = new RegExp(`(${escapedHighlights.join('|')})`, 'gi');
     const parts = content.split(regex);
     
     return parts.map((part, i) =>
-      highlights.some(h => h.toLowerCase() === part.toLowerCase()) ? (
+      normalizedHighlights.some(h => h.toLowerCase() === part.toLowerCase()) ? (
         <mark key={i} className={styles.highlight}>{part}</mark>
       ) : (
         <span key={i}>{part}</span>

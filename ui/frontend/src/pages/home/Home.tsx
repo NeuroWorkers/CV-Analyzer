@@ -27,7 +27,6 @@ export const Home = ({
   return (
     <Container style={{ position: 'relative' }}>
       <Stack>
-        
         <Search isLoading={isLoading} clearSignal={clearSignal} handleResetSearch={handleResetSearch}/>
      
         {isLoading && (
