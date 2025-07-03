@@ -1,21 +1,32 @@
-// @ts-nocheck
-let globalConfig: {
-  port: number;
-  backendCheckToPath: string;
+interface ConfigType {
+  basenameFrontend: string;
+  domain: string;
+  port: string;
+  apiPath: string;
   defaultList: string[];
-} | null;
+  backendCheckToPath: string;
+}
+
+let globalConfig: ConfigType | null = null;
 
 try {
-    ({ globalConfig } = await import("../config/config"));
+    const configModule = await import("../config/config") as { globalConfig: ConfigType };
+    globalConfig = configModule.globalConfig;
     console.log('Импорт globalConfig прошел успешно:', globalConfig);
 } catch (error) {
     console.error('Ошибка импорта globalConfig:', error);
     globalConfig = null; 
 }
 
-export async function init() {
+export async function init(): Promise<string | null> {
     console.log('начало работы init')
     const protocol = window.location.protocol.replace(':', '');
+    
+    if (!globalConfig) {
+        console.error('globalConfig не загружен');
+        return null;
+    }
+    
     if (!globalConfig.port) {
         console.log('порт не задан');
     }
@@ -39,7 +50,7 @@ export async function init() {
     return null;
 }
 
-async function checkConnection(url) {
+async function checkConnection(url: string): Promise<string | null> {
     try {
         const response = await fetch(url, {
             method: 'GET',

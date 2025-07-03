@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { fetchCards } from './core/api/api';
@@ -18,7 +18,7 @@ export const App = () => {
   const totalCount = useSelector((state: RootState) => state.cards.totalCount);
   const searchQuery = useSelector((state: RootState) => state.cards.searchQuery);
 
-  const loadCards = async (pageToLoad: number, query: string) => {
+  const loadCards = useCallback(async (pageToLoad: number, query: string) => {
     setIsLoading(true)
     try {
       const { cards, totalCount } = await fetchCards(URL, pageToLoad, query);
@@ -31,12 +31,12 @@ export const App = () => {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [URL, dispatch])
 
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage)
     loadCards(newPage, searchQuery)
-  }
+  }, [loadCards, searchQuery])
 
   useEffect(() => {
     // Загружаем карточки только при инициализации (когда нет карточек и не было загрузки)
@@ -44,7 +44,7 @@ export const App = () => {
       setStatus(true)
       loadCards(page, searchQuery)
     }
-  }, [cards.length, status, searchQuery])
+  }, [cards.length, status, searchQuery, loadCards, page])
 
   useEffect(() => {
     // Загружаем карточки только при изменении поискового запроса (не при инициализации)
@@ -52,7 +52,7 @@ export const App = () => {
       setPage(1)
       loadCards(1, searchQuery)
     }
-  }, [searchQuery])
+  }, [searchQuery, loadCards])
 
   return <Home 
     isLoading={isLoading} 

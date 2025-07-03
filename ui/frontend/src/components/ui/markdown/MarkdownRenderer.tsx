@@ -1,6 +1,6 @@
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
+import { useMemo } from 'react';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 import styles from './MarkdownRenderer.module.css';
 
@@ -10,49 +10,36 @@ interface MarkdownRendererProps {
 }
 
 export const MarkdownRenderer = ({ children, className }: MarkdownRendererProps) => {
+  const sanitizedHtml = useMemo(() => {
+    try {
+      // Настраиваем marked для правильного рендеринга
+      marked.setOptions({
+        breaks: true, // Преобразуем переносы строк в <br>
+        gfm: true,    // Поддержка GitHub Flavored Markdown
+      });
+
+      // Преобразуем markdown в HTML (используем синхронную версию parse)
+      const rawHtml = marked.parse(children, { async: false }) as string;
+      
+      // Очищаем HTML с помощью DOMPurify
+      return DOMPurify.sanitize(rawHtml, {
+        ALLOWED_TAGS: [
+          'p', 'br', 'strong', 'em', 'b', 'i', 'u', 's', 
+          'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+          'blockquote', 'code', 'pre', 'table', 'thead', 'tbody', 'tr', 'td', 'th'
+        ],
+        ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
+      });
+    } catch (error) {
+      console.error('Error parsing markdown:', error);
+      return children; // Возвращаем исходный текст в случае ошибки
+    }
+  }, [children]);
+
   return (
-    <div className={className}>
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw]}
-      components={{
-        // Стилизация ссылок
-        a: ({ node, ...props }) => (
-          <a 
-            {...props} 
-            className={styles.link}
-            target="_blank" 
-            rel="noopener noreferrer"
-          />
-        ),
-        // Стилизация жирного текста
-        strong: ({ node, ...props }) => (
-          <strong {...props} className={styles.bold} />
-        ),
-        // Стилизация абзацев
-        p: ({ node, ...props }) => (
-          <p {...props} className={styles.paragraph} />
-        ),
-        // Стилизация списков
-        ul: ({ node, ...props }) => (
-          <ul {...props} className={styles.list} />
-        ),
-        li: ({ node, ...props }) => (
-          <li {...props} className={styles.listItem} />
-        ),
-        // Стилизация заголовков
-        h1: ({ node, ...props }) => (
-          <h1 {...props} className={styles.heading1} />
-        ),
-        h2: ({ node, ...props }) => (
-          <h2 {...props} className={styles.heading2} />
-        ),
-        h3: ({ node, ...props }) => (
-          <h3 {...props} className={styles.heading3} />
-        ),
-      }}      >
-        {children}
-      </ReactMarkdown>
-    </div>
+    <div 
+      className={`${styles.markdownContainer} ${className || ''}`}
+      dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+    />
   );
 };

@@ -1,11 +1,9 @@
-// @ts-nocheck
 import { Modal } from '@mantine/core';
 import { useSelector } from 'react-redux';
 
 import type { IModalProps } from '../../../core/types/ui-types/modalTypes';
 import type { RootState } from '../../../core/store';
 import { extractFullName, extractUsername } from '../../../core/utils/extractFunctions';
-import { Highlight } from '../hightlight/Hightlight';
 import { HighlightWithMarkdown } from '../hightlight/HighlightWithMarkdown';
 import { MarkdownRenderer } from '../markdown/MarkdownRenderer';
 
