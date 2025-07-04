@@ -50,7 +50,7 @@ def init_resources():
     Загружает модель на устройство "mps" (Apple Silicon) если доступно,
     иначе на CPU. Загружает индекс FAISS и метаданные из файлов.
 
-    Возвращаемое значение:
+    Returns:
         None
     """
     global model, index, metadata
@@ -106,36 +106,44 @@ async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -
     Фильтрует результаты поиска, используя OpenRouter для подтверждения релевантности,
     а также выделяет ключевые слова, подтверждающие релевантность.
 
-    Теперь модель возвращает telegram_id вместо index.
+    Returns:
+         Отфильтрованный массив и хайлайты.
     """
     system_prompt = (
         "Ты ИИ-ассистент по отбору резюме.\n"
-        "На входе — запрос пользователя и список резюме, каждый из которых имеет telegram_id.\n"
-        "Для каждого релевантного резюме верни JSON-объект:\n"
+        "На входе — запрос пользователя и список резюме, каждый из которых имеет telegram_id, автора и текст.\n\n"
+        "Для каждого резюме реши, релевантно ли оно запросу. Если да, верни объект:\n"
         "{'telegram_id': 123456789, 'релевантно': 'Да', 'подсветка': ['ключ1', 'ключ2']}.\n"
-        "Если не релевантно — не включай в ответ.\n"
+        "Если резюме не подходит — не включай его в ответ.\n"
         "Верни JSON-массив таких объектов."
     )
 
-    user_content = f"Запрос: {user_query}\nРезюме:\n" + "".join(
-        f"{r['telegram_id']}: {r['content']}\n" for r in results
-    )
+    resume_blocks = []
+    for r in results:
+        author = r.get("author", "").strip()
+        content = r.get("content", "").strip()
+        telegram_id = r.get("telegram_id")
+        full_text = f"[{telegram_id}] Автор: {author}\nТекст: {content}\n"
+        resume_blocks.append(full_text)
 
-    payload_messages = [
+    user_content = f"Запрос: {user_query}\nРезюме:\n" + "\n".join(resume_blocks)
+
+    messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_content}
     ]
 
-    response_text = await chat_completion_openrouter(payload_messages, model=openai_model)
+    response_text = await chat_completion_openrouter(messages, model=openai_model)
 
     clean_response = re.sub(r"```json\s*|```", "", response_text).strip()
+
     try:
         parsed_list = json.loads(clean_response)
     except json.JSONDecodeError:
         try:
             parsed_list = eval(clean_response)
         except Exception as e:
-            print(f"Error parsing response: {e}")
+            print(f"[ERROR parse JSON]: {e}")
             parsed_list = []
 
     result_by_tid = {r["telegram_id"]: r for r in results}

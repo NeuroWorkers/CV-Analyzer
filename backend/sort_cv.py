@@ -7,6 +7,7 @@ import httpx
 from configs.ai_config import max_processing_message_count, openrouter_api_key
 from configs.project_paths import tg_dump_text_path, relevant_text_path, relevant_media_path
 
+
 PROMPT_TEMPLATE = """
 Ты — помощник, который помогает отбирать сообщения, содержащие CV (резюме) или подробное описание профессионального опыта, навыков и достижений человека.
 
@@ -26,6 +27,7 @@ PROMPT_TEMPLATE = """
 Пример сообщения:
 \"\"\"{text}\"\"\"
 """
+
 
 REAL_AUTHOR_PROMPT = """
 Ты — помощник, который анализирует пересланные сообщения в Telegram.

@@ -53,12 +53,17 @@ async def semantic_search(user_query: str, messages: List[Any]) -> Tuple[List[di
     """
 
     system_prompt = (
-        "Ты ИИ-помощник, который помогает искать релевантные резюме. "
-        "На входе у тебя есть пользовательский запрос и список резюме, каждый из которых представлен в формате "
-        "'telegram_id: текст'. Если резюме подходит, верни JSON-массив объектов вида:\n"
+        "Ты ИИ-помощник, который помогает искать релевантные резюме.\n"
+        "На входе — пользовательский запрос и список резюме, каждый из которых содержит:\n"
+        "- telegram_id (уникальный идентификатор)\n"
+        "- author (имя и ник автора)\n"
+        "- content (текст резюме)\n\n"
+        "Если резюме релевантно запросу (например, совпадает имя или совпадает по смыслу), "
+        "верни JSON-массив объектов:\n"
         "[{'telegram_id': 123456789, 'match': true, 'highlights': ['ключ1', 'ключ2']}, ...]\n"
-        "Если не подходит — {'match': false, 'highlights': []}.\n"
-        "Выделяй только осмысленные совпадения — по смыслу и форме (синонимы, склонения и т.д.)."
+        "Если не подходит — не включай.\n"
+        "Учитывай имя и ник автора так же, как и текст.\n"
+        "Подсвечивай только осмысленные совпадения: имена, роли, ключевые слова."
     )
 
     headers = {
@@ -67,7 +72,7 @@ async def semantic_search(user_query: str, messages: List[Any]) -> Tuple[List[di
     }
 
     user_content = f"Запрос: {user_query}\nРезюме:\n" + "".join(
-        f"{msg.telegram_id}: {msg.content}\n" for msg in messages
+        f"{msg.telegram_id}: Автор: {msg.author}\nТекст: {msg.content}\n\n" for msg in messages
     )
 
     payload = {
@@ -109,17 +114,16 @@ async def semantic_search(user_query: str, messages: List[Any]) -> Tuple[List[di
         if tid is None or tid not in msg_by_tid:
             continue
 
-        if res.get("match"):
-            current_highlights = [w for w in res.get("highlights", []) if len(w) >= 3]
-            msg = msg_by_tid[tid]
-            relevant.append({
-                "telegram_id": msg.telegram_id,
-                "content": msg.content,
-                "author": msg.author,
-                "created_at": msg.created_at,
-                "media_path": msg.media_path
-            })
-            highlights.append(current_highlights)
+        current_highlights = [w for w in res.get("highlights", []) if len(w) >= 3]
+        msg = msg_by_tid[tid]
+        relevant.append({
+            "telegram_id": msg.telegram_id,
+            "content": msg.content,
+            "author": msg.author,
+            "created_at": msg.created_at,
+            "media_path": msg.media_path
+        })
+        highlights.append(current_highlights)
 
     return relevant, highlights
 
