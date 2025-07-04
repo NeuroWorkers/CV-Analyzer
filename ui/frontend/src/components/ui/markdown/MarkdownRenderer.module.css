@@ -1,6 +1,9 @@
 .markdownContainer {
   line-height: 1.4;
   color: inherit;
+  overflow: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Стилизация ссылок */
@@ -27,6 +30,13 @@
   margin: 0.25rem 0;
   line-height: 1.4;
   white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Предотвращение показа разорванных тегов */
+.markdownContainer p:last-child {
+  margin-bottom: 0;
 }
 
 /* Стилизация списков */

@@ -6,6 +6,7 @@ import type { ICardProps } from '../../../core/types/ui-types/cardTypes';
 import type { RootState } from '../../../core/store';
 import { ModalWindow } from '../modal/ModalWindow';
 import { extractFullName, extractUsername } from '../../../core/utils/extractFunctions';
+import { truncateMarkdownByWords } from '../../../core/utils/truncateUtils';
 import { HighlightWithMarkdown } from '../hightlight/HighlightWithMarkdown';
 import { MarkdownRenderer } from '../markdown/MarkdownRenderer';
 
@@ -15,15 +16,6 @@ import styles from './Card.module.css';
 export const CardComponent = ({ data }: ICardProps) => {
   const [opened, { open, close }] = useDisclosure(false);
   const URL = useSelector((state: RootState) => state.config.url);
-  
-  const truncateMarkdown = (text: string, maxLength: number): string => {
-    if (text.length <= maxLength) return text;
-    const truncated = text.slice(0, maxLength);
-    const lastPeriod = truncated.lastIndexOf('.');
-    const lastNewline = truncated.lastIndexOf('\n');
-    const lastIndex = Math.max(lastPeriod, lastNewline);
-    return lastIndex > -1 ? truncated.slice(0, lastIndex + 1) + '...' : truncated + '...';
-  }
   
   return (
     <>
@@ -49,13 +41,13 @@ export const CardComponent = ({ data }: ICardProps) => {
               {data.highlight_text ? (
                 <div className={styles.markdownParagraph}>
                   <HighlightWithMarkdown 
-                    text={truncateMarkdown(data.text ?? '', 200)} 
+                    text={truncateMarkdownByWords(data.text ?? '', 50)} 
                     highlights={data.highlight_text} 
                   />
                 </div>
               ) : (
                 <MarkdownRenderer className={styles.markdownParagraph}>
-                  {truncateMarkdown(data.text, 200)}
+                  {truncateMarkdownByWords(data.text, 50)}
                 </MarkdownRenderer>
               )}
             </div>
