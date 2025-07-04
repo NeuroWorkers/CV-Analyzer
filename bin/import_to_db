@@ -2,10 +2,10 @@
 cd `dirname $0`;cd ../
 p=`pwd`
 
-export PYTHONPATH=$(pwd):$PYTHONPATH
+source ./bin/begin.sh
 
-#python3 database/database/import_to_db.py
-#cd database/
+#export PYTHONPATH=$(pwd):$PYTHONPATH
+
 #python3 $p/bin/import_to_db_run.py
 python3 -c '
 import asyncio
