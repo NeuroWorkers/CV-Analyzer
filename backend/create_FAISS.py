@@ -33,15 +33,12 @@ def extract_texts_and_metadata(json_data: dict) -> Tuple[List[str], List[Dict]]:
             if not msg or len(msg) < 7:
                 continue
 
-            text = msg[2]
-            if not text:
-                continue
+            texts.append(f"Автор CV(резюме): {msg[3]}. Резюме: {msg[2]}")
 
-            texts.append(text)
             metadata.append({
                 "telegram_id": msg[0],
                 "created_at": msg[1],
-                "content": text,
+                "content": msg[2],
                 "author": msg[3],
                 "fwd_date": msg[4],
                 "fwd_author": msg[5],

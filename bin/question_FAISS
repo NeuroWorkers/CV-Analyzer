@@ -8,9 +8,9 @@ from backend.question_analyzer_FAISS import full_pipeline, init_resources
 from backend.create_FAISS import build_or_update_index
 
 async def main():
-    #build_or_update_index()
+    build_or_update_index()
     init_resources()
-    query = "Валера"
+    query = "Роман Казаков"
     results, highlights = await full_pipeline(query)
     print(results)
     print(highlights)
