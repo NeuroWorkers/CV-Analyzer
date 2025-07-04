@@ -38,7 +38,7 @@ logger.addHandler(file_handler)
 
 
 cached_all_nodes: Dict[str, Tuple[float, list]] = {}
-cached_relevant_nodes: Dict[str, Tuple[float, Tuple[list, list]]] = {}  
+cached_relevant_nodes: Dict[str, Tuple[float, Tuple[list, list]]] = {}
 
 CACHE_TTL = 300
 
@@ -91,28 +91,23 @@ async def init437721():
 
 
 @app.get("/get_all_nodes/{page_number}")
-async def get_all_nodes(page_number: int = 0, request: Request = None):
-    """
-    Возвращает страницу с узлами (резюме) с пагинацией.
-
-    Args:
-        page_number (int): Номер страницы (начинается с 1).
-        request (Request, optional): Объект запроса (не используется).
-
-    Returns:
-        JSONResponse: Список узлов с автором, датой, текстом и ссылкой на фото.
-    """
+async def get_all_nodes(page_number: int = 1, request: Request = None):
     try:
-        nodes = await fetch_all_messages()
-        results = []
+        cache = cached_all_nodes.get("all")
+        if cache and is_cache_valid(cache[0]):
+            nodes = cache[1]
+        else:
+            nodes = await fetch_all_messages()
+            cached_all_nodes["all"] = (time.time(), nodes)
+
         start = (page_number - 1) * 6
         end = page_number * 6
+        results = []
 
         for idx, node in enumerate(nodes[start:end]):
             media_url = None
             if node.media_path:
-                media_path = node.media_path
-                current_media_path = os.path.join(DATA_PATH, str(media_path))
+                current_media_path = os.path.join(DATA_PATH, str(node.media_path))
                 if os.path.exists(current_media_path):
                     media_url = f"/media/{os.path.basename(current_media_path)}"
                     logger.info(f"media_url = {media_url}")
@@ -126,36 +121,29 @@ async def get_all_nodes(page_number: int = 0, request: Request = None):
 
         results.append({"count": len(nodes)})
         return JSONResponse(results)
-    except Exception as e:
+
+    except Exception:
         logging.error("Произошла ошибка:\n%s", traceback.format_exc())
 
 
 @app.get("/get_relevant_nodes/{query}/{page_number}")
-async def get_relevant_nodes(query: str, page_number: int = 0, request: Request = None):
-    """
-    Возвращает релевантные узлы (резюме) по запросу с подсветкой и пагинацией.
-
-    Args:
-        query (str): Текст поискового запроса.
-        page_number (int): Номер страницы (начинается с 1).
-        request (Request, optional): Объект запроса (не используется).
-
-    Returns:
-        JSONResponse: Список релевантных узлов с автором, датой, текстом,
-                      подсветкой и ссылкой на фото.
-    """
+async def get_relevant_nodes(query: str, page_number: int = 1, request: Request = None):
     try:
-        nodes, highlights = await full_pipeline(query)
+        cache = cached_relevant_nodes.get(query)
+        if cache and is_cache_valid(cache[0]):
+            nodes, highlights = cache[1]
+        else:
+            nodes, highlights = await full_pipeline(query)
+            cached_relevant_nodes[query] = (time.time(), (nodes, highlights))
 
-        results = []
         start = (page_number - 1) * 6
         end = page_number * 6
+        results = []
 
         for idx, node in enumerate(nodes[start:end]):
             media_url = None
             if node['media_path']:
-                media_path = node['media_path']
-                current_media_path = os.path.join(DATA_PATH, str(media_path))
+                current_media_path = os.path.join(DATA_PATH, str(node['media_path']))
                 if os.path.exists(current_media_path):
                     media_url = f"/media/{os.path.basename(current_media_path)}"
 
@@ -166,14 +154,11 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
                 "highlight_text": highlights[start + idx] if start + idx < len(highlights) else [],
                 "photo": media_url
             })
-            logger.info("HIGHLIGHTS (ИНДЕКС): ")
-            logger.info(highlights)
-            logger.info("\n\n")
 
         results.append({"count": len(nodes)})
-
         return JSONResponse(results)
-    except Exception as e:
+
+    except Exception:
         logging.error("Произошла ошибка:\n%s", traceback.format_exc())
 
 
