@@ -1,4 +1,7 @@
 import logging
+import time
+from typing import Dict, Tuple
+
 import uvicorn
 import backend
 import traceback
@@ -32,6 +35,16 @@ file_handler = logging.FileHandler('app2.log')
 file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
 logger.addHandler(file_handler)
+
+
+cached_all_nodes: Dict[str, Tuple[float, list]] = {}
+cached_relevant_nodes: Dict[str, Tuple[float, Tuple[list, list]]] = {}  
+
+CACHE_TTL = 300
+
+
+def is_cache_valid(timestamp: float) -> bool:
+    return time.time() - timestamp < CACHE_TTL
 
 
 @asynccontextmanager
@@ -137,7 +150,6 @@ async def get_relevant_nodes(query: str, page_number: int = 0, request: Request 
         results = []
         start = (page_number - 1) * 6
         end = page_number * 6
-
 
         for idx, node in enumerate(nodes[start:end]):
             media_url = None
