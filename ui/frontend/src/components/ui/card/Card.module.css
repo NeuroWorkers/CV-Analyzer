@@ -89,8 +89,20 @@
   color: #666;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  max-height: 400px;
-  overflow-y: auto;
+  max-height: 300px;
+  overflow: hidden;
+  position: relative;
+}
+
+.text::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: linear-gradient(transparent, rgba(255, 255, 255, 0.8));
+  pointer-events: none;
 }
 
 .markdownParagraph {
@@ -100,6 +112,10 @@
   color: #333;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 8;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .markdownStrong {

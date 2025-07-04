@@ -46,8 +46,25 @@
   line-height: 1.3;
 }
 
-.container {
-  line-height: 1.5;
+.markdownContainer {
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  overflow: hidden;
+  color: inherit;
+}
+
+.markdownContainer p {
+  margin: 0.25rem 0;
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.markdownContainer p:last-child {
+  margin-bottom: 0;
+
   white-space: pre-wrap;
   word-wrap: break-word;
   overflow-wrap: break-word;
