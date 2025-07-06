@@ -10,13 +10,14 @@ import torch
 from sentence_transformers import SentenceTransformer
 
 from configs.project_paths import faiss_index_path, faiss_metadata_path
-from configs.ai_config import faiss_model, openai_model
+from configs.ai_config import faiss_model, openai_model, db_conn_name
 
 model = None
 index = None
 metadata = None
 
-client = edgedb.create_async_client("database")
+print ("db_conn_name=" + db_conn_name) # default "database"
+client = edgedb.create_async_client(db_conn_name)
 
 
 async def fetch_all_messages() -> List[dict[str, Any]]:

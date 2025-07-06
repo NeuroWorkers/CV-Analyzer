@@ -5,7 +5,7 @@ import edgedb
 from datetime import datetime
 from configs.project_paths import relevant_text_path
 from backend.create_FAISS import build_or_update_index
-
+from configs.ai_config import db_conn_name
 
 def update_FAISS():
     build_or_update_index()
@@ -43,7 +43,10 @@ async def update_messages_to_db(json_path: str = os.path.join(relevant_text_path
     Returns:
         None
     """
-    client = edgedb.create_async_client("database")
+
+    print ("db_conn_name=" + db_conn_name) # default "database"
+    client = edgedb.create_async_client(db_conn_name)
+
 
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)

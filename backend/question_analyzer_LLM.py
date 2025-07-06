@@ -9,7 +9,9 @@ import edgedb
 
 from configs.ai_config import *
 
-client = edgedb.create_async_client("database")
+print ("db_conn_name=" + db_conn_name) # default "database"
+client = edgedb.create_async_client(db_conn_name)
+
 
 
 async def fetch_all_messages() -> List[dict[str, Any]]:
