@@ -70,6 +70,9 @@ async def update_messages_to_db(json_path: str = os.path.join(relevant_text_path
             media_type = media_data["type"] if media_data else None
             media_path = media_data["path"] if media_data else None
 
+            if content is None:
+                content = ""
+
             try:
                 await client.query("""
                     INSERT ResumeMessage {
