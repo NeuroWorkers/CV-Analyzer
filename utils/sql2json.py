@@ -48,6 +48,9 @@ def convert_to_json(data_list, topic_id, start_message_id):
         first_name = d.get("first_name") or ""
         last_name = d.get("last_name") or ""
         about = d.get("about", "")
+        # Если поле about пустое, заменяем на пустые кавычки
+        if not about:
+            about = ''
         username_part = f"@{username}" if username else ""
         fio_part = f"{last_name} {first_name}".strip()
         fio_full = f"{username_part} {fio_part}".strip()
