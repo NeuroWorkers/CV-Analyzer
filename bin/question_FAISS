@@ -1,6 +1,7 @@
 #!/bin/bash
 cd "$(dirname "$0")/../"
-export PYTHONPATH=$(pwd):$PYTHONPATH
+
+source ./bin/begin.sh
 
 python3 -c '
 import asyncio

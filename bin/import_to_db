@@ -4,8 +4,6 @@ p=`pwd`
 
 source ./bin/begin.sh
 
-#export PYTHONPATH=$(pwd):$PYTHONPATH
-
 #python3 $p/bin/import_to_db_run.py
 python3 -c '
 import asyncio

@@ -1,21 +1,7 @@
 #!/bin/bash
 cd `dirname $0`;cd ../
 
-export PYTHONPATH=$(pwd):$PYTHONPATH
-if [ -f configs/proxy.sh ]; then
-source configs/proxy.sh
-else
-source configs/proxy.sh.sample
-fi
-if [ -f configs/config.sh ]; then
-source configs/config.sh
-else
-source configs/config.sh.sample
-fi
-
-if [ "x$VIRTUAL_ENV" == "x" ]; then
-source ${VENV_DIR}/bin/activate
-fi
+source ./bin/begin.sh
 
 #python3 bin/parse_cv.py
 python3 -c 'from backend.create_FAISS import build_or_update_index

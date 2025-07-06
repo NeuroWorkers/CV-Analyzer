@@ -1,13 +1,14 @@
 #!/bin/bash
 cd `dirname $0`;cd ../
 
-export PYTHONPATH=$(pwd):$PYTHONPATH
+source ./bin/begin.sh
+
 if [ -f configs/proxy.sh ]; then
 source configs/proxy.sh
 else
 source configs/proxy.sh.sample
 fi
-#echo $HTTP_PROXY
+echo $HTTP_PROXY
 
 #python3 bin/parse_cv.py
 python3 -c 'from backend.sort_cv import sort_cv
