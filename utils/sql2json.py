@@ -1,5 +1,17 @@
 import json
 import argparse
+from datetime import datetime
+
+def format_date(date_str):
+    """Преобразует дату из формата '2025-07-01 22:41:50.522035' в '2025-07-01 22:41:50'"""
+    try:
+        # Парсим дату с микросекундами
+        dt = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S.%f')
+        # Возвращаем дату без микросекунд
+        return dt.strftime('%Y-%m-%d %H:%M:%S')
+    except ValueError:
+        # Если дата уже в нужном формате или некорректная, возвращаем как есть
+        return date_str
 
 def parse_copy_block(sql_path, source_filter="TG"):
     data_list = []
@@ -39,9 +51,13 @@ def convert_to_json(data_list, topic_id, start_message_id):
         username_part = f"@{username}" if username else ""
         fio_part = f"{last_name} {first_name}".strip()
         fio_full = f"{username_part} {fio_part}".strip()
+        
+        # Форматируем дату
+        formatted_date = format_date(fetch_date)
+        
         downloaded_text = [
             msg_id,
-            fetch_date,
+            formatted_date,
             about,
             fio_full
         ]
