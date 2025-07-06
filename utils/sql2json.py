@@ -59,7 +59,10 @@ def convert_to_json(data_list, topic_id, start_message_id):
             msg_id,
             formatted_date,
             about,
-            fio_full
+            fio_full,
+            None,
+            None,
+            topic_id
         ]
         messages.append({
             "downloaded_text": downloaded_text,
@@ -77,7 +80,7 @@ def main():
     )
     parser.add_argument("sql_file", help="Путь к SQL-дампу")
     parser.add_argument("-o", "--output", help="Имя выходного JSON-файла (по умолчанию stdout)")
-    parser.add_argument("-s", "--start", type=int, default=1, help="Начальный номер сообщения (default: 1)")
+    parser.add_argument("-s", "--start", type=int, default=900000, help="Начальный номер сообщения (default: 900000)")
     parser.add_argument("-t", "--topic", type=int, default=1275, help="ID топика (default: 1275)")
     parser.add_argument("--source", default="TG", help="Фильтруемый источник (default: TG)")
     args = parser.parse_args()
