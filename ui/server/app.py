@@ -116,12 +116,18 @@ async def get_all_nodes(page_number: int = 1, request: Request = None):
                 "photo": media_url
             })
 
-        results.append({"count": len(nodes)})
+        count = len(nodes)
         logger.info(f"[GET ALL NODES] results: {pformat(results)}")
-        return JSONResponse(results)
+
+        res_struct = {
+            "data": results,
+            "count": count
+        }
+
+        return JSONResponse(content=res_struct)
 
     except Exception:
-        logger.error("Произошла ошибка:\n%s", traceback.format_exc())
+        logger.error(f"Произошла ошибка:\n {traceback.format_exc()}")
 
 
 @app.get("/get_relevant_nodes/{query}/{page_number}")
@@ -152,13 +158,19 @@ async def get_relevant_nodes(query: str, page_number: int = 1, request: Request 
                 "photo": media_url
             })
 
-        results.append({"count": len(nodes)})
-        results.append({"highlight_text": highlights})
+        count = len(nodes)
         logger.info(f"[GET RELEVANT NODES] results:\n{pformat(results)}")
-        return JSONResponse(results)
 
-    except Exception:
-        logger.error("Произошла ошибка:\n%s", traceback.format_exc())
+        res_struct = {
+            "data": results,
+            "count": count,
+            "highlight_text": highlights
+        }
+
+        return JSONResponse(content=res_struct)
+    except Exception as e:
+        logger.error(f"Произошла ошибка:\n {traceback.format_exc()}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
 if __name__ == "__main__":
