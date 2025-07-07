@@ -26,7 +26,14 @@ export const ModalWindow = ({ opened, close, data }: IModalProps) => {
               rel="noopener noreferrer"
               className={styles.authorLink}
             >
-              {extractUsername(data.author)}
+              {data.highlight_text ? (
+                <HighlightWithMarkdown 
+                  text={extractUsername(data.author)} 
+                  highlights={data.highlight_text} 
+                />
+              ) : (
+                extractUsername(data.author)
+              )}
             </a>
           )}
         </div>
@@ -50,7 +57,16 @@ export const ModalWindow = ({ opened, close, data }: IModalProps) => {
               alt={data.author}
               className={styles.image}
             />
-            <span className={styles.authorName}>{extractFullName(data.author)}</span>
+            <span className={styles.authorName}>
+              {data.highlight_text ? (
+                <HighlightWithMarkdown 
+                  text={extractFullName(data.author)} 
+                  highlights={data.highlight_text} 
+                />
+              ) : (
+                extractFullName(data.author)
+              )}
+            </span>
           </>
         )}
         <div className={styles.text}>

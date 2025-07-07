@@ -8,6 +8,27 @@
   box-shadow: 0 0 0 1px rgba(255, 255, 0, 0.5) !important;
 }
 
+/* Специальные стили для подсветки в ссылках */
+a .highlight {
+  color: #000 !important;
+  text-decoration: none !important;
+}
+
+a:hover .highlight {
+  color: #000 !important;
+  text-decoration: none !important;
+}
+
+/* Специальные стили для подсветки в заголовках */
+h1 .highlight,
+h2 .highlight,
+h3 .highlight,
+h4 .highlight,
+h5 .highlight,
+h6 .highlight {
+  font-weight: inherit !important;
+}
+
 .container {
   line-height: 1.4;
   white-space: pre-wrap;

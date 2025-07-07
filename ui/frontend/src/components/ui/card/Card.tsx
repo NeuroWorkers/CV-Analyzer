@@ -30,10 +30,28 @@ export const CardComponent = ({ data }: ICardProps) => {
               <div className={styles.authorInfo}>
                 {data.author && !data.author.includes('собаки') && (
                   <Anchor href={`https://t.me/${extractUsername(data.author)}`} target="_blank">
-                    {extractUsername(data.author)}
+                    {data.highlight_text ? (
+                      <HighlightWithMarkdown 
+                        text={extractUsername(data.author)} 
+                        highlights={data.highlight_text} 
+                      />
+                    ) : (
+                      extractUsername(data.author)
+                    )}
                   </Anchor>
                 )}
-                {data.author && <h3 className={styles.author}>{extractFullName(data.author)}</h3>}
+                {data.author && (
+                  <h3 className={styles.author}>
+                    {data.highlight_text ? (
+                      <HighlightWithMarkdown 
+                        text={extractFullName(data.author)} 
+                        highlights={data.highlight_text} 
+                      />
+                    ) : (
+                      extractFullName(data.author)
+                    )}
+                  </h3>
+                )}
               </div>
             </div>
             <hr className={styles.divider} />
