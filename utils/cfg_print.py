@@ -12,14 +12,14 @@ from configs import cfg
 
 
 def cfg_print():
-    print("Global variables imported from my_module.py:")
+    print("Global variables imported from config.cfg:")
     for name, value in cfg.__dict__.items():
-        if not name.startswith('__') and not callable(value) and not isinstance(value, type):
+        if not name.startswith('__') and not callable(value) and not isinstance(value, type) and not name in sys.modules:
                 print(f"{name}={value}")
 
 def main():
     cfg_print()
-    pass
+    
     
 
 if __name__ == "__main__":

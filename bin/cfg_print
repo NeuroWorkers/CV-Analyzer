@@ -1,6 +1,8 @@
 #!/bin/bash
+cd `dirname $0`;cd ../
 
-cd ../
+source ./bin/begin.sh
+
 export PYTHONPATH=$(pwd):$PYTHONPATH
 #python3 configs/111.py
 python3 utils/cfg_print.py
