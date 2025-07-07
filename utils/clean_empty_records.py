@@ -6,6 +6,7 @@
 import json
 import sys
 import os
+import argparse
 from pathlib import Path
 
 def clean_empty_records(json_data):
@@ -47,31 +48,36 @@ def clean_empty_records(json_data):
 
 def main():
     """Основная функция скрипта."""
-    if len(sys.argv) != 2:
-        print("Использование: python clean_empty_records.py <путь_к_json_файлу>")
-        print("Пример: python clean_empty_records.py dump.json")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description='Удаляет записи из JSON файла с пустым третьим полем в downloaded_text.'
+    )
+    parser.add_argument('input_file', help='Путь к входному JSON файлу')
+    parser.add_argument('-o', '--output', help='Путь к выходному JSON файлу')
     
-    input_file = sys.argv[1]
+    args = parser.parse_args()
+    
+    input_file = args.input_file
+    output_file = args.output if args.output else input_file
     
     # Проверяем, существует ли файл
     if not os.path.exists(input_file):
         print(f"Ошибка: файл '{input_file}' не найден")
         sys.exit(1)
     
-    # Создаем резервную копию
-    backup_file = input_file + ".backup"
-    try:
-        with open(input_file, 'r', encoding='utf-8') as f:
-            original_data = f.read()
-        
-        with open(backup_file, 'w', encoding='utf-8') as f:
-            f.write(original_data)
-        
-        print(f"Создана резервная копия: {backup_file}")
-    except Exception as e:
-        print(f"Ошибка при создании резервной копии: {e}")
-        sys.exit(1)
+    # Создаем резервную копию только если перезаписываем исходный файл
+    if input_file == output_file:
+        backup_file = input_file + ".backup"
+        try:
+            with open(input_file, 'r', encoding='utf-8') as f:
+                original_data = f.read()
+            
+            with open(backup_file, 'w', encoding='utf-8') as f:
+                f.write(original_data)
+            
+            print(f"Создана резервная копия: {backup_file}")
+        except Exception as e:
+            print(f"Ошибка при создании резервной копии: {e}")
+            sys.exit(1)
     
     # Загружаем и обрабатываем JSON
     try:
@@ -98,13 +104,16 @@ def main():
         removed_count = total_before - total_after
         
         # Сохраняем очищенные данные
-        with open(input_file, 'w', encoding='utf-8') as f:
+        with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(cleaned_data, f, ensure_ascii=False, indent=4)
         
         print(f"Обработка завершена!")
         print(f"Записей до очистки: {total_before}")
         print(f"Записей после очистки: {total_after}")
         print(f"Удалено записей с пустым третьим полем: {removed_count}")
+        
+        if input_file != output_file:
+            print(f"Результат сохранен в: {output_file}")
         
     except json.JSONDecodeError as e:
         print(f"Ошибка при чтении JSON: {e}")
