@@ -1,6 +1,8 @@
 import json
 import re
 import asyncio
+from pprint import pformat
+
 import edgedb
 from typing import List, Any, Tuple, Dict
 
@@ -12,11 +14,17 @@ from sentence_transformers import SentenceTransformer
 from configs.project_paths import faiss_index_path, faiss_metadata_path
 from configs.ai_config import faiss_model, openai_model, db_conn_name
 
+from utils.logger import MyLogger
+
 model = None
 index = None
 metadata = None
 
-print ("db_conn_name=" + db_conn_name) # default "database"
+
+logger = MyLogger(__name__)
+
+
+print("db_conn_name=" + db_conn_name)  # default "database"
 client = edgedb.create_async_client(db_conn_name)
 
 
@@ -57,6 +65,8 @@ def init_resources():
     global model, index, metadata
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
+    logger.info(f"[INIT RESOURCES] device: {device}")
+
     model = SentenceTransformer(faiss_model, device=device)
 
     index = faiss.read_index(faiss_index_path)
@@ -86,7 +96,7 @@ async def analyze_user_query(user_query: str) -> str:
     ], model=openai_model)
 
 
-async def vector_search(optimized_query: str, k: int = 20) -> List[Dict[str, Any]]:
+async def vector_search(optimized_query: str, k: int = 6) -> List[Dict[str, Any]]:
     """
     Выполняет поиск по FAISS индексу на основе векторного представления запроса.
 
@@ -99,10 +109,14 @@ async def vector_search(optimized_query: str, k: int = 20) -> List[Dict[str, Any
     """
     query_vec = model.encode([optimized_query], convert_to_numpy=True).astype("float32")
     distances, indices = index.search(query_vec, k)
-    return [metadata[idx] for idx in indices[0] if 0 <= idx < len(metadata)]
+
+    search_results = [metadata[idx] for idx in indices[0] if 0 <= idx < len(metadata)]
+    logger.info(f"[VECTOR SEARCH] search results: {pformat(search_results)}")
+    return search_results
 
 
-async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], List[List[str]]]:
+async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -> Tuple[
+    List[Dict[str, Any]], List[List[str]]]:
     """
     Фильтрует результаты поиска, используя OpenRouter для подтверждения релевантности,
     а также выделяет ключевые слова, подтверждающие релевантность.
@@ -161,6 +175,7 @@ async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -
             filtered.append(result_by_tid[tid])
             highlights.append(phrases)
 
+    logger.info(f"[FILTER AND HIGHLIGHT] filtered: {pformat(filtered)}\nhighlights: {pformat(highlights)}")
     return filtered, highlights
 
 

@@ -1,7 +1,8 @@
-import logging
 import time
+from pprint import pformat
 from typing import Dict, Tuple
 
+import os
 import uvicorn
 import backend
 import traceback
@@ -14,7 +15,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.question_analyzer_FAISS import init_resources
 
-from configs.project_paths import *
+from utils.logger import MyLogger
+
+from configs.project_paths import relevant_media_path, DATA_PATH
 from configs.server_config import SERVER_PORT, SERVER_HOST, SEARCH_MODE
 
 if SEARCH_MODE == "" or not hasattr(backend, "SEARCH_MODE"):
@@ -29,16 +32,11 @@ elif SEARCH_MODE == "FAISS":
     build_or_update_index()
     from backend.question_analyzer_FAISS import fetch_all_messages, full_pipeline
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-file_handler = logging.FileHandler('app2.log')
-file_handler.setLevel(logging.INFO)
-file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-logger.addHandler(file_handler)
-
 
 cached_all_nodes: Dict[str, Tuple[float, list]] = {}
 cached_relevant_nodes: Dict[str, Tuple[float, Tuple[list, list]]] = {}
+
+logger = MyLogger(__name__)
 
 CACHE_TTL = 300
 
@@ -110,7 +108,6 @@ async def get_all_nodes(page_number: int = 1, request: Request = None):
                 current_media_path = os.path.join(DATA_PATH, str(node.media_path))
                 if os.path.exists(current_media_path):
                     media_url = f"/media/{os.path.basename(current_media_path)}"
-                    logger.info(f"media_url = {media_url}")
 
             results.append({
                 "author": node.author,
@@ -120,10 +117,11 @@ async def get_all_nodes(page_number: int = 1, request: Request = None):
             })
 
         results.append({"count": len(nodes)})
+        logger.info(f"[GET ALL NODES] results: {pformat(results)}")
         return JSONResponse(results)
 
     except Exception:
-        logging.error("Произошла ошибка:\n%s", traceback.format_exc())
+        logger.error("Произошла ошибка:\n%s", traceback.format_exc())
 
 
 @app.get("/get_relevant_nodes/{query}/{page_number}")
@@ -156,11 +154,13 @@ async def get_relevant_nodes(query: str, page_number: int = 1, request: Request 
             })
 
         results.append({"count": len(nodes)})
+        logger.info(f"[GET RELEVANT NODES] results:\n{pformat(results)}")
         return JSONResponse(results)
 
     except Exception:
-        logging.error("Произошла ошибка:\n%s", traceback.format_exc())
+        logger.error("Произошла ошибка:\n%s", traceback.format_exc())
 
 
 if __name__ == "__main__":
+    logger.info(f"[SERVER] СЕРВЕР ЗАПУЩЕН ПО АДРЕСУ: {SERVER_HOST}, НА ПОРТУ: {SERVER_PORT}")
     uvicorn.run(app, host=SERVER_HOST, port=SERVER_PORT)
