@@ -1,5 +1,8 @@
 import os
+import openai
 from pathlib import Path
+
+import configs.keys
 
 import configs.main_paths_config_sample
 import configs.ai_config_sample
@@ -30,6 +33,7 @@ telegram_config = Path('configs/telegram_config.py')
 try:
     if main_paths_config.exists():
         import configs.main_paths_config
+
         if hasattr(configs.main_paths_config, 'DATA_PATH'):
             DATA_PATH = configs.main_paths_config.DATA_PATH
 
@@ -44,6 +48,7 @@ except Exception as e:
 try:
     if ai_config.exists():
         import configs.ai_config
+
         if hasattr(configs.ai_config, 'max_processing_message_count'):
             max_processing_message_count = configs.ai_config.max_processing_message_count
 
@@ -61,6 +66,7 @@ except Exception as e:
 try:
     if server_config.exists():
         import configs.server_config
+
         if hasattr(configs.server_config, 'SERVER_PORT'):
             SERVER_PORT = configs.server_config.SERVER_PORT
 
@@ -75,6 +81,7 @@ except Exception as e:
 try:
     if telegram_config.exists():
         import configs.telegram_config
+
         if hasattr(configs.telegram_config, 'group_username'):
             group_username = configs.telegram_config.group_username
 
@@ -97,3 +104,9 @@ faiss_metadata_path = os.path.join(FAISS_PATH, "cv_metadata.json")
 
 db_path = os.path.join(DATABASE_PATH, "database")
 db_schema_path = os.path.join(db_path, "dbschema")
+
+openai.api_key = configs.keys.openai_api_key
+openrouter_api_key = configs.keys.openrouter_api_key
+API_ID = configs.keys.API_ID
+API_HASH = configs.keys.API_HASH
+SESSION_STRING = configs.keys.SESSION_STRING
