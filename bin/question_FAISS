@@ -11,7 +11,7 @@ from backend.create_FAISS import build_or_update_index
 async def main():
     build_or_update_index()
     init_resources()
-    query = "Роман Казаков"
+    query = "Valerii"
     results, highlights = await full_pipeline(query)
     print(results)
     print(highlights)

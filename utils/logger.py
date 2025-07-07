@@ -13,10 +13,8 @@ class MyLogger:
         log_file_name = f"logs/{name}_log.txt"
         os.makedirs('logs', exist_ok=True)
 
-        # Настройка уровня логирования
         self.logger.setLevel(level)
 
-        # Форматтер
         formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
@@ -32,7 +30,6 @@ class MyLogger:
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
 
-        # Консольный хандлер (опционально)
         if console:
             console_handler = logging.StreamHandler()
             console_handler.setFormatter(formatter)

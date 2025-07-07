@@ -96,7 +96,7 @@ async def analyze_user_query(user_query: str) -> str:
     ], model=openai_model)
 
 
-async def vector_search(optimized_query: str, k: int = 6) -> List[Dict[str, Any]]:
+async def vector_search(optimized_query: str, k: int = 20) -> List[Dict[str, Any]]:
     """
     Выполняет поиск по FAISS индексу на основе векторного представления запроса.
 
