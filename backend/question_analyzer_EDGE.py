@@ -5,7 +5,7 @@ import httpx
 import asyncio
 from typing import List, Any, Tuple, Dict
 
-from configs.ai_config import *
+from configs.cfg import *
 
 client = edgedb.create_async_client("database")
 

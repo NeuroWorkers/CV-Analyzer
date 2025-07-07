@@ -5,7 +5,7 @@ import telethon.sessions
 from datetime import datetime
 from telethon import TelegramClient
 
-from configs.project_paths import tg_dump_media_path, tg_dump_last_dump_path, tg_dump_text_path, DATA_PATH
+from configs.cfg import tg_dump_media_path, tg_dump_last_dump_path, tg_dump_text_path, DATA_PATH
 from tg_dumper.chatdata import Message
 
 from telethon.tl.functions.channels import GetForumTopicsRequest
@@ -14,7 +14,7 @@ from telethon.tl.types import (
     DocumentAttributeFilename, DocumentAttributeSticker, Channel, User
 )
 
-from configs.telegram_config import API_ID, API_HASH, SESSION_STRING, group_username, specific_topic_id
+from configs.cfg import API_ID, API_HASH, SESSION_STRING, group_username, specific_topic_id
 
 downloaded_avatars = {}
 

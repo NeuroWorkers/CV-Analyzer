@@ -5,8 +5,8 @@ import numpy as np
 from typing import List, Dict, Tuple
 from sentence_transformers import SentenceTransformer
 
-from configs.ai_config import faiss_model
-from configs.project_paths import relevant_text_path, faiss_index_path, faiss_metadata_path
+from configs.cfg import faiss_model
+from configs.cfg import relevant_text_path, faiss_index_path, faiss_metadata_path
 
 model = SentenceTransformer(faiss_model)
 

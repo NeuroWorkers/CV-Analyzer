@@ -3,7 +3,7 @@ import json
 import shutil
 import traceback
 
-from configs.project_paths import relevant_text_path, relevant_media_path, tg_dump_media_path
+from configs.cfg import relevant_text_path, relevant_media_path, tg_dump_media_path
 
 
 def copy_media_from_json(

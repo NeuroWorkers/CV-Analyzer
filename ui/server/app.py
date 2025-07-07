@@ -18,8 +18,8 @@ from backend.question_analyzer_FAISS import init_resources
 
 from utils.logger import MyLogger
 
-from configs.project_paths import relevant_media_path, DATA_PATH
-from configs.server_config import SERVER_PORT, SERVER_HOST, SEARCH_MODE
+from configs.cfg import relevant_media_path, DATA_PATH
+from configs.cfg import SERVER_PORT, SERVER_HOST, SEARCH_MODE
 
 logger = MyLogger(__name__, level=logging.INFO, console=True)
 

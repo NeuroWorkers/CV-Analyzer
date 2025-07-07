@@ -12,8 +12,8 @@ import httpx
 import torch
 from sentence_transformers import SentenceTransformer
 
-from configs.project_paths import faiss_index_path, faiss_metadata_path
-from configs.ai_config import faiss_model, openai_model, db_conn_name
+from configs.cfg import faiss_index_path, faiss_metadata_path
+from configs.cfg import faiss_model, openai_model, db_conn_name
 
 from utils.logger import MyLogger
 
@@ -214,7 +214,7 @@ async def chat_completion_openrouter(messages: List[Dict[str, str]], model: str 
     Returns:
         str: Текстовый ответ от модели.
     """
-    from configs.ai_config import openrouter_api_key
+    from configs.cfg import openrouter_api_key
 
     logger.debug(f"Sending request to OpenRouter API with model: {model}")
     

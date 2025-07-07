@@ -4,8 +4,8 @@ import json
 import asyncio
 import httpx
 
-from configs.ai_config import max_processing_message_count, openrouter_api_key
-from configs.project_paths import tg_dump_text_path, relevant_text_path, relevant_media_path
+from configs.cfg import max_processing_message_count, openrouter_api_key
+from configs.cfg import tg_dump_text_path, relevant_text_path, relevant_media_path
 
 
 PROMPT_TEMPLATE = """

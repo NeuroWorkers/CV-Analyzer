@@ -3,9 +3,8 @@ import pytz
 import json
 import edgedb
 from datetime import datetime
-from configs.project_paths import relevant_text_path
 from backend.create_FAISS import build_or_update_index
-from configs.ai_config import db_conn_name
+from configs.cfg import db_conn_name, relevant_text_path
 
 
 def update_FAISS():

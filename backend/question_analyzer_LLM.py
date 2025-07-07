@@ -7,7 +7,7 @@ from typing import Any, List, Tuple
 import httpx
 import edgedb
 
-from configs.ai_config import *
+from configs.cfg import *
 
 print ("db_conn_name=" + db_conn_name) # default "database"
 client = edgedb.create_async_client(db_conn_name)

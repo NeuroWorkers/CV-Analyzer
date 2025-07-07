@@ -2,6 +2,7 @@ import json
 import argparse
 from datetime import datetime
 
+
 def format_date(date_str):
     """Преобразует дату из формата '2025-07-01 22:41:50.522035' в '2025-07-01 22:41:50'"""
     try:
@@ -12,6 +13,7 @@ def format_date(date_str):
     except ValueError:
         # Если дата уже в нужном формате или некорректная, возвращаем как есть
         return date_str
+
 
 def parse_copy_block(sql_path, source_filter="TG"):
     data_list = []
@@ -40,6 +42,7 @@ def parse_copy_block(sql_path, source_filter="TG"):
                 data_list.append((fetch_date, data))
     return data_list
 
+
 def convert_to_json(data_list, topic_id, start_message_id):
     messages = []
     msg_id = start_message_id
@@ -54,10 +57,10 @@ def convert_to_json(data_list, topic_id, start_message_id):
         username_part = f"@{username}" if username else ""
         fio_part = f"{last_name} {first_name}".strip()
         fio_full = f"{username_part} {fio_part}".strip()
-        
+
         # Форматируем дату
         formatted_date = format_date(fetch_date)
-        
+
         downloaded_text = [
             msg_id,
             formatted_date,
@@ -76,6 +79,7 @@ def convert_to_json(data_list, topic_id, start_message_id):
         })
         msg_id += 1
     return {str(topic_id): messages}
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -96,6 +100,7 @@ def main():
             json.dump(res, out, ensure_ascii=False, indent=4)
     else:
         print(json.dumps(res, ensure_ascii=False, indent=4))
+
 
 if __name__ == "__main__":
     main()
