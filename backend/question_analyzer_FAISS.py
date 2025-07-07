@@ -1,6 +1,7 @@
 import json
 import re
 import asyncio
+import logging
 from pprint import pformat
 
 import edgedb
@@ -21,7 +22,7 @@ index = None
 metadata = None
 
 
-logger = MyLogger(__name__)
+logger = MyLogger(__name__, level=logging.DEBUG, console=True)
 
 
 print("db_conn_name=" + db_conn_name)  # default "database"
@@ -85,15 +86,21 @@ async def analyze_user_query(user_query: str) -> str:
     Returns:
         str: Оптимизированный запрос — строка с ключевыми словами и синонимами.
     """
+    logger.debug(f"Analyzing user query: {user_query}")
+    
     system_prompt = (
         "Ты ИИ-ассистент по поиску резюме. Преобразуй запрос пользователя в короткий список ключевых слов, "
         "синонимов и связанных терминов. Добавляй формы слов, синонимы, аббревиатуры, связанные роли. "
         "Игнорируй нерелевантные слова. Верни одну строку."
     )
-    return await chat_completion_openrouter([
+    
+    result = await chat_completion_openrouter([
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_query},
     ], model=openai_model)
+    
+    logger.debug(f"Optimized query result: {result}")
+    return result
 
 
 async def vector_search(optimized_query: str, k: int = 20) -> List[Dict[str, Any]]:
@@ -107,11 +114,18 @@ async def vector_search(optimized_query: str, k: int = 20) -> List[Dict[str, Any
     Returns:
         List[Dict[str, Any]]: Список метаданных наиболее релевантных резюме.
     """
+    logger.debug(f"Starting vector search for query: '{optimized_query}' with k={k}")
+    
     query_vec = model.encode([optimized_query], convert_to_numpy=True).astype("float32")
+    logger.debug(f"Query vector shape: {query_vec.shape}")
+    
     distances, indices = index.search(query_vec, k)
+    logger.debug(f"FAISS search completed. Distances: {distances[0][:5]}, Indices: {indices[0][:5]}")
 
     search_results = [metadata[idx] for idx in indices[0] if 0 <= idx < len(metadata)]
-    logger.info(f"[VECTOR SEARCH] search results: {pformat(search_results)}")
+    logger.info(f"Vector search found {len(search_results)} results")
+    logger.debug(f"Search results: {pformat(search_results[:3])}")  # Логируем только первые 3 для краткости
+    
     return search_results
 
 
@@ -124,6 +138,8 @@ async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -
     Returns:
          Отфильтрованный массив и хайлайты.
     """
+    logger.debug(f"Starting filter and highlight for query: '{user_query}' with {len(results)} results")
+    
     system_prompt = (
         "Ты ИИ-ассистент по отбору резюме.\n"
         "На входе — запрос пользователя и список резюме, каждый из которых имеет telegram_id, автора и текст.\n\n"
@@ -142,6 +158,7 @@ async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -
         resume_blocks.append(full_text)
 
     user_content = f"Запрос: {user_query}\nРезюме:\n" + "\n".join(resume_blocks)
+    logger.debug(f"Prepared prompt for OpenRouter with {len(resume_blocks)} resumes")
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -149,16 +166,19 @@ async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -
     ]
 
     response_text = await chat_completion_openrouter(messages, model=openai_model)
+    logger.debug(f"OpenRouter response: {response_text[:200]}...")  # Логируем первые 200 символов
 
     clean_response = re.sub(r"```json\s*|```", "", response_text).strip()
 
     try:
         parsed_list = json.loads(clean_response)
+        logger.debug(f"Successfully parsed JSON response with {len(parsed_list)} items")
     except json.JSONDecodeError:
         try:
             parsed_list = eval(clean_response)
+            logger.warning("JSON parsing failed, used eval() as fallback")
         except Exception as e:
-            print(f"[ERROR parse JSON]: {e}")
+            logger.error(f"Both JSON and eval parsing failed: {e}")
             parsed_list = []
 
     result_by_tid = {r["telegram_id"]: r for r in results}
@@ -169,13 +189,17 @@ async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -
     for item in parsed_list:
         tid = item.get("telegram_id")
         if tid is None or tid not in result_by_tid:
+            logger.warning(f"Skipping invalid telegram_id: {tid}")
             continue
         if item.get("релевантно", "").lower().startswith("да"):
             phrases = [w for w in item.get("подсветка", []) if len(w) >= 3]
             filtered.append(result_by_tid[tid])
             highlights.append(phrases)
+            logger.debug(f"Added relevant result for telegram_id {tid} with highlights: {phrases}")
 
-    logger.info(f"[FILTER AND HIGHLIGHT] filtered: {pformat(filtered)}\nhighlights: {pformat(highlights)}")
+    logger.info(f"Filter and highlight completed: {len(filtered)}/{len(results)} results passed filter")
+    logger.debug(f"Final highlights: {pformat(highlights)}")
+    
     return filtered, highlights
 
 
@@ -192,6 +216,8 @@ async def chat_completion_openrouter(messages: List[Dict[str, str]], model: str 
     """
     from configs.ai_config import openrouter_api_key
 
+    logger.debug(f"Sending request to OpenRouter API with model: {model}")
+    
     headers = {
         "Authorization": f"Bearer {openrouter_api_key}",
         "Content-Type": "application/json"
@@ -203,14 +229,26 @@ async def chat_completion_openrouter(messages: List[Dict[str, str]], model: str 
         "temperature": 0
     }
 
-    async with httpx.AsyncClient(timeout=60.0) as client_http:
-        response = await client_http.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers=headers,
-            json=payload
-        )
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"].strip()
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client_http:
+            logger.debug("Making HTTP request to OpenRouter API")
+            response = await client_http.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers=headers,
+                json=payload
+            )
+            response.raise_for_status()
+            
+            result = response.json()["choices"][0]["message"]["content"].strip()
+            logger.debug(f"OpenRouter API response received, length: {len(result)} characters")
+            return result
+            
+    except httpx.HTTPStatusError as e:
+        logger.error(f"HTTP error from OpenRouter API: {e.response.status_code} - {e.response.text}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in OpenRouter API call: {str(e)}")
+        raise
 
 
 async def full_pipeline(user_query: str) -> Tuple[List[Dict[str, Any]], List[List[str]]]:
@@ -228,18 +266,23 @@ async def full_pipeline(user_query: str) -> Tuple[List[Dict[str, Any]], List[Lis
             - Список релевантных резюме.
             - Список списков ключевых слов для каждого резюме.
     """
-    print(f"[INFO] Запрос: {user_query}")
-    optimized_query = await analyze_user_query(user_query)
-    print(f"[INFO] Оптимизированный запрос: {optimized_query}")
+    logger.info(f"Starting full pipeline for query: '{user_query}'")
+    
+    try:
+        optimized_query = await analyze_user_query(user_query)
+        logger.info(f"Query optimization completed: '{optimized_query}'")
 
-    raw_results = await vector_search(optimized_query)
-    print(f"[INFO] Найдено кандидатов: {len(raw_results)}")
+        raw_results = await vector_search(optimized_query)
+        logger.info(f"Vector search completed: found {len(raw_results)} candidates")
 
-    filtered, highlighted = await filter_and_highlight(user_query, raw_results)
-    print(f"[INFO] Отфильтровано: {len(filtered)}")
-    print(f"[INFO] Подсветка завершена")
-
-    return filtered, highlighted
+        filtered, highlighted = await filter_and_highlight(user_query, raw_results)
+        logger.info(f"Pipeline completed: {len(filtered)} relevant results with highlights")
+        
+        return filtered, highlighted
+        
+    except Exception as e:
+        logger.error(f"Error in full pipeline: {str(e)}")
+        raise
 
 
 def test() -> None:

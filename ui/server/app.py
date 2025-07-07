@@ -1,4 +1,5 @@
 import time
+import logging
 from pprint import pformat
 from typing import Dict, Tuple
 
@@ -19,6 +20,8 @@ from utils.logger import MyLogger
 
 from configs.project_paths import relevant_media_path, DATA_PATH
 from configs.server_config import SERVER_PORT, SERVER_HOST, SEARCH_MODE
+
+logger = MyLogger(__name__, level=logging.INFO, console=True)
 
 if SEARCH_MODE == "" or not hasattr(backend, "SEARCH_MODE"):
     from backend.question_analyzer_LLM import fetch_all_messages, full_pipeline
@@ -47,9 +50,18 @@ def is_cache_valid(timestamp: float) -> bool:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logger.info("Starting application lifespan")
+    
     if SEARCH_MODE == "FAISS":
+        logger.info("Initializing FAISS resources...")
         init_resources()
+        logger.info("FAISS resources initialized successfully")
+    else:
+        logger.info(f"Using search mode: {SEARCH_MODE}")
+    
+    logger.info("Application startup completed")
     yield
+    logger.info("Application shutdown completed")
 
 
 app = FastAPI(lifespan=lifespan)
@@ -90,17 +102,24 @@ async def init437721():
 
 @app.get("/get_all_nodes/{page_number}")
 async def get_all_nodes(page_number: int = 1, request: Request = None):
+    logger.info(f"GET /get_all_nodes/{page_number} - Client IP: {request.client.host if request else 'unknown'}")
+    
     try:
         cache = cached_all_nodes.get("all")
         if cache and is_cache_valid(cache[0]):
+            logger.debug("Using cached data for all nodes")
             nodes = cache[1]
         else:
+            logger.debug("Fetching fresh data from database")
             nodes = await fetch_all_messages()
             cached_all_nodes["all"] = (time.time(), nodes)
+            logger.debug(f"Cached {len(nodes)} nodes")
 
         start = (page_number - 1) * 6
         end = page_number * 6
         results = []
+
+        logger.debug(f"Processing nodes from index {start} to {end}")
 
         for idx, node in enumerate(nodes[start:end]):
             media_url = None
@@ -108,6 +127,7 @@ async def get_all_nodes(page_number: int = 1, request: Request = None):
                 current_media_path = os.path.join(DATA_PATH, str(node.media_path))
                 if os.path.exists(current_media_path):
                     media_url = f"/media/{os.path.basename(current_media_path)}"
+                    logger.debug(f"Found media file for node {idx}: {media_url}")
 
             results.append({
                 "author": node.author,
@@ -117,7 +137,7 @@ async def get_all_nodes(page_number: int = 1, request: Request = None):
             })
 
         count = len(nodes)
-        logger.info(f"[GET ALL NODES] results: {pformat(results)}")
+        logger.info(f"Returning {len(results)} nodes out of {count} total (page {page_number})")
 
         res_struct = {
             "data": results,
@@ -126,23 +146,31 @@ async def get_all_nodes(page_number: int = 1, request: Request = None):
 
         return JSONResponse(content=res_struct)
 
-    except Exception:
-        logger.error(f"Произошла ошибка:\n {traceback.format_exc()}")
+    except Exception as e:
+        logger.error(f"Error in get_all_nodes: {str(e)}\n{traceback.format_exc()}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
 @app.get("/get_relevant_nodes/{query}/{page_number}")
 async def get_relevant_nodes(query: str, page_number: int = 1, request: Request = None):
+    logger.info(f"GET /get_relevant_nodes/'{query}'/{page_number} - Client IP: {request.client.host if request else 'unknown'}")
+    
     try:
         cache = cached_relevant_nodes.get(query)
         if cache and is_cache_valid(cache[0]):
+            logger.debug(f"Using cached search results for query: '{query}'")
             nodes, highlights = cache[1]
         else:
+            logger.debug(f"Performing fresh search for query: '{query}'")
             nodes, highlights = await full_pipeline(query)
             cached_relevant_nodes[query] = (time.time(), (nodes, highlights))
+            logger.debug(f"Cached search results: {len(nodes)} nodes, {len(highlights)} highlight sets")
 
         start = (page_number - 1) * 6
         end = page_number * 6
         results = []
+
+        logger.debug(f"Processing relevant nodes from index {start} to {end}")
 
         for idx, node in enumerate(nodes[start:end]):
             media_url = None
@@ -150,6 +178,7 @@ async def get_relevant_nodes(query: str, page_number: int = 1, request: Request 
                 current_media_path = os.path.join(DATA_PATH, str(node['media_path']))
                 if os.path.exists(current_media_path):
                     media_url = f"/media/{os.path.basename(current_media_path)}"
+                    logger.debug(f"Found media file for relevant node {idx}: {media_url}")
 
             results.append({
                 "author": node['author'],
@@ -159,21 +188,29 @@ async def get_relevant_nodes(query: str, page_number: int = 1, request: Request 
             })
 
         count = len(nodes)
-        logger.info(f"[GET RELEVANT NODES] results:\n{pformat(results)}")
+        # Получаем highlights для текущей страницы
+        page_highlights = highlights[start:end] if highlights else []
+        
+        logger.info(f"Returning {len(results)} relevant nodes out of {count} total for query '{query}' (page {page_number})")
+        logger.debug(f"Page highlights: {page_highlights}")
 
         res_struct = {
             "data": results,
             "count": count,
-            "highlight_text": highlights
+            "highlight_text": page_highlights
         }
 
-        logger.info(f"[GET ALL NODES] highlights: {highlights}")
         return JSONResponse(content=res_struct)
+        
     except Exception as e:
-        logger.error(f"Произошла ошибка:\n {traceback.format_exc()}")
+        logger.error(f"Error in get_relevant_nodes for query '{query}': {str(e)}\n{traceback.format_exc()}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
 if __name__ == "__main__":
-    logger.info(f"[SERVER] СЕРВЕР ЗАПУЩЕН ПО АДРЕСУ: {SERVER_HOST}, НА ПОРТУ: {SERVER_PORT}")
+    logger.info(f"Starting CV-Analyzer server on {SERVER_HOST}:{SERVER_PORT}")
+    logger.info(f"Search mode: {SEARCH_MODE}")
+    logger.debug(f"Media path: {relevant_media_path}")
+    logger.debug(f"Data path: {DATA_PATH}")
+    
     uvicorn.run(app, host=SERVER_HOST, port=SERVER_PORT)
