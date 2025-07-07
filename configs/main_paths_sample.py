@@ -1,3 +1,0 @@
-DATA_PATH = ""
-DATABASE_PATH = ""
-FAISS_PATH = ""
