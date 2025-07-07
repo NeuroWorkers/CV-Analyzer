@@ -31,13 +31,13 @@ try:
     if main_paths_config.exists():
         import configs.main_paths_config
         if hasattr(configs.main_paths_config, 'DATA_PATH'):
-            DATA_PATH = main_paths_config.DATA_PATH
+            DATA_PATH = configs.main_paths_config.DATA_PATH
 
         if hasattr(configs.main_paths_config, 'DATABASE_PATH'):
-            DATABASE_PATH = main_paths_config.DATABASE_PATH
+            DATABASE_PATH = configs.main_paths_config.DATABASE_PATH
 
         if hasattr(configs.main_paths_config, 'FAISS_PATH'):
-            FAISS_PATH = main_paths_config.FAISS_PATH
+            FAISS_PATH = configs.main_paths_config.FAISS_PATH
 except Exception as e:
     print(e)
 
@@ -45,16 +45,16 @@ try:
     if ai_config.exists():
         import configs.ai_config
         if hasattr(configs.ai_config, 'max_processing_message_count'):
-            max_processing_message_count = main_paths_config.max_processing_message_count
+            max_processing_message_count = configs.ai_config.max_processing_message_count
 
         if hasattr(configs.ai_config, 'faiss_model'):
-            faiss_model = main_paths_config.faiss_model
+            faiss_model = configs.ai_config.faiss_model
 
         if hasattr(configs.ai_config, 'openai_model'):
-            openai_model = main_paths_config.openai_model
+            openai_model = configs.ai_config.openai_model
 
         if hasattr(configs.ai_config, 'db_conn_name'):
-            db_conn_name = main_paths_config.db_conn_name
+            db_conn_name = configs.ai_config.db_conn_name
 except Exception as e:
     print(e)
 
@@ -62,13 +62,13 @@ try:
     if server_config.exists():
         import configs.server_config
         if hasattr(configs.server_config, 'SERVER_PORT'):
-            SERVER_PORT = main_paths_config.SERVER_PORT
+            SERVER_PORT = configs.server_config.SERVER_PORT
 
         if hasattr(configs.server_config, 'SERVER_HOST'):
-            SERVER_HOST = main_paths_config.SERVER_HOST
+            SERVER_HOST = configs.server_config.SERVER_HOST
 
         if hasattr(configs.server_config, 'SEARCH_MODE'):
-            SEARCH_MODE = main_paths_config.SEARCH_MODE
+            SEARCH_MODE = configs.server_config.SEARCH_MODE
 except Exception as e:
     print(e)
 
@@ -76,10 +76,10 @@ try:
     if telegram_config.exists():
         import configs.telegram_config
         if hasattr(configs.telegram_config, 'group_username'):
-            group_username = main_paths_config.group_username
+            group_username = configs.telegram_config.group_username
 
         if hasattr(configs.telegram_config, 'specific_topic_id'):
-            specific_topic_id = main_paths_config.specific_topic_id
+            specific_topic_id = configs.telegram_config.specific_topic_id
 except Exception as e:
     print(e)
 
