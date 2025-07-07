@@ -23,6 +23,8 @@ data/tg_dump/media/
 data/tg_dump/last_dump/
 data/tg_dump/text/
 data/tg_dump/text/non_filtered_cv.json
+configs/keys.py
+configs/proxy.sh
 
 .DS_Store
 Thumbs.db
