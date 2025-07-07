@@ -2,11 +2,24 @@ import os
 
 try:
     from configs.main_paths_sample import *
+except Exception as e:
+    print(e)
+
+try:
     from configs.ai_config_sample import *
+except Exception as e:
+    print(e)
+
+try:
     from configs.server_config_sample import *
+except Exception as e:
+    print(e)
+
+try:
     from configs.telegram_config_sample import *
 except Exception as e:
     print(e)
+
 
 if DATA_PATH == "":
     DATA_PATH = "./data"
