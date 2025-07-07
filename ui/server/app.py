@@ -166,7 +166,7 @@ async def get_relevant_nodes(query: str, page_number: int = 1, request: Request 
             "count": count,
             "highlight_text": highlights
         }
-
+        logger.info(f"[GET ALL NODES] highlights: {highlights}")
         return JSONResponse(content=res_struct)
     except Exception as e:
         logger.error(f"Произошла ошибка:\n {traceback.format_exc()}")
