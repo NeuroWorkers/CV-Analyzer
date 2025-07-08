@@ -5,6 +5,7 @@ from logging.handlers import RotatingFileHandler
 
 LOG_FILE_PATH = "logs/server.log"  # можно заменить путь по своему
 
+
 def setup_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)  # или INFO
