@@ -227,6 +227,8 @@ async def chat_completion_openrouter(messages: List[Dict[str, str]], model: str 
         "temperature": 0
     }
 
+    logger.debug(f"\n\n\n ЗАПРОС К ОПЕНРОУТЕРУ{messages}\n\n\n\n")
+
     try:
         async with httpx.AsyncClient(timeout=60.0) as client_http:
             logger.debug("Making HTTP request to OpenRouter API")
