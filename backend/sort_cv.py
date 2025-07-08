@@ -5,7 +5,7 @@ import asyncio
 import httpx
 
 from configs.cfg import max_processing_message_count, openrouter_api_key
-from configs.cfg import tg_dump_text_path, relevant_text_path, relevant_media_path
+from configs.cfg import tg_dump_text_path, relevant_text_path, sort_model
 
 
 PROMPT_TEMPLATE = """
@@ -51,7 +51,7 @@ HEADERS = {
 }
 
 
-async def chat_completion(messages: list[dict], model: str = "openai/gpt-4") -> str:
+async def chat_completion(messages: list[dict], model: str = sort_model) -> str:
     """
     Отправляет запрос в OpenRouter API для генерации ответа модели чат-ИИ.
 

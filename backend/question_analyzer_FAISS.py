@@ -12,7 +12,7 @@ import torch
 from sentence_transformers import SentenceTransformer
 
 from configs.cfg import faiss_index_path, faiss_metadata_path
-from configs.cfg import faiss_model, openai_model, db_conn_name
+from configs.cfg import faiss_model, highlight_model, db_conn_name, analyze_query_model
 
 from utils.logger import setup_logger
 
@@ -95,13 +95,13 @@ async def analyze_user_query(user_query: str) -> str:
     result = await chat_completion_openrouter([
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_query},
-    ], model="openai/gpt-4")
+    ], model=analyze_query_model)
     
     logger.debug(f"Optimized query result: {result}")
     return result
 
 
-async def vector_search(optimized_query: str, k: int = 10000) -> List[Dict[str, Any]]:
+async def vector_search(optimized_query: str, k: int = faiss_deep) -> List[Dict[str, Any]]:
     """
     Выполняет поиск по FAISS индексу на основе векторного представления запроса.
 
@@ -163,7 +163,7 @@ async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -
         {"role": "user", "content": user_content}
     ]
 
-    response_text = await chat_completion_openrouter(messages, model=openai_model)
+    response_text = await chat_completion_openrouter(messages, model=highlight_model)
     logger.debug(f"OpenRouter response: {response_text[:200]}...")  # Логируем первые 200 символов
 
     clean_response = re.sub(r"```json\s*|```", "", response_text).strip()
@@ -201,7 +201,7 @@ async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -
     return filtered, highlights
 
 
-async def chat_completion_openrouter(messages: List[Dict[str, str]], model: str = openai_model) -> str:
+async def chat_completion_openrouter(messages: List[Dict[str, str]], model) -> str:
     """
     Отправляет запрос к OpenRouter API и получает ответ от модели.
 
@@ -226,8 +226,6 @@ async def chat_completion_openrouter(messages: List[Dict[str, str]], model: str 
         "messages": messages,
         "temperature": 0
     }
-
-    logger.debug(f"\n\n\n ЗАПРОС К ОПЕНРОУТЕРУ{messages}\n\n\n\n")
 
     try:
         async with httpx.AsyncClient(timeout=60.0) as client_http:

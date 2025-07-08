@@ -15,8 +15,11 @@ FAISS_PATH = configs.main_paths_config_sample.FAISS_PATH
 
 max_processing_message_count = configs.ai_config_sample.max_processing_message_count
 faiss_model = configs.ai_config_sample.faiss_model
-openai_model = configs.ai_config_sample.openai_model
+sort_model = configs.ai_config_sample.sort_model
+analyze_query_model = configs.ai_config_sample.analyze_query_model
+highlight_model = configs.ai_config_sample.highlight_model
 db_conn_name = configs.ai_config_sample.db_conn_name
+faiss_deep = configs.ai_config_sample.faiss_deep
 
 SERVER_HOST = configs.server_config_sample.SERVER_HOST
 SERVER_PORT = configs.server_config_sample.SERVER_PORT
@@ -55,11 +58,20 @@ try:
         if hasattr(configs.ai_config, 'faiss_model'):
             faiss_model = configs.ai_config.faiss_model
 
-        if hasattr(configs.ai_config, 'openai_model'):
-            openai_model = configs.ai_config.openai_model
+        if hasattr(configs.ai_config, 'analyze_query_model'):
+            analyze_query_model = configs.ai_config.analyze_query_model
+
+        if hasattr(configs.ai_config, 'highlight_model'):
+            highlight_model = configs.ai_config.highlight_model
+
+        if hasattr(configs.ai_config, 'sort_model'):
+            sort_model = configs.ai_config.sort_model
 
         if hasattr(configs.ai_config, 'db_conn_name'):
             db_conn_name = configs.ai_config.db_conn_name
+
+        if hasattr(configs.ai_config, 'faiss_deep'):
+            faiss_deep = configs.ai_config.faiss_deep
 except Exception as e:
     print(e)
 
