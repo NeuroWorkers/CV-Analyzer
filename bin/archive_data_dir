@@ -6,6 +6,6 @@ source ./bin/begin.sh
 d1=`basename $p`
 echo $d1
 dt=`date +"%Y%m%d-%H%M%S"`
-fff=data-${d2}-${dt}.tar.gz
+fff=data-${d2}-${dt}
 echo "Creating file=$fff"
 tar -czvf ${fff}-nomedia.tar.gz --exclude=data/relevant/media --exclude=data/tg_dump/media data/
