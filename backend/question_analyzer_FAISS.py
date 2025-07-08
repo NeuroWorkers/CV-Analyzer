@@ -11,7 +11,7 @@ import httpx
 import torch
 from sentence_transformers import SentenceTransformer
 
-from configs.cfg import faiss_index_path, faiss_metadata_path
+from configs.cfg import faiss_index_path, faiss_metadata_path, faiss_deep
 from configs.cfg import faiss_model, highlight_model, db_conn_name, analyze_query_model
 
 from utils.logger import setup_logger
