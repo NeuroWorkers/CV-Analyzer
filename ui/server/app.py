@@ -25,7 +25,7 @@ logger = setup_logger("server")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting application lifespan")
-    #build_or_update_index()
+    # build_or_update_index()
     init_resources()
     logger.info("FAISS resources initialized successfully")
 
