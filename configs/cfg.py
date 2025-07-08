@@ -116,6 +116,13 @@ faiss_metadata_path = os.path.join(FAISS_PATH, "cv_metadata.json")
 db_path = os.path.join(DATABASE_PATH, "database")
 db_schema_path = os.path.join(db_path, "dbschema")
 
+openai.api_key = configs.keys_sample.openai_api_key
+openrouter_api_key = configs.keys_sample.openrouter_api_key
+API_ID = configs.keys_sample.API_ID
+API_HASH = configs.keys_sample.API_HASH
+SESSION_STRING = configs.keys_sample.SESSION_STRING
+
+
 try:
     if keys.exists():
         import configs.keys
@@ -142,9 +149,3 @@ except Exception as e:
     print(e)
 
 
-
-#openai.api_key = configs.keys.openai_api_key
-#openrouter_api_key = configs.keys.openrouter_api_key
-#API_ID = configs.keys.API_ID
-#API_HASH = configs.keys.API_HASH
-#SESSION_STRING = configs.keys.SESSION_STRING
