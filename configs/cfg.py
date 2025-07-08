@@ -27,10 +27,17 @@ SEARCH_MODE = configs.server_config_sample.SEARCH_MODE
 group_username = configs.telegram_config_sample.group_username
 specific_topic_id = configs.telegram_config_sample.specific_topic_id
 
+openai.api_key = configs.keys_sample.openai_api_key
+openrouter_api_key = configs.keys_sample.openrouter_api_key
+API_ID = configs.keys_sample.API_ID
+API_HASH = configs.keys_sample.API_HASH
+SESSION_STRING = configs.keys_sample.SESSION_STRING
+
 main_paths_config = Path('configs/main_paths_config.py')
 ai_config = Path('configs/ai_config.py')
 server_config = Path('configs/server_config.py')
 telegram_config = Path('configs/telegram_config.py')
+keys = Path('configs/keys.py')
 
 try:
     if main_paths_config.exists():
@@ -101,6 +108,28 @@ try:
 except Exception as e:
     print(e)
 
+try:
+    if keys.exists():
+        import configs.keys
+
+        if hasattr(configs.keys, 'openai_api_key'):
+            openai_api_key = configs.keys.openai_api_key
+            openai.api_key = openai_api_key
+
+        if hasattr(configs.keys, 'openrouter_api_key'):
+            openrouter_api_key = configs.keys.openrouter_api_key
+
+        if hasattr(configs.keys, 'API_ID'):
+            API_ID = configs.keys.API_ID
+
+        if hasattr(configs.keys, 'API_HASH'):
+            API_HASH = configs.keys.API_HASH
+
+        if hasattr(configs.keys, 'SESSION_STRING'):
+            SESSION_STRING = configs.keys.SESSION_STRING
+except Exception as e:
+    print(e)
+
 relevant_path = os.path.join(DATA_PATH, "relevant")
 relevant_media_path = os.path.join(relevant_path, "media")
 relevant_text_path = os.path.join(relevant_path, "text")
@@ -115,37 +144,3 @@ faiss_metadata_path = os.path.join(FAISS_PATH, "cv_metadata.json")
 
 db_path = os.path.join(DATABASE_PATH, "database")
 db_schema_path = os.path.join(db_path, "dbschema")
-
-openai.api_key = configs.keys_sample.openai_api_key
-openrouter_api_key = configs.keys_sample.openrouter_api_key
-API_ID = configs.keys_sample.API_ID
-API_HASH = configs.keys_sample.API_HASH
-SESSION_STRING = configs.keys_sample.SESSION_STRING
-
-
-try:
-    if keys.exists():
-        import configs.keys
-
-        if hasattr(configs.keys, 'openai_api_key'):
-            openai_api_key = configs.keys.openai_api_key
-            openai.api_key = openai_api_key
-
-        if hasattr(configs.keys, 'openrouter_api_key'):
-            openrouter_api_key = configs.openrouter_api_key
-
-        if hasattr(configs.keys, 'API_ID'):
-            API_ID = configs.keys.API_ID
-
-        if hasattr(configs.keys, 'API_HASH'):
-            API_HASH = configs.keys.API_HASH
-
-        if hasattr(configs.keys, 'SESSION_STRING'):
-            SESSION_STRING = configs.keys.SESSION_STRING
-
-
-
-except Exception as e:
-    print(e)
-
-
