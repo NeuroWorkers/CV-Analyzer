@@ -20,7 +20,7 @@ from utils.logger import MyLogger
 from configs.cfg import relevant_media_path, DATA_PATH
 from configs.cfg import SERVER_PORT, SERVER_HOST, SEARCH_MODE
 
-logger = MyLogger(__name__, level=logging.INFO, console=True)
+logger = MyLogger("ui.server.app", level=logging.INFO, console=True)
 
 if SEARCH_MODE == "" or not hasattr(backend, "SEARCH_MODE"):
     from backend.question_analyzer_LLM import fetch_all_messages, full_pipeline
@@ -37,8 +37,6 @@ elif SEARCH_MODE == "FAISS":
 
 cached_all_nodes: Dict[str, Tuple[float, list]] = {}
 cached_relevant_nodes: Dict[str, Tuple[float, Tuple[list, list]]] = {}
-
-logger = MyLogger(__name__)
 
 CACHE_TTL = 300
 
