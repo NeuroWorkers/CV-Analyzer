@@ -95,7 +95,7 @@ async def analyze_user_query(user_query: str) -> str:
     result = await chat_completion_openrouter([
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_query},
-    ], model=openai_model)
+    ], model="openai/gpt-4")
     
     logger.debug(f"Optimized query result: {result}")
     return result
