@@ -1,4 +1,5 @@
 import type { ICardData } from '../types/ui-types/cardTypes';
+import { getSessionId } from '../utils/session';
 
 interface RawDataItem {
   count?: number;
@@ -13,9 +14,10 @@ interface ApiResponse {
 
 export const fetchCards = async (url: string, pageNum: number, search: string): Promise<{ cards: ICardData[]; totalCount: number }> => {
   try {
+    const sessionId = getSessionId();
     const endpoint = search
-      ? `${url}/get_relevant_nodes/${encodeURIComponent(search)}/${pageNum}`
-      : `${url}/get_all_nodes/${pageNum}`;
+      ? `${url}/get_relevant_nodes/${sessionId}/${encodeURIComponent(search)}/${pageNum}`
+      : `${url}/get_all_nodes/${sessionId}/${pageNum}`;
 
     const response = await fetch(endpoint, {
       method: 'GET',
