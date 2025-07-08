@@ -36,7 +36,6 @@ def extract_texts_and_metadata(json_data: dict) -> Tuple[List[str], List[Dict]]:
 
             texts.append(f"Автор CV(резюме): {msg[3]}. Резюме: {msg[2]}")
 
-            print(media)
             metadata.append({
                 "telegram_id": msg[0],
                 "created_at": msg[1],
