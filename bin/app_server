@@ -12,4 +12,4 @@ fi
 echo HTTP_PROXY=$HTTP_PROXY
 echo VENV_DIR=$VENV_DIR
 
-python3 ./ui/server/app.py 2>&1 | tee -a app-nonsystemd.log
+python3 ./ui/server/app.py 2>&1 | tee -a logs/app-nonsystemd.log
