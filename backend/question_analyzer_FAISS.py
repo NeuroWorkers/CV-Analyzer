@@ -68,7 +68,7 @@ def init_resources():
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     logger.info(f"[INIT RESOURCES] device: {device}")
 
-    model = SentenceTransformer(faiss_model, device=device)
+    model = SentenceTransformer(faiss_model)
 
     index = faiss.read_index(faiss_index_path)
     with open(faiss_metadata_path, "r", encoding="utf-8") as f:
@@ -276,7 +276,7 @@ async def full_pipeline(user_query: str) -> Tuple[List[Dict[str, Any]], List[Lis
         logger.info(f"Vector search completed: found {len(raw_results)} candidates")
 
         filtered, highlighted = await filter_and_highlight(user_query, raw_results)
-        logger.info(f"Pipeline completed: {len(filtered)} relevant results with highlights")
+        logger.info(f"Pipeline completed: {filtered} relevant results with highlights")
         
         return filtered, highlighted
         

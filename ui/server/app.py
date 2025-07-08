@@ -161,7 +161,7 @@ async def get_relevant_nodes(query: str, page_number: int = 1, request: Request 
             logger.debug(f"Performing fresh search for query: '{query}'")
             nodes, highlights = await full_pipeline(query)
             cached_relevant_nodes[query] = (time.time(), (nodes, highlights))
-            logger.debug(f"Cached search results: {len(nodes)} nodes, {len(highlights)} highlight sets")
+            logger.debug(f"Cached search results: {nodes} nodes, {len(highlights)} highlight sets")
 
         start = (page_number - 1) * 6
         end = page_number * 6
