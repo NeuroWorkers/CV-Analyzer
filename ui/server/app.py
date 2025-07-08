@@ -1,10 +1,6 @@
-import time
-import logging
-from typing import Dict, Tuple, List, Any
-
 import os
-import uvicorn
 import backend
+import uvicorn
 import traceback
 from fastapi import FastAPI
 from starlette.requests import Request
@@ -19,9 +15,7 @@ from configs.cfg import relevant_media_path, DATA_PATH
 from configs.cfg import SERVER_PORT, SERVER_HOST, SEARCH_MODE
 
 from backend.create_FAISS import build_or_update_index
-build_or_update_index()
 from backend.question_analyzer_FAISS import fetch_all_messages, full_pipeline
-
 
 from utils.logger import setup_logger
 
@@ -31,7 +25,7 @@ logger = setup_logger("server")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting application lifespan")
-
+    #build_or_update_index()
     init_resources()
     logger.info("FAISS resources initialized successfully")
 
