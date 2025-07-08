@@ -119,7 +119,6 @@ db_schema_path = os.path.join(db_path, "dbschema")
 try:
     if keys.exists():
         import configs.keys
-        exit()
 
         if hasattr(configs.keys, 'openai_api_key'):
             openai_api_key = configs.keys.openai_api_key
