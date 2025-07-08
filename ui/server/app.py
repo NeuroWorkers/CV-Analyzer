@@ -1,6 +1,5 @@
 import time
 import logging
-from pprint import pformat
 from typing import Dict, Tuple
 
 import os

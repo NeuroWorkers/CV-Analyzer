@@ -103,7 +103,7 @@ async def analyze_user_query(user_query: str) -> str:
     return result
 
 
-async def vector_search(optimized_query: str, k: int = 20) -> List[Dict[str, Any]]:
+async def vector_search(optimized_query: str, k: int = 10000) -> List[Dict[str, Any]]:
     """
     Выполняет поиск по FAISS индексу на основе векторного представления запроса.
 
@@ -124,8 +124,8 @@ async def vector_search(optimized_query: str, k: int = 20) -> List[Dict[str, Any
 
     search_results = [metadata[idx] for idx in indices[0] if 0 <= idx < len(metadata)]
     logger.info(f"Vector search found {len(search_results)} results")
-    logger.debug(f"Search results: {pformat(search_results[:3])}")  # Логируем только первые 3 для краткости
-    
+    logger.debug(f"Search results: {pformat(search_results[:3])}")
+
     return search_results
 
 
