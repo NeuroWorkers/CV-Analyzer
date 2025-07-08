@@ -101,7 +101,7 @@ async def analyze_user_query(user_query: str) -> str:
     return result
 
 
-async def vector_search(optimized_query: str, k: int = 10000) -> List[Dict[str, Any]]:
+async def vector_search(optimized_query: str, k: int = 1000) -> List[Dict[str, Any]]:
     """
     Выполняет поиск по FAISS индексу на основе векторного представления запроса.
 
