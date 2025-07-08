@@ -1,7 +1,6 @@
 import json
 import re
 import asyncio
-import logging
 from pprint import pformat
 
 import edgedb
@@ -15,14 +14,13 @@ from sentence_transformers import SentenceTransformer
 from configs.cfg import faiss_index_path, faiss_metadata_path
 from configs.cfg import faiss_model, openai_model, db_conn_name
 
-from utils.logger import MyLogger
+import logging
+
+logger = logging.getLogger(__name__)
 
 model = None
 index = None
 metadata = None
-
-
-logger = MyLogger(__name__, level=logging.DEBUG, console=True)
 
 
 print("db_conn_name=" + db_conn_name)  # default "database"
