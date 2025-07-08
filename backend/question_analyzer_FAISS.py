@@ -14,9 +14,9 @@ from sentence_transformers import SentenceTransformer
 from configs.cfg import faiss_index_path, faiss_metadata_path
 from configs.cfg import faiss_model, openai_model, db_conn_name
 
-import logging
+from utils.logger import setup_logger
 
-logger = logging.getLogger(__name__)
+logger = setup_logger("faiss")
 
 model = None
 index = None

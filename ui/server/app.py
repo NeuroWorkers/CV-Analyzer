@@ -3,7 +3,6 @@ import logging
 from typing import Dict, Tuple
 
 import os
-import logging
 import uvicorn
 import backend
 import traceback
@@ -19,35 +18,22 @@ from backend.question_analyzer_FAISS import init_resources
 from configs.cfg import relevant_media_path, DATA_PATH
 from configs.cfg import SERVER_PORT, SERVER_HOST, SEARCH_MODE
 
-if SEARCH_MODE == "" or not hasattr(backend, "SEARCH_MODE"):
-    from backend.question_analyzer_LLM import fetch_all_messages, full_pipeline
-elif SEARCH_MODE == "LLM":
-    from backend.question_analyzer_LLM import fetch_all_messages, full_pipeline
-elif SEARCH_MODE == "EDGE_EMBED":
-    from backend.question_analyzer_EDGE import fetch_all_messages, full_pipeline
-elif SEARCH_MODE == "FAISS":
-    from backend.create_FAISS import build_or_update_index
+from backend.create_FAISS import build_or_update_index
+build_or_update_index()
+from backend.question_analyzer_FAISS import fetch_all_messages, full_pipeline
 
-    build_or_update_index()
-    from backend.question_analyzer_FAISS import fetch_all_messages, full_pipeline
 
-from utils.logger import setup_logging
+from utils.logger import setup_logger
 
-setup_logging()  # Настройка логирования
-
-logger = logging.getLogger(__name__)
+logger = setup_logger("server")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting application lifespan")
 
-    if SEARCH_MODE == "FAISS":
-        logger.info("Initializing FAISS resources...")
-        init_resources()
-        logger.info("FAISS resources initialized successfully")
-    else:
-        logger.info(f"Using search mode: {SEARCH_MODE}")
+    init_resources()
+    logger.info("FAISS resources initialized successfully")
 
     logger.info("Application startup completed")
     yield
@@ -113,7 +99,7 @@ async def get_all_nodes(page_number: int = 1, request: Request = None):
 
             results.append({
                 "author": node.author,
-                "date": node.created_at.isoformat() if node.created_at else None,
+                "date": node.created_at if node.created_at else None,
                 "text": node.content,
                 "photo": media_url
             })
@@ -157,7 +143,7 @@ async def get_relevant_nodes(query: str, page_number: int = 1, request: Request 
 
             results.append({
                 "author": node['author'],
-                "date": node['created_at'].isoformat() if node['created_at'] else None,
+                "date": node['created_at'] if node['created_at'] else None,
                 "text": node['content'],
                 "photo": media_url
             })

@@ -30,11 +30,13 @@ def extract_texts_and_metadata(json_data: dict) -> Tuple[List[str], List[Dict]]:
     for entries in json_data.values():
         for entry in entries:
             msg = entry.get("downloaded_text")
+            media = entry.get("downloaded_media")
             if not msg or len(msg) < 7:
                 continue
 
             texts.append(f"Автор CV(резюме): {msg[3]}. Резюме: {msg[2]}")
 
+            print(media)
             metadata.append({
                 "telegram_id": msg[0],
                 "created_at": msg[1],
@@ -42,7 +44,8 @@ def extract_texts_and_metadata(json_data: dict) -> Tuple[List[str], List[Dict]]:
                 "author": msg[3],
                 "fwd_date": msg[4],
                 "fwd_author": msg[5],
-                "topic_id": msg[6]
+                "topic_id": msg[6],
+                "media_path": media["path"]
             })
 
     return texts, metadata
