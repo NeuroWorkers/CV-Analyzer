@@ -99,7 +99,7 @@ async def get_all_nodes(page_number: int = 1, request: Request = None):
 
             results.append({
                 "author": node.author,
-                "date": node.created_at if node.created_at else None,
+                "date": node.created_at.isoformat() if node.created_at else None,
                 "text": node.content,
                 "photo": media_url
             })
