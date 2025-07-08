@@ -35,16 +35,6 @@ elif SEARCH_MODE == "FAISS":
     from backend.question_analyzer_FAISS import fetch_all_messages, full_pipeline
 
 
-cached_all_nodes: Dict[str, Tuple[float, list]] = {}
-cached_relevant_nodes: Dict[str, Tuple[float, Tuple[list, list]]] = {}
-
-CACHE_TTL = 300
-
-
-def is_cache_valid(timestamp: float) -> bool:
-    return time.time() - timestamp < CACHE_TTL
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting application lifespan")
@@ -100,17 +90,9 @@ async def init437721():
 @app.get("/get_all_nodes/{page_number}")
 async def get_all_nodes(page_number: int = 1, request: Request = None):
     logger.info(f"GET /get_all_nodes/{page_number} - Client IP: {request.client.host if request else 'unknown'}")
-    
+
     try:
-        cache = cached_all_nodes.get("all")
-        if cache and is_cache_valid(cache[0]):
-            logger.debug("Using cached data for all nodes")
-            nodes = cache[1]
-        else:
-            logger.debug("Fetching fresh data from database")
-            nodes = await fetch_all_messages()
-            cached_all_nodes["all"] = (time.time(), nodes)
-            logger.debug(f"Cached {len(nodes)} nodes")
+        nodes = await fetch_all_messages()
 
         start = (page_number - 1) * 6
         end = page_number * 6
@@ -153,15 +135,7 @@ async def get_relevant_nodes(query: str, page_number: int = 1, request: Request 
     logger.info(f"GET /get_relevant_nodes/'{query}'/{page_number} - Client IP: {request.client.host if request else 'unknown'}")
     
     try:
-        cache = cached_relevant_nodes.get(query)
-        if cache and is_cache_valid(cache[0]):
-            logger.debug(f"Using cached search results for query: '{query}'")
-            nodes, highlights = cache[1]
-        else:
-            logger.debug(f"Performing fresh search for query: '{query}'")
-            nodes, highlights = await full_pipeline(query)
-            cached_relevant_nodes[query] = (time.time(), (nodes, highlights))
-            logger.debug(f"Cached search results: {nodes} nodes, {len(highlights)} highlight sets")
+        nodes, highlights = await full_pipeline(query)
 
         start = (page_number - 1) * 6
         end = page_number * 6
