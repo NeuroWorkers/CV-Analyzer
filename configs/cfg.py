@@ -2,8 +2,7 @@ import os
 import openai
 from pathlib import Path
 
-import configs.keys
-
+import configs.keys_sample
 import configs.main_paths_config_sample
 import configs.ai_config_sample
 import configs.server_config_sample
@@ -117,8 +116,36 @@ faiss_metadata_path = os.path.join(FAISS_PATH, "cv_metadata.json")
 db_path = os.path.join(DATABASE_PATH, "database")
 db_schema_path = os.path.join(db_path, "dbschema")
 
-openai.api_key = configs.keys.openai_api_key
-openrouter_api_key = configs.keys.openrouter_api_key
-API_ID = configs.keys.API_ID
-API_HASH = configs.keys.API_HASH
-SESSION_STRING = configs.keys.SESSION_STRING
+try:
+    if keys.exists():
+        import configs.keys
+        exit()
+
+        if hasattr(configs.keys, 'openai_api_key'):
+            openai_api_key = configs.keys.openai_api_key
+            openai.api_key = openai_api_key
+
+        if hasattr(configs.keys, 'openrouter_api_key'):
+            openrouter_api_key = configs.openrouter_api_key
+
+        if hasattr(configs.keys, 'API_ID'):
+            API_ID = configs.keys.API_ID
+
+        if hasattr(configs.keys, 'API_HASH'):
+            API_HASH = configs.keys.API_HASH
+
+        if hasattr(configs.keys, 'SESSION_STRING'):
+            SESSION_STRING = configs.keys.SESSION_STRING
+
+
+
+except Exception as e:
+    print(e)
+
+
+
+#openai.api_key = configs.keys.openai_api_key
+#openrouter_api_key = configs.keys.openrouter_api_key
+#API_ID = configs.keys.API_ID
+#API_HASH = configs.keys.API_HASH
+#SESSION_STRING = configs.keys.SESSION_STRING
