@@ -1,6 +1,6 @@
 import time
 import logging
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List, Any
 
 import os
 import uvicorn
@@ -76,8 +76,8 @@ async def init437721():
     return {"status": "ok"}
 
 
-@app.get("/get_all_nodes/{page_number}")
-async def get_all_nodes(page_number: int = 1, request: Request = None):
+@app.get("/get_all_nodes/{session_id}/{page_number}")
+async def get_all_nodes(session_id: str, page_number: int = 1, request: Request = None):
     logger.info(f"GET /get_all_nodes/{page_number} - Client IP: {request.client.host if request else 'unknown'}")
 
     try:
@@ -109,7 +109,8 @@ async def get_all_nodes(page_number: int = 1, request: Request = None):
 
         res_struct = {
             "data": results,
-            "count": count
+            "count": count,
+            "session_id": session_id
         }
 
         return JSONResponse(content=res_struct)
@@ -119,13 +120,31 @@ async def get_all_nodes(page_number: int = 1, request: Request = None):
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
-@app.get("/get_relevant_nodes/{query}/{page_number}")
-async def get_relevant_nodes(query: str, page_number: int = 1, request: Request = None):
+session_cache = {}
+nodes = None
+highlights = None
+
+
+@app.get("/get_relevant_nodes/{session_id}/{query}/{page_number}")
+async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, request: Request = None):
     logger.info(
         f"GET /get_relevant_nodes/'{query}'/{page_number} - Client IP: {request.client.host if request else 'unknown'}")
 
     try:
-        nodes, highlights = await full_pipeline(query)
+        if session_id in session_cache:
+            if query in session_cache[session_id]:
+                nodes, highlights = session_cache[session_id][query]
+                other_queries = list(session_cache[session_id].keys())
+                for other_query in other_queries:
+                    if other_query != query:
+                        del session_cache[session_id][other_query]
+            else:
+                nodes, highlights = await full_pipeline(query)
+                session_cache[session_id][query] = (nodes, highlights)
+        else:
+            session_cache[session_id] = {}
+            nodes, highlights = await full_pipeline(query)
+            session_cache[session_id][query] = (nodes, highlights)
 
         start = (page_number - 1) * 6
         end = page_number * 6
@@ -149,7 +168,7 @@ async def get_relevant_nodes(query: str, page_number: int = 1, request: Request 
             })
 
         count = len(nodes)
-        # Получаем highlights для текущей страницы
+
         page_highlights = highlights[start:end] if highlights else []
 
         logger.info(
@@ -159,7 +178,8 @@ async def get_relevant_nodes(query: str, page_number: int = 1, request: Request 
         res_struct = {
             "data": results,
             "count": count,
-            "highlight_text": page_highlights
+            "highlight_text": page_highlights,
+            "session_id": session_id
         }
 
         return JSONResponse(content=res_struct)
