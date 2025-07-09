@@ -4,7 +4,7 @@ import asyncio
 from pprint import pformat
 
 import edgedb
-from typing import List, Any, Tuple, Dict
+from typing import List, Any
 
 import faiss
 import numpy as np
@@ -87,11 +87,12 @@ async def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[list
         if idx == -1:
             continue
         item = metadata[idx]
-        highlights = extract_highlights(optimized_query, item["text"])
+        highlights = extract_highlights(optimized_query, item["content"])
         results.append({
-            "id": item["id"],
-            "text": item["text"],
-            "meta": item["meta"],
+            "telegram_id": item["telegram_id"],
+            "date": item["date"],
+            "content": item["content"],
+            "author": item["author"],
             "highlights": highlights,
             "media_path": item["media_path"]
         })

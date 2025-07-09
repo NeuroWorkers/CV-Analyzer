@@ -153,9 +153,10 @@ async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, 
                     logger.debug(f"Found media file for relevant node {idx}: {media_url}")
 
             results.append({
-                "author": node['meta']['author'],
-                "date": node['id'] if node['id'] else None,
-                "text": node['text'],
+                "telegram_id": node['telegram_id'],
+                "date": node['date'] if node['date'] else None,
+                "content": node['content'],
+                "author": node['author'],
                 "photo": media_url
             })
 
@@ -174,8 +175,6 @@ async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, 
             "highlight_text": page_highlights,
             "session_id": session_id
         }
-
-        logger.debug(f"\n\n\n\n{page_highlights}\n\n\n\n")
 
         return JSONResponse(content=res_struct)
 

@@ -28,27 +28,17 @@ def init_resources():
     model = SentenceTransformer(faiss_model, device=device)
 
 
-def extract_text_and_media(entry: Dict) -> tuple[Any, Any] | str:
-    try:
-        return entry["downloaded_text"][2], entry['downloaded_media']['path']
-    except Exception as e:
-        print(e)
-
-
 def flatten_json_data(json_data: Dict) -> List[Dict]:
     records = []
     for _, items in json_data.items():
         for item in items:
-            text, media = extract_text_and_media(item)
-            if text:
+            if item["downloaded_text"][2]:
                 records.append({
-                    "id": item["downloaded_text"][0],
-                    "text": text,
-                    "meta": {
-                        "author": item["downloaded_text"][3],
-                        "chat_id": item["downloaded_text"][-1]
-                    },
-                    "media_path": media
+                    "telegram_id": item["downloaded_text"][0],
+                    "date": item["downloaded_text"][1],
+                    "content": item["downloaded_text"][2],
+                    "author": item["downloaded_text"][3],
+                    "media_path": item['downloaded_media']['path']
                 })
     return records
 
@@ -65,14 +55,14 @@ def build_or_update_index():
         print("[FAISS] Индекс найден — обновляем только новыми.")
         with open(faiss_metadata_path, "r", encoding="utf-8") as f:
             existing_metadata = json.load(f)
-        existing_ids = {entry["id"] for entry in existing_metadata}
+        existing_ids = {entry["telegram_id"] for entry in existing_metadata}
 
-        new_records = [r for r in records if r["id"] not in existing_ids]
+        new_records = [r for r in records if r["telegram_id"] not in existing_ids]
         if not new_records:
             print("[FAISS] Нет новых записей для добавления.")
             return
 
-        texts = [r["text"] for r in new_records]
+        texts = [r["content"] for r in new_records]
         print(f"Создаем эмбеддинги для {len(texts)} новых записей.")
         embeddings = model.encode(texts, show_progress_bar=True, batch_size=32, normalize_embeddings=True)
 
@@ -80,7 +70,7 @@ def build_or_update_index():
         index.add(embeddings)
         faiss.write_index(index, faiss_index_path)
 
-        new_metadata = [{"id": r["id"], "meta": r["meta"], "text": r["text"], "media_path": r["media_path"]} for r in
+        new_metadata = [{"telegram_id": r["telegram_id"], "date": r["date"], "content": r["content"], "author": r["author"], "media_path": r["media_path"]} for r in
                         new_records]
         existing_metadata.extend(new_metadata)
         with open(faiss_metadata_path, "w", encoding="utf-8") as f:
@@ -89,7 +79,7 @@ def build_or_update_index():
         print(f"[FAISS] Добавлено {len(new_records)} новых записи(-ей) в индекс.")
     else:
         print("[FAISS] Индекс не найден — создаём новый.")
-        texts = [r["text"] for r in records]
+        texts = [r["content"] for r in records]
         print(f"Создаем эмбеддинги для {len(texts)} записей.")
         embeddings = model.encode(texts, show_progress_bar=True, batch_size=32, normalize_embeddings=True)
 
@@ -105,7 +95,7 @@ def build_or_update_index():
         faiss.write_index(index, faiss_index_path)
 
         print("\nСохранение метаданных.")
-        metadata = [{"id": r["id"], "meta": r["meta"], "text": r["text"], "media_path": r["media_path"]} for r in
+        metadata = [{"telegram_id": r["telegram_id"], "date": r["date"], "content": r["content"], "author": r["author"], "media_path": r["media_path"]} for r in
                     records]
         with open(faiss_metadata_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, ensure_ascii=False, indent=2)
