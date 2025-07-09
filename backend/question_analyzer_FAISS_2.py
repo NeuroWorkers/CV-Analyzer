@@ -64,7 +64,7 @@ def init_resources():
     chunk_vectors = np.load(faiss_chunk_vectors_path, allow_pickle=True)
 
 
-def get_relevant_chunks(query_vector: np.ndarray, chunks: List[str], chunk_embeds: np.ndarray, threshold: float = 0.85) -> List[str]:
+def get_relevant_chunks(query_vector: np.ndarray, chunks: List[str], chunk_embeds: np.ndarray, threshold: float = 0.8) -> List[str]:
     """
     Находит релевантные чанки на основе косинусной близости.
     """
@@ -89,9 +89,6 @@ async def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[List
         item = metadata[idx]
         chunk_embeds = chunk_vectors[idx]
         chunks = item.get("chunks", [])
-
-        if not chunks or len(chunk_embeds) == 0:
-            continue
 
         highlights = get_relevant_chunks(query_vec[0], chunks, chunk_embeds)
         if not highlights:

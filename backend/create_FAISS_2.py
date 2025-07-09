@@ -6,7 +6,6 @@ from typing import List, Dict, Any
 
 import torch
 from sentence_transformers import SentenceTransformer
-import re
 
 from configs.cfg import (
     faiss_model,
@@ -26,9 +25,11 @@ EMBEDDING_DIM = 384
 
 def init_resources():
     global model
+
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     if device == "cpu":
         faiss.omp_set_num_threads(os.cpu_count())
+
     model = SentenceTransformer(faiss_model, device=device)
 
 
@@ -58,26 +59,15 @@ def flatten_json_data(json_data: Dict) -> List[Dict]:
     return records
 
 
-def split_into_chunks(text: str, max_ngram: int = 3) -> List[str]:
-    tokens = re.findall(r'\b\w[\w\-/:.]*\w|\w\b', text)
+def split_into_chunks(text: str, max_n: int = 3) -> List[str]:
+    words = text.split()
     ngrams = []
-
-    for i in range(len(tokens)):
-        for n in range(1, max_ngram + 1):
-            if i + n <= len(tokens):
-                ngram = " ".join(tokens[i:i + n])
-                ngrams.append(ngram)
-
-    for token in tokens:
-        parts = re.split(r'[-/:]', token)
-        for i in range(len(parts)):
-            if parts[i]:
-                ngrams.append(parts[i])
-                if i < len(parts) - 1:
-                    ngrams.append(parts[i] + '-')
-                    ngrams.append('-'.join(parts[:i + 2]))
-
-    return list(set(ngrams))
+    for n in range(1, max_n + 1):
+        ngrams.extend(
+            " ".join(words[i:i + n])
+            for i in range(len(words) - n + 1)
+        )
+    return ngrams
 
 
 def build_or_update_index():
@@ -101,7 +91,7 @@ def build_or_update_index():
 
         texts = [r["text"] for r in new_records]
         print(f"Создаем эмбеддинги для {len(texts)} новых записей.")
-        embeddings = model.encode([t.lower() for t in texts], show_progress_bar=True, batch_size=32, normalize_embeddings=True)
+        embeddings = model.encode(texts, show_progress_bar=True, batch_size=32, normalize_embeddings=True)
 
         index = faiss.read_index(faiss_index_path)
         index.add(embeddings)
@@ -127,6 +117,7 @@ def build_or_update_index():
             })
             new_chunk_vectors.append(chunk_embeds)
 
+        # Объединяем старые и новые
         updated_metadata = existing_metadata + new_metadata
         updated_chunk_vectors = np.concatenate([existing_chunk_vectors, np.array(new_chunk_vectors, dtype=object)])
 
@@ -139,7 +130,7 @@ def build_or_update_index():
         print("[FAISS] Индекс не найден — создаём новый.")
         texts = [r["text"] for r in records]
         print(f"Создаем эмбеддинги для {len(texts)} записей.")
-        embeddings = model.encode([t.lower() for t in texts], show_progress_bar=True, batch_size=32, normalize_embeddings=True)
+        embeddings = model.encode(texts, show_progress_bar=True, batch_size=32, normalize_embeddings=True)
 
         print("\nСоздание индекса")
         quantizer = faiss.IndexFlatIP(EMBEDDING_DIM)
