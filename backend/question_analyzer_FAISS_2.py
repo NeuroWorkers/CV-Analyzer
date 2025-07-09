@@ -73,16 +73,6 @@ def extract_highlights(query: str, text: str) -> List[str]:
 
 
 async def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[list[dict[str, list[str] | Any]], list[str]]:
-    """
-    Выполняет поиск по FAISS индексу на основе векторного представления запроса.
-
-    Args:
-        optimized_query (str): Оптимизированный поисковый запрос.
-        k (int): Максимальное число возвращаемых результатов (по умолчанию 20).
-
-    Returns:
-        List[Dict[str, Any]]: Список метаданных наиболее релевантных резюме.
-    """
     logger.debug(f"Starting vector search for query: '{optimized_query}' with k={k}")
 
     query_vec = model.encode([optimized_query], normalize_embeddings=True)
@@ -112,20 +102,6 @@ async def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[list
 
 
 async def full_pipeline(user_query: str) -> tuple[list[dict[str, list[str] | Any]], list[str]]:
-    """
-    Полный пайплайн поиска резюме:
-    - Оптимизация запроса
-    - Поиск по FAISS индексу
-    - Фильтрация результатов и подсветка ключевых слов
-
-    Args:
-        user_query (str): Исходный запрос пользователя.
-
-    Returns:
-        Tuple[List[Dict[str, Any]], List[List[str]]]:
-            - Список релевантных резюме.
-            - Список списков ключевых слов для каждого резюме.
-    """
     logger.info(f"Starting full pipeline for query: '{user_query}'")
 
     try:
