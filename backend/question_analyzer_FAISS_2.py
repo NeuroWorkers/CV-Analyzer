@@ -90,6 +90,9 @@ async def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[List
         chunk_embeds = chunk_vectors[idx]
         chunks = item.get("chunks", [])
 
+        if not chunks or len(chunk_embeds) == 0:
+            continue
+
         highlights = get_relevant_chunks(query_vec[0], chunks, chunk_embeds)
         if not highlights:
             continue
