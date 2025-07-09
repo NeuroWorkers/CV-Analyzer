@@ -66,7 +66,7 @@ def init_resources():
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     logger.info(f"[INIT RESOURCES] device: {device}")
 
-    model = SentenceTransformer(faiss_model)
+    model = SentenceTransformer(faiss_model, device=device)
 
     index = faiss.read_index(faiss_index_path)
     with open(faiss_metadata_path, "r", encoding="utf-8") as f:
@@ -85,19 +85,19 @@ async def analyze_user_query(user_query: str) -> str:
         str: Оптимизированный запрос — строка с ключевыми словами и синонимами.
     """
     logger.debug(f"Analyzing user query: {user_query}")
-    
+
     system_prompt = (
         "Ты ИИ-ассистент по поиску резюме. Преобразуй запрос пользователя в короткий список ключевых слов, "
         "синонимов и связанных терминов. Добавляй формы слов, синонимы, аббревиатуры, связанные роли. "
         "Игнорируй нерелевантные слова. Верни одну строку. Все слова в твоем ответе должны быть продублированы следующим образом: "
         "если слово на русском, то оно также должно быть продублировано на английский и наоборот."
     )
-    
+
     result = await chat_completion_openrouter([
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_query},
     ], model=analyze_query_model)
-    
+
     logger.debug(f"Optimized query result: {result}")
     return result
 
@@ -114,10 +114,10 @@ async def vector_search(optimized_query: str, k: int = faiss_deep) -> List[Dict[
         List[Dict[str, Any]]: Список метаданных наиболее релевантных резюме.
     """
     logger.debug(f"Starting vector search for query: '{optimized_query}' with k={k}")
-    
+
     query_vec = model.encode([optimized_query], convert_to_numpy=True).astype("float32")
     logger.debug(f"Query vector shape: {query_vec.shape}")
-    
+
     distances, indices = index.search(query_vec, k)
     logger.debug(f"FAISS search completed. Distances: {distances[0][:5]}, Indices: {indices[0][:5]}")
 
@@ -138,7 +138,7 @@ async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -
          Отфильтрованный массив и хайлайты.
     """
     logger.debug(f"Starting filter and highlight for query: '{user_query}' with {len(results)} results")
-    
+
     system_prompt = (
         "Ты ИИ-ассистент по отбору резюме.\n"
         "На входе — запрос пользователя и список резюме, каждый из которых имеет telegram_id, автора и текст.\n\n"
@@ -198,7 +198,7 @@ async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -
 
     logger.info(f"Filter and highlight completed: {len(filtered)}/{len(results)} results passed filter")
     logger.debug(f"Final highlights: {pformat(highlights)}")
-    
+
     return filtered, highlights
 
 
@@ -216,7 +216,7 @@ async def chat_completion_openrouter(messages: List[Dict[str, str]], model) -> s
     from configs.cfg import openrouter_api_key
 
     logger.debug(f"Sending request to OpenRouter API with model: {model}")
-    
+
     headers = {
         "Authorization": f"Bearer {openrouter_api_key}",
         "Content-Type": "application/json"
@@ -237,11 +237,11 @@ async def chat_completion_openrouter(messages: List[Dict[str, str]], model) -> s
                 json=payload
             )
             response.raise_for_status()
-            
+
             result = response.json()["choices"][0]["message"]["content"].strip()
             logger.debug(f"OpenRouter API response received, length: {len(result)} characters")
             return result
-            
+
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP error from OpenRouter API: {e.response.status_code} - {e.response.text}")
         raise
@@ -266,7 +266,7 @@ async def full_pipeline(user_query: str) -> Tuple[List[Dict[str, Any]], List[Lis
             - Список списков ключевых слов для каждого резюме.
     """
     logger.info(f"Starting full pipeline for query: '{user_query}'")
-    
+
     try:
         optimized_query = await analyze_user_query(user_query)
         logger.info(f"Query optimization completed: '{optimized_query}'")
@@ -276,9 +276,9 @@ async def full_pipeline(user_query: str) -> Tuple[List[Dict[str, Any]], List[Lis
 
         filtered, highlighted = await filter_and_highlight(user_query, raw_results)
         logger.info(f"Pipeline completed: {filtered} relevant results with highlights")
-        
+
         return filtered, highlighted
-        
+
     except Exception as e:
         logger.error(f"Error in full pipeline: {str(e)}")
         raise

@@ -9,13 +9,12 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.question_analyzer_FAISS import init_resources
+from backend.question_analyzer_FAISS_2 import init_resources
 
 from configs.cfg import relevant_media_path, DATA_PATH
 from configs.cfg import SERVER_PORT, SERVER_HOST, SEARCH_MODE
 
-from backend.create_FAISS import build_or_update_index
-from backend.question_analyzer_FAISS import fetch_all_messages, full_pipeline
+from backend.question_analyzer_FAISS_2 import fetch_all_messages, full_pipeline
 
 from utils.logger import setup_logger
 
@@ -25,10 +24,8 @@ logger = setup_logger("server")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting application lifespan")
-    # build_or_update_index()
     init_resources()
     logger.info("FAISS resources initialized successfully")
-
     logger.info("Application startup completed")
     yield
     logger.info("Application shutdown completed")
@@ -148,6 +145,7 @@ async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, 
 
         for idx, node in enumerate(nodes[start:end]):
             media_url = None
+            print(node)
             if node['media_path']:
                 current_media_path = os.path.join(DATA_PATH, str(node['media_path']))
                 if os.path.exists(current_media_path):
@@ -155,9 +153,9 @@ async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, 
                     logger.debug(f"Found media file for relevant node {idx}: {media_url}")
 
             results.append({
-                "author": node['author'],
-                "date": node['created_at'] if node['created_at'] else None,
-                "text": node['content'],
+                "author": node['meta']['author'],
+                "date": node['id'] if node['id'] else None,
+                "text": node['text'],
                 "photo": media_url
             })
 
