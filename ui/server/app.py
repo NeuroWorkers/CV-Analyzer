@@ -69,7 +69,7 @@ async def init437721():
 
 @app.get("/get_all_nodes/{session_id}/{page_number}")
 async def get_all_nodes(session_id: str, page_number: int = 1, request: Request = None):
-    logger.info(f"GET /get_all_nodes/{page_number} - Client IP: {request.client.host if request else 'unknown'}")
+    logger.info(f"GET /get_all_nodes/{session_id}/{page_number} - Client IP: {request.client.host if request else 'unknown'}")
 
     try:
         nodes = await fetch_all_messages()
@@ -119,7 +119,7 @@ highlights = None
 @app.get("/get_relevant_nodes/{session_id}/{query}/{page_number}")
 async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, request: Request = None):
     logger.info(
-        f"GET /get_relevant_nodes/'{query}'/{page_number} - Client IP: {request.client.host if request else 'unknown'}")
+        f"GET /get_relevant_nodes/{session_id}/'{query}'/{page_number} - Client IP: {request.client.host if request else 'unknown'}")
 
     try:
         if session_id in session_cache:
