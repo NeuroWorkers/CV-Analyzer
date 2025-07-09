@@ -161,7 +161,8 @@ async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, 
 
         count = len(nodes)
 
-        page_highlights = highlights[start:end] if highlights else []
+        page_highlights_nested = highlights[start:end] if highlights else []
+        page_highlights = [word for sublist in page_highlights_nested for word in sublist]
 
         logger.info(
             f"Returning {len(results)} relevant nodes out of {count} total for query '{query}' (page {page_number})")
@@ -173,6 +174,8 @@ async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, 
             "highlight_text": page_highlights,
             "session_id": session_id
         }
+
+        logger.debug(f"\n\n\n\n{page_highlights}\n\n\n\n")
 
         return JSONResponse(content=res_struct)
 

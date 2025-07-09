@@ -11,15 +11,6 @@ import backend.create_FAISS_2
 async def main():
     backend.create_FAISS_2.init_resources()
     backend.create_FAISS_2.build_or_update_index()
-    init_resources()
-    query = "ИИ"
-    results, highlights = await full_pipeline(query)
-    print(results)
-    print(highlights)
-    print("\n--- Результаты ---\n")
-    #for r, hl in zip(results, highlights):
-        #print(f"{r}")
-        #print(f"[Подсветка]: {hl}\n")
 
 asyncio.run(main())
 '

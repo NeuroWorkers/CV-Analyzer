@@ -1,13 +1,19 @@
 import os
 import json
 import faiss
+import numpy as np
 from typing import List, Dict, Any
 
 import torch
 from sentence_transformers import SentenceTransformer
 
-from configs.cfg import faiss_model
-from configs.cfg import relevant_text_path, faiss_index_path, faiss_metadata_path
+from configs.cfg import (
+    faiss_model,
+    relevant_text_path,
+    faiss_index_path,
+    faiss_metadata_path,
+    faiss_chunk_vectors_path
+)
 
 model = None
 index = None
@@ -22,8 +28,7 @@ def init_resources():
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     if device == "cpu":
-        num_threads = os.cpu_count()
-        faiss.omp_set_num_threads(num_threads)
+        faiss.omp_set_num_threads(os.cpu_count())
 
     model = SentenceTransformer(faiss_model, device=device)
 
@@ -33,6 +38,7 @@ def extract_text_and_media(entry: Dict) -> tuple[Any, Any] | str:
         return entry["downloaded_text"][2], entry['downloaded_media']['path']
     except Exception as e:
         print(e)
+        return None, None
 
 
 def flatten_json_data(json_data: Dict) -> List[Dict]:
@@ -51,6 +57,12 @@ def flatten_json_data(json_data: Dict) -> List[Dict]:
                     "media_path": media
                 })
     return records
+
+
+def split_into_chunks(text: str) -> List[str]:
+    # Каждый чанк — отдельное слово без фильтрации
+    words = text.split()
+    return words
 
 
 def build_or_update_index():
@@ -80,13 +92,35 @@ def build_or_update_index():
         index.add(embeddings)
         faiss.write_index(index, faiss_index_path)
 
-        new_metadata = [{"id": r["id"], "meta": r["meta"], "text": r["text"], "media_path": r["media_path"]} for r in
-                        new_records]
-        existing_metadata.extend(new_metadata)
-        with open(faiss_metadata_path, "w", encoding="utf-8") as f:
-            json.dump(existing_metadata, f, ensure_ascii=False, indent=2)
+        print("\nОбработка чанков для новых записей")
+        with open(faiss_chunk_vectors_path, "rb") as f:
+            existing_chunk_vectors = np.load(f, allow_pickle=True)
 
-        print(f"[FAISS] Добавлено {len(new_records)} новых записи(-ей) в индекс.")
+        new_metadata = []
+        new_chunk_vectors = []
+
+        for record in new_records:
+            chunks = split_into_chunks(record["text"])
+            chunk_embeds = model.encode(chunks, batch_size=16, normalize_embeddings=True)
+
+            new_metadata.append({
+                "id": record["id"],
+                "meta": record["meta"],
+                "text": record["text"],
+                "media_path": record["media_path"],
+                "chunks": chunks
+            })
+            new_chunk_vectors.append(chunk_embeds)
+
+        # Объединяем старые и новые
+        updated_metadata = existing_metadata + new_metadata
+        updated_chunk_vectors = np.concatenate([existing_chunk_vectors, np.array(new_chunk_vectors, dtype=object)])
+
+        with open(faiss_metadata_path, "w", encoding="utf-8") as f:
+            json.dump(updated_metadata, f, ensure_ascii=False, indent=2)
+        np.save(faiss_chunk_vectors_path, updated_chunk_vectors)
+
+        print(f"[FAISS] Добавлено {len(new_records)} новых записей и {sum(len(c) for c in new_chunk_vectors)} чанков.")
     else:
         print("[FAISS] Индекс не найден — создаём новый.")
         texts = [r["text"] for r in records]
@@ -104,10 +138,28 @@ def build_or_update_index():
         index.add(embeddings)
         faiss.write_index(index, faiss_index_path)
 
-        print("\nСохранение метаданных.")
-        metadata = [{"id": r["id"], "meta": r["meta"], "text": r["text"], "media_path": r["media_path"]} for r in
-                    records]
+        print("\nОбработка чанков для подсветки")
+        all_chunks = []
+        chunk_vectors = []
+        metadata = []
+
+        for record in records:
+            chunks = split_into_chunks(record["text"])
+            chunk_embeds = model.encode(chunks, batch_size=16, normalize_embeddings=True)
+
+            metadata.append({
+                "id": record["id"],
+                "meta": record["meta"],
+                "text": record["text"],
+                "media_path": record["media_path"],
+                "chunks": chunks
+            })
+
+            all_chunks.append(chunks)
+            chunk_vectors.append(chunk_embeds)
+
         with open(faiss_metadata_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, ensure_ascii=False, indent=2)
+        np.save(faiss_chunk_vectors_path, np.array(chunk_vectors, dtype=object))
 
-        print(f"\nНовый индекс создан. Всего записей: {len(records)}")
+        print(f"\nНовый индекс создан. Всего записей: {len(records)}, чанков сохранено: {sum(len(c) for c in all_chunks)}")
