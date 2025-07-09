@@ -1,0 +1,19 @@
+#!/bin/bash
+cd `dirname $0`;cd ../../; p=`pwd`
+
+#source ./bin/begin.sh
+
+echo "----- data/ ------" 
+check_=0
+
+if [ -d ./data ]; then 
+echo "./data dir found"
+if [-d ./data]
+fi 
+
+
+
+if [ x$check_ == x1 ];
+echo "ERROR ./data dir not found/full!"
+echo "Get ./data from archives"
+fi
