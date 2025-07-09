@@ -1,30 +1,28 @@
 #!/bin/bash
 cd `dirname $0`;cd ../; p=`pwd`
 
-source ../venv/bin/activate
+source ./bin/begin.sh
 
-export PYTHONPATH=$(pwd):$PYTHONPATH
-
-export PYTHONPATH=$(pwd):$PYTHONPATH
 if [ -f configs/proxy.sh ]; then
 source configs/proxy.sh
 else
 source configs/proxy.sh.sample
 fi
 
-if [ -f configs/config.sh ]; then
-source configs/config.sh
-else
-source configs/config.sh.sample
-fi
-
 echo HTTP_PROXY=$HTTP_PROXY | tee -a logs/app.log
 echo VENV_DIR=$VENV_DIR | tee -a logs/app.log
 echo HTTP_SERVER_PORT=$HTTP_SERVER_PORT | tee -a logs/app.log
 #exit
-
-source ${VENV_DIR}/bin/activate
-
+echo SERVER_PORT=$SERVER_PORT
+echo SERVER_HOST=$SERVER_HOST
 
 (cd ui/frontend/dist/;python3 -m http.server $HTTP_SERVER_PORT) 2>&1 | tee -a logs/http_static.log &
+
+if [ x$RUN_unicorve_cli == x1 ]; then
+echo uvicorn ui.server.app:app --host $SERVER_HOST --port $SERVER_PORT
+uvicorn ui.server.app:app --host $SERVER_HOST --port $SERVER_PORT
+else
+echo python3 ./ui/server/app.py ...
 python3 ./ui/server/app.py 2>&1 | tee -a logs/app.log
+fi
+
