@@ -1,0 +1,37 @@
+#!/bin/bash
+cd `dirname $0`;cd ../../; p=`pwd`
+
+source ./bin/begin.sh
+
+echo HTTP_PROXY=$HTTP_PROXY
+echo VENV_DIR=$VENV_DIR
+echo SERVER_PORT=$SERVER_PORT
+echo SERVER_HOST=$SERVER_HOST
+echo HTTP_SERVER_PORT=$HTTP_SERVER_PORT
+
+echo "СКРИПТ СОЗДАЕТ НОВУЮ БАЗУ edgedb!
+ТО ЕСТЬ ИМЯ connection ПОМЕНЯЕТСЯ, ОСОБЕННО ЕСЛИ ЕСТЬ ДРУГИЕ КОННЕКТЫ
+ПОСЛЕ НЕГО НУЖНО ПЕРЕКОНФИГУРИРОВАТЬ db_conn_name"
+echo
+# gel / edgedb  &>/dev/null
+CMD="gel"
+if type -P $CMD ; then
+  echo "$CMD is found in PATH."
+else
+  echo "$CMD is NOT found in PATH."
+fi
+
+echo "database/ - gel db here, hardcoded"
+cd database/
+
+echo "Run: gel project init"
+gel project init
+
+echo ""; echo "----------- instance-name ----------------"
+instance-name=`gel project info --get instance-name`
+gel project info --get instance-name
+echo
+
+
+
+

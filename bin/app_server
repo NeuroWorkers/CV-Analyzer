@@ -11,5 +11,15 @@ fi
 
 echo HTTP_PROXY=$HTTP_PROXY
 echo VENV_DIR=$VENV_DIR
+echo SERVER_PORT=$SERVER_PORT
+echo SERVER_HOST=$SERVER_HOST
+echo HTTP_SERVER_PORT=$HTTP_SERVER_PORT
 
+if [ x$RUN_unicorve_cli == x1 ]; then
+echo uvicorn ui.server.app:app --host $SERVER_HOST --port $SERVER_PORT
+uvicorn ui.server.app:app --host $SERVER_HOST --port $SERVER_PORT | tee -a logs/app-nonsystemd.log
+else
+echo python3 ./ui/server/app.py ...
 python3 ./ui/server/app.py 2>&1 | tee -a logs/app-nonsystemd.log
+fi
+

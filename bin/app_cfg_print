@@ -14,6 +14,3 @@ echo VENV_DIR=$VENV_DIR
 echo SERVER_PORT=$SERVER_PORT
 echo SERVER_HOST=$SERVER_HOST
 echo HTTP_SERVER_PORT=$HTTP_SERVER_PORT
-
-(cd ui/frontend/dist/;python3 -m http.server $HTTP_SERVER_PORT) 2>&1 | tee -a logs/http_static.log &
-python3 ./ui/server/app.py 2>&1 | tee -a logs/app.log &
