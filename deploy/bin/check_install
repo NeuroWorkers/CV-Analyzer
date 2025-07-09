@@ -6,14 +6,17 @@ cd `dirname $0`;cd ../../; p=`pwd`
 echo "----- data/ ------" 
 check_=0
 
-if [ -d ./data ]; then 
-echo "./data dir found"
-if [-d ./data]
-fi 
-
-
-
-if [ x$check_ == x1 ];
-echo "ERROR ./data dir not found/full!"
-echo "Get ./data from archives"
+if [ ! -d ./data/relevant/text ]; then
+check_=1
 fi
+if [ x$check_ == "x1" ]; then
+echo "ERROR ./data dir not in order (not found)!!!"
+echo "Get ./data from archives"
+else
+echo "./data dir seems ok"
+fi
+
+
+
+
+
