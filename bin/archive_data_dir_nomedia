@@ -8,4 +8,4 @@ echo $d1
 dt=`date +"%Y%m%d-%H%M%S"`
 fff=data-${d2}-${dt}
 echo "Creating file=$fff"
-tar -czvf ${fff}.tar.gz data/
+tar -czvf ${fff}-nomedia.tar.gz --exclude=data/relevant/media --exclude=data/tg_dump/media data/
