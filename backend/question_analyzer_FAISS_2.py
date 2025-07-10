@@ -1,19 +1,24 @@
 import json
 import os
 import asyncio
-import re
 from pprint import pformat
 
 import edgedb
-from typing import List, Any
+from typing import List, Any, Tuple, Dict
 
 import faiss
 import numpy as np
 import torch
 from sentence_transformers import SentenceTransformer
 
-from configs.cfg import faiss_index_path, faiss_metadata_path, faiss_deep
-from configs.cfg import faiss_model, db_conn_name
+from configs.cfg import (
+    faiss_index_path,
+    faiss_metadata_path,
+    faiss_chunk_vectors_path,
+    faiss_deep,
+    faiss_model,
+    db_conn_name
+)
 
 from utils.logger import setup_logger
 
@@ -22,25 +27,13 @@ logger = setup_logger("faiss")
 model = None
 index = None
 metadata = None
+chunk_vectors = None
 
 print("db_conn_name=" + db_conn_name)
 client = edgedb.create_async_client(db_conn_name)
 
-THRESHOLD_SCORE = 0.4
-
 
 async def fetch_all_messages() -> List[dict[str, Any]]:
-    """
-    Загружает все сообщения с резюме из базы данных EdgeDB.
-
-    Returns:
-        List[dict[str, Any]]: Список словарей с полями резюме:
-            'telegram_id' (int) — ID пользователя в Telegram,
-            'content' (str) — текст резюме,
-            'author' (str) — автор сообщения,
-            'created_at' (datetime) — дата создания,
-            'media_path' (str|None) — путь к медиафайлу, если есть.
-    """
     return await client.query("""
         SELECT ResumeMessage {
             telegram_id,
@@ -53,69 +46,95 @@ async def fetch_all_messages() -> List[dict[str, Any]]:
 
 
 def init_resources():
-    global model, index, metadata
+    global model, index, metadata, chunk_vectors
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     if device == "cpu":
-        num_threads = os.cpu_count()
-        faiss.omp_set_num_threads(num_threads)
+        faiss.omp_set_num_threads(os.cpu_count())
 
     logger.info(f"[INIT RESOURCES] device: {device}")
-
     model = SentenceTransformer(faiss_model, device=device)
 
     index = faiss.read_index(faiss_index_path)
-    index.nprobe = 20
+    index.nprobe = 100
+
     with open(faiss_metadata_path, "r", encoding="utf-8") as f:
         metadata = json.load(f)
 
-
-def extract_highlights(query: str, text: str) -> List[str]:
-    query_words = set(re.findall(r"\w+", query.lower()))
-    text_words = re.findall(r"\w+", text.lower())
-    return [word for word in query_words if word in text_words]
+    chunk_vectors = np.load(faiss_chunk_vectors_path, allow_pickle=True)
 
 
-async def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[list[dict[str, list[str] | Any]], list[str]]:
+def get_relevant_chunks(query_vector: np.ndarray, chunks: List[str], chunk_embeds: np.ndarray, threshold: float = 0.85, top_k: int = 10) -> List[str]:
+    """
+    Возвращает наиболее релевантные чанки текста на основе косинусной близости.
+
+    Args:
+        query_vector (np.ndarray): Вектор запроса, shape=(embedding_dim,)
+        chunks (List[str]): Список текстовых чанков
+        chunk_embeds (np.ndarray): Матрица эмбеддингов чанков, shape=(N, embedding_dim)
+        threshold (float): Минимальная косинусная близость
+        top_k (int): Максимальное число возвращаемых чанков (по убыванию релевантности)
+
+    Returns:
+        List[str]: Отфильтрованные и отсортированные по релевантности чанки
+    """
+    query_norm = query_vector / np.linalg.norm(query_vector)
+    chunk_norms = chunk_embeds / np.linalg.norm(chunk_embeds, axis=1, keepdims=True)
+
+    similarities = np.dot(chunk_norms, query_norm.T)
+
+    relevant_indices = np.where(similarities >= threshold)[0]
+
+    sorted_indices = relevant_indices[np.argsort(similarities[relevant_indices])[::-1]]
+
+    top_indices = sorted_indices[:top_k]
+
+    return [chunks[i] for i in top_indices]
+
+
+async def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[List[Dict[str, Any]], List[List[str]]]:
     logger.debug(f"Starting vector search for query: '{optimized_query}' with k={k}")
 
-    query_vec = model.encode([optimized_query.lower()], normalize_embeddings=False)
+    query_vec = model.encode([optimized_query], normalize_embeddings=True)
     scores, indices = index.search(np.array(query_vec), k)
 
-    logger.debug(f"FAISS search completed. Top scores: {scores[0][:5]}")
-
     results = []
-    highlights_set = set()
+    highlights_list = []
 
-    for score, idx in zip(scores[0], indices[0]):
-        if idx == -1 or score < THRESHOLD_SCORE:
+    for idx in indices[0]:
+        if idx == -1:
             continue
 
         item = metadata[idx]
+        chunk_embeds = chunk_vectors[idx]
+        chunks = item.get("chunks", [])
 
-        combined_text = f"Автор CV(резюме), автор текста: {item['author']}. Резюме: {item['content']}"
-        hl = extract_highlights(optimized_query, combined_text)
+        if not chunks or len(chunk_embeds) == 0:
+            continue
+
+        highlights = get_relevant_chunks(query_vec[0], chunks, chunk_embeds)
+        if not highlights:
+            continue
 
         results.append({
             "telegram_id": item["telegram_id"],
             "date": item["date"],
             "content": item["content"],
             "author": item["author"],
-            "highlights": hl,
-            "media_path": item["media_path"]
+            "media_path": item['media_path'],
+            "highlights": highlights
         })
+        highlights_list.append(highlights)
 
-        highlights_set.update(hl)
+    logger.info(f"Vector search returned {len(results)} records with highlights")
+    logger.debug(f"Top results: {pformat(results)}")
 
-    logger.info(f"Vector search returned {len(results)} results above threshold {THRESHOLD_SCORE}")
-    logger.debug(f"Search results preview: {pformat(results[:3])}")
-
-    return results, list(highlights_set)
+    return results, highlights_list
 
 
-async def full_pipeline(user_query: str) -> tuple[list[dict[str, list[str] | Any]], list[str]]:
+async def full_pipeline(user_query: str) -> Tuple[List[Dict[str, Any]], List[List[str]]]:
+    logger.info(f"Starting full pipeline for query: '{user_query}'")
     try:
-        logger.info(f"Starting full pipeline for query: '{user_query}'")
         raw_results, highlights = await vector_search(user_query)
         return raw_results, highlights
     except Exception as e:
@@ -124,11 +143,12 @@ async def full_pipeline(user_query: str) -> tuple[list[dict[str, list[str] | Any
 
 
 def test() -> None:
+    init_resources()
     query = "искусственный интеллект"
     results, highlights = asyncio.run(full_pipeline(query))
 
     for r, hl in zip(results, highlights):
-        print(f"{r['created_at']} — {r['author']}: {r['content']}")
+        print(f"{r['meta']['author']}: {r['text'][:120]}...")
         print(f"[Подсветка]: {hl}\n")
 
 

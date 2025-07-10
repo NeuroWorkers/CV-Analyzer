@@ -10,4 +10,4 @@ highlight_model = "google/gemini-2.5-flash"
 
 db_conn_name = "database"
 
-faiss_deep = 10000
+faiss_deep = 100
