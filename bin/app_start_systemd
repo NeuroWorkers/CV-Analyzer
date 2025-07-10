@@ -20,7 +20,7 @@ echo SERVER_HOST=$SERVER_HOST
 
 if [ x$RUN_unicorve_cli == x1 ]; then
 echo uvicorn ui.server.app:app --host $SERVER_HOST --port $SERVER_PORT
-uvicorn ui.server.app:app --host $SERVER_HOST --port $SERVER_PORT | tee -a logs/app.log
+uvicorn ui.server.app:app --host $SERVER_HOST --port $SERVER_PORT 2>&1  | tee -a logs/app.log
 else
 echo python3 ./ui/server/app.py ...
 python3 ./ui/server/app.py 2>&1 | tee -a logs/app.log
