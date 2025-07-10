@@ -1,0 +1,22 @@
+#!/bin/bash
+cd `dirname $0`;cd ../../; p=`pwd`
+
+#source ./bin/begin.sh
+
+echo "----- data/ ------" 
+check_=0
+
+if [ ! -d ./data/relevant/text ]; then
+check_=1
+fi
+if [ x$check_ == "x1" ]; then
+echo "ERROR ./data dir not in order (not found)!!!"
+echo "Get ./data from archives"
+else
+echo "./data dir seems ok"
+fi
+
+
+
+
+

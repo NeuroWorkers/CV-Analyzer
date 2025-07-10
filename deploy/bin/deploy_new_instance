@@ -1,0 +1,27 @@
+#!/bin/bash
+cd `dirname $0`;cd ../../; p=`pwd`
+
+#source ./bin/begin.sh
+source ./deploy/bin/lib.sh
+
+if [ -f ./configs/server_config.py -o -f ./configs/config.sh   ]; then
+#check_=1
+echo ERROR! NEED CLEAN INSTALL
+fi
+echo "OK, install seems clean"
+echo "Press enter"
+read
+
+#echo "Need to unpack ./data from archive"
+
+if [ -f ./new-deploy-cfg.sh ]; then
+source ./new-deploy-cfg.sh
+else
+echo ""
+echo "ERROR: You need create new-deploy-cfg.sh (smaple in deploy/..."
+exit
+fi
+echo SERVER_PORT=$SERVER_PORT
+echo "Press enter if ok"
+read 
+
