@@ -51,7 +51,9 @@ def split_into_chunks(text: str) -> List[str]:
 
 def split_into_faiss_chunks(text: str) -> List[str]:
     texts = text.split(".")
-    texts = texts + text.split()
+    res=text.split()
+    res = [s for s in res if len(s) >= 3 ]
+    texts = texts + res
     return texts
 
 
