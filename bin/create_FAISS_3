@@ -1,0 +1,16 @@
+#!/bin/bash
+cd `dirname $0`;cd ../
+
+source ./bin/begin.sh
+
+#python3 bin/parse_cv.py
+python3 -c '
+import asyncio
+import backend.create_FAISS_3
+
+async def main():
+    backend.create_FAISS_3.init_resources()
+    backend.create_FAISS_3.build_or_update_index()
+
+asyncio.run(main())
+'
