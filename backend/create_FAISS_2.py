@@ -12,15 +12,14 @@ from configs.cfg import (
     relevant_text_path,
     faiss_index_path,
     faiss_metadata_path,
+    N_LIST,
+    EMBEDDING_DIM,
     faiss_chunk_vectors_path
 )
 
 model = None
 index = None
 metadata = None
-
-N_LIST = 100
-EMBEDDING_DIM = 384
 
 
 def init_resources():
@@ -70,8 +69,7 @@ def build_or_update_index():
             print("[FAISS] Нет новых записей для добавления.")
             return
 
-        texts = [f"Автор: {r['author']}. Текст: {r['content']}" for r in new_records]
-        print(texts)
+        texts = [r["content"] for r in new_records]
 
         print(f"Создаем эмбеддинги для {len(texts)} новых записей.")
         embeddings = model.encode([t.lower() for t in texts], show_progress_bar=True, batch_size=32, normalize_embeddings=True)
@@ -111,8 +109,7 @@ def build_or_update_index():
         print(f"[FAISS] Добавлено {len(new_records)} новых записей и {sum(len(c) for c in new_chunk_vectors)} чанков.")
     else:
         print("[FAISS] Индекс не найден — создаём новый.")
-        texts = [f"Автор: {r['author']}. Текст: {r['content']}" for r in records]
-        print(texts)
+        texts = [r["content"] for r in records]
 
         print(f"Создаем эмбеддинги для {len(texts)} записей.")
         embeddings = model.encode([t.lower() for t in texts], show_progress_bar=True, batch_size=32, normalize_embeddings=True)

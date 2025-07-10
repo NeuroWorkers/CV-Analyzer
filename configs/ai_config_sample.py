@@ -11,3 +11,5 @@ db_conn_name = "database"
 faiss_deep = 100
 chunk_threshold = 0.85
 top_k = 10
+N_LIST = 100
+EMBEDDING_DIM = 384

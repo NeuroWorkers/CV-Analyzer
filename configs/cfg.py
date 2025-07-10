@@ -21,6 +21,8 @@ db_conn_name = configs.ai_config_sample.db_conn_name
 faiss_deep = configs.ai_config_sample.faiss_deep
 chunk_threshold = configs.ai_config_sample.chunk_threshold
 top_k = configs.ai_config_sample.top_k
+EMBEDDING_DIM = configs.ai_config_sample.EMBEDDING_DIM
+N_LIST = configs.ai_config_sample.N_LIST
 
 SERVER_HOST = configs.server_config_sample.SERVER_HOST
 SERVER_PORT = configs.server_config_sample.SERVER_PORT
@@ -86,6 +88,12 @@ try:
 
         if hasattr(configs.ai_config, 'top_k'):
             top_k = configs.ai_config.top_k
+
+        if hasattr(configs.ai_config, 'EMBEDDING_DIM'):
+            EMBEDDING_DIM = configs.ai_config.EMBEDDING_DIM
+
+        if hasattr(configs.ai_config, 'N_LIST'):
+            N_LIST = configs.ai_config.N_LIST
 except Exception as e:
     print(e)
 
