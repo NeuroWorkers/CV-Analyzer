@@ -17,6 +17,8 @@ from configs.cfg import (
     faiss_chunk_vectors_path,
     faiss_deep,
     faiss_model,
+    chunk_threshold,
+    top_k,
     db_conn_name
 )
 
@@ -112,7 +114,7 @@ async def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[List
         if not chunks or len(chunk_embeds) == 0:
             continue
 
-        highlights = get_relevant_chunks(query_vec[0], chunks, chunk_embeds)
+        highlights = get_relevant_chunks(query_vec[0], chunks, chunk_embeds, chunk_threshold, top_k)
         if not highlights:
             continue
 

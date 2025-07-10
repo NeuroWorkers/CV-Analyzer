@@ -19,6 +19,8 @@ analyze_query_model = configs.ai_config_sample.analyze_query_model
 highlight_model = configs.ai_config_sample.highlight_model
 db_conn_name = configs.ai_config_sample.db_conn_name
 faiss_deep = configs.ai_config_sample.faiss_deep
+chunk_threshold = configs.ai_config_sample.chunk_threshold
+top_k = configs.ai_config_sample.top_k
 
 SERVER_HOST = configs.server_config_sample.SERVER_HOST
 SERVER_PORT = configs.server_config_sample.SERVER_PORT
@@ -78,6 +80,12 @@ try:
 
         if hasattr(configs.ai_config, 'faiss_deep'):
             faiss_deep = configs.ai_config.faiss_deep
+
+        if hasattr(configs.ai_config, 'chunk_threshold'):
+            chunk_threshold = configs.ai_config.chunk_threshold
+
+        if hasattr(configs.ai_config, 'top_k'):
+            top_k = configs.ai_config.top_k
 except Exception as e:
     print(e)
 
