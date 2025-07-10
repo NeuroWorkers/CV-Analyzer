@@ -70,7 +70,8 @@ def build_or_update_index():
             print("[FAISS] Нет новых записей для добавления.")
             return
 
-        texts = [r["content"] for r in new_records]
+        texts = [f"Автор: {r['author']}. Текст: {r['content']}" for r in new_records]
+        print(texts)
 
         print(f"Создаем эмбеддинги для {len(texts)} новых записей.")
         embeddings = model.encode([t.lower() for t in texts], show_progress_bar=True, batch_size=32, normalize_embeddings=True)
@@ -110,7 +111,9 @@ def build_or_update_index():
         print(f"[FAISS] Добавлено {len(new_records)} новых записей и {sum(len(c) for c in new_chunk_vectors)} чанков.")
     else:
         print("[FAISS] Индекс не найден — создаём новый.")
-        texts = [r["content"] for r in records]
+        texts = [f"Автор: {r['author']}. Текст: {r['content']}" for r in records]
+        print(texts)
+
         print(f"Создаем эмбеддинги для {len(texts)} записей.")
         embeddings = model.encode([t.lower() for t in texts], show_progress_bar=True, batch_size=32, normalize_embeddings=True)
 
