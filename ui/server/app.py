@@ -153,9 +153,8 @@ async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, 
                     logger.debug(f"Found media file for relevant node {idx}: {media_url}")
 
             results.append({
-                "telegram_id": node['telegram_id'],
                 "date": node['date'] if node['date'] else None,
-                "content": node['content'],
+                "text": node['content'],
                 "author": node['author'],
                 "photo": media_url
             })
@@ -168,6 +167,7 @@ async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, 
             f"Returning {len(results)} relevant nodes out of {count} total for query '{query}' (page {page_number})")
         logger.debug(f"Page highlights: {page_highlights}")
 
+        logger.info(f"{results}")
         res_struct = {
             "data": results,
             "count": count,
