@@ -53,35 +53,40 @@ def build_or_update_index():
 
     if os.path.exists(faiss_index_path) and os.path.exists(faiss_metadata_path):
         print("[FAISS] Индекс найден — обновляем только новыми.")
+
         with open(faiss_metadata_path, "r", encoding="utf-8") as f:
             existing_metadata = json.load(f)
+
         existing_ids = {entry["telegram_id"] for entry in existing_metadata}
 
         new_records = [r for r in records if r["telegram_id"] not in existing_ids]
+
         if not new_records:
             print("[FAISS] Нет новых записей для добавления.")
             return
 
-        texts = [r["content"] for r in new_records]
+        texts = [f"Автор CV(резюме), автор текста: {r['author']}. Резюме: {r['content']}" for r in new_records]
+
         print(f"Создаем эмбеддинги для {len(texts)} новых записей.")
-        embeddings = model.encode(texts, show_progress_bar=True, batch_size=32, normalize_embeddings=True)
+        embeddings = model.encode(texts, show_progress_bar=True, batch_size=32, normalize_embeddings=False)
 
         index = faiss.read_index(faiss_index_path)
         index.add(embeddings)
         faiss.write_index(index, faiss_index_path)
 
-        new_metadata = [{"telegram_id": r["telegram_id"], "date": r["date"], "content": r["content"], "author": r["author"], "media_path": r["media_path"]} for r in
-                        new_records]
+        new_metadata = [{"telegram_id": r["telegram_id"], "date": r["date"], "content": r["content"], "author": r["author"], "media_path": r["media_path"]} for r in new_records]
         existing_metadata.extend(new_metadata)
+
         with open(faiss_metadata_path, "w", encoding="utf-8") as f:
             json.dump(existing_metadata, f, ensure_ascii=False, indent=2)
 
         print(f"[FAISS] Добавлено {len(new_records)} новых записи(-ей) в индекс.")
     else:
         print("[FAISS] Индекс не найден — создаём новый.")
-        texts = [r["content"] for r in records]
+        texts = [f"Автор CV(резюме), автор текста: {r['author']}. Резюме: {r['content']}" for r in records]
+
         print(f"Создаем эмбеддинги для {len(texts)} записей.")
-        embeddings = model.encode(texts, show_progress_bar=True, batch_size=32, normalize_embeddings=True)
+        embeddings = model.encode(texts, show_progress_bar=True, batch_size=32, normalize_embeddings=False)
 
         print("\nСоздание индекса")
         quantizer = faiss.IndexFlatIP(EMBEDDING_DIM)
@@ -95,8 +100,8 @@ def build_or_update_index():
         faiss.write_index(index, faiss_index_path)
 
         print("\nСохранение метаданных.")
-        metadata = [{"telegram_id": r["telegram_id"], "date": r["date"], "content": r["content"], "author": r["author"], "media_path": r["media_path"]} for r in
-                    records]
+        metadata = [{"telegram_id": r["telegram_id"], "date": r["date"], "content": r["content"], "author": r["author"], "media_path": r["media_path"]} for r in records]
+
         with open(faiss_metadata_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, ensure_ascii=False, indent=2)
 

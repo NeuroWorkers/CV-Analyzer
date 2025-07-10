@@ -162,8 +162,7 @@ async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, 
 
         count = len(nodes)
 
-        page_highlights_nested = highlights[start:end] if highlights else []
-        page_highlights = [word for sublist in page_highlights_nested for word in sublist]
+        page_highlights = highlights[start:end] if highlights else []
 
         logger.info(
             f"Returning {len(results)} relevant nodes out of {count} total for query '{query}' (page {page_number})")

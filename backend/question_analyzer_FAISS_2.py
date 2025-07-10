@@ -1,6 +1,7 @@
 import json
 import os
 import asyncio
+import re
 from pprint import pformat
 
 import edgedb
@@ -24,6 +25,8 @@ metadata = None
 
 print("db_conn_name=" + db_conn_name)
 client = edgedb.create_async_client(db_conn_name)
+
+THRESHOLD_SCORE = 0.4
 
 
 async def fetch_all_messages() -> List[dict[str, Any]]:
@@ -62,50 +65,57 @@ def init_resources():
     model = SentenceTransformer(faiss_model, device=device)
 
     index = faiss.read_index(faiss_index_path)
-    index.nprobe = 10
+    index.nprobe = 20
     with open(faiss_metadata_path, "r", encoding="utf-8") as f:
         metadata = json.load(f)
 
 
 def extract_highlights(query: str, text: str) -> List[str]:
-    words = set(query.lower().split())
-    return [word for word in words if word in text.lower()]
+    query_words = set(re.findall(r"\w+", query.lower()))
+    text_words = re.findall(r"\w+", text.lower())
+    return [word for word in query_words if word in text_words]
 
 
 async def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[list[dict[str, list[str] | Any]], list[str]]:
     logger.debug(f"Starting vector search for query: '{optimized_query}' with k={k}")
 
-    query_vec = model.encode([optimized_query], normalize_embeddings=True)
-    logger.debug(f"Query vector shape: {query_vec.shape}")
-
+    query_vec = model.encode([optimized_query.lower()], normalize_embeddings=False)
     scores, indices = index.search(np.array(query_vec), k)
-    logger.debug(f"FAISS search completed. Distances: {scores[0][:5]}, Indices: {indices[0][:5]}")
+
+    logger.debug(f"FAISS search completed. Top scores: {scores[0][:5]}")
 
     results = []
-    highlights = []
-    for idx in indices[0]:
-        if idx == -1:
+    highlights_set = set()
+
+    for score, idx in zip(scores[0], indices[0]):
+        if idx == -1 or score < THRESHOLD_SCORE:
             continue
+
         item = metadata[idx]
-        highlights = extract_highlights(optimized_query, item["content"])
+
+        combined_text = f"Автор CV(резюме), автор текста: {item['author']}. Резюме: {item['content']}"
+        hl = extract_highlights(optimized_query, combined_text)
+
         results.append({
             "telegram_id": item["telegram_id"],
             "date": item["date"],
             "content": item["content"],
             "author": item["author"],
-            "highlights": highlights,
+            "highlights": hl,
             "media_path": item["media_path"]
         })
-    logger.info(f"Vector search found {len(results)} results")
-    logger.debug(f"Search results: {pformat(results[:3])}")
 
-    return results, highlights
+        highlights_set.update(hl)
+
+    logger.info(f"Vector search returned {len(results)} results above threshold {THRESHOLD_SCORE}")
+    logger.debug(f"Search results preview: {pformat(results[:3])}")
+
+    return results, list(highlights_set)
 
 
 async def full_pipeline(user_query: str) -> tuple[list[dict[str, list[str] | Any]], list[str]]:
-    logger.info(f"Starting full pipeline for query: '{user_query}'")
-
     try:
+        logger.info(f"Starting full pipeline for query: '{user_query}'")
         raw_results, highlights = await vector_search(user_query)
         return raw_results, highlights
     except Exception as e:
