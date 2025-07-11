@@ -6,3 +6,4 @@ SEARCH_MODE = ""
 # SEARCH_MODE = "LLM"
 # SEARCH_MODE = "FAISS"
 
+db_conn_name = "database"

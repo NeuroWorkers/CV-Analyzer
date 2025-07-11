@@ -17,7 +17,6 @@ faiss_model = configs.ai_config_sample.faiss_model
 sort_model = configs.ai_config_sample.sort_model
 analyze_query_model = configs.ai_config_sample.analyze_query_model
 highlight_model = configs.ai_config_sample.highlight_model
-db_conn_name = configs.main_paths_config_sample.db_conn_name
 faiss_deep = configs.ai_config_sample.faiss_deep
 chunk_threshold = configs.ai_config_sample.chunk_threshold
 EMBEDDING_DIM = configs.ai_config_sample.EMBEDDING_DIM
@@ -27,6 +26,7 @@ N_PROBE = configs.ai_config_sample.N_PROBE
 SERVER_HOST = configs.server_config_sample.SERVER_HOST
 SERVER_PORT = configs.server_config_sample.SERVER_PORT
 SEARCH_MODE = configs.server_config_sample.SEARCH_MODE
+db_conn_name = configs.server_config_sample.db_conn_name
 
 group_username = configs.telegram_config_sample.group_username
 specific_topic_id = configs.telegram_config_sample.specific_topic_id
@@ -55,9 +55,6 @@ try:
 
         if hasattr(configs.main_paths_config, 'FAISS_PATH'):
             FAISS_PATH = configs.main_paths_config.FAISS_PATH
-
-        if hasattr(configs.main_paths_config, 'db_conn_name'):
-            db_conn_name = configs.main_paths_config.db_conn_name
 except Exception as e:
     print(e)
 
@@ -109,6 +106,9 @@ try:
 
         if hasattr(configs.server_config, 'SEARCH_MODE'):
             SEARCH_MODE = configs.server_config.SEARCH_MODE
+
+        if hasattr(configs.server_config, 'db_conn_name'):
+            db_conn_name = configs.server_config.db_conn_name
 except Exception as e:
     print(e)
 
