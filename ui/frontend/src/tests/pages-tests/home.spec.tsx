@@ -33,6 +33,7 @@ const mockStore = configureStore({
       cards: [],
       searchQuery: '',
       totalCount: 0,
+      connectionError: false,
     },
   },
 });
