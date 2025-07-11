@@ -1,0 +1,15 @@
+#!/bin/bash
+cd `dirname $0`;cd ../; p=`pwd`
+
+source ./bin/begin.sh
+
+echo HTTP_PROXY=$HTTP_PROXY
+echo VENV_DIR=$VENV_DIR
+echo SERVER_PORT=$SERVER_PORT
+echo SERVER_HOST=$SERVER_HOST
+echo HTTP_SERVER_PORT=$HTTP_SERVER_PORT
+
+cd database
+#edgedb dump --all > 111.sql
+dt=`date +"%Y%m%d-%H%M%S"`
+edgedb dump ../dump-edgedb-${st}.sql
