@@ -14,7 +14,6 @@ from configs.cfg import (
     faiss_index_path,
     faiss_metadata_path,
     N_LIST,
-    EMBEDDING_DIM,
     faiss_chunk_vectors_path
 )
 
@@ -184,6 +183,7 @@ def build_or_update_index():
         embeddings = model.encode(all_chunks, show_progress_bar=True, batch_size=32, normalize_embeddings=True)
 
         print("\nСоздание индекса")
+        EMBEDDING_DIM = model.get_sentence_embedding_dimension()
         quantizer = faiss.IndexFlatIP(EMBEDDING_DIM)
         index = faiss.IndexIVFFlat(quantizer, EMBEDDING_DIM, N_LIST, faiss.METRIC_INNER_PRODUCT)
 
