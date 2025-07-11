@@ -171,14 +171,13 @@ async def get_relevant_nodes(session_id: str, query: str, request: Request = Non
                 "photo": media_url
             })
 
-
         response = {
             "data": results,
             "count": len(nodes),
             "session_id": session_id
         }
 
-        logger.info(f"Returned {len(results)} relevant nodes for query '{query}' (page {page_number})")
+        logger.info(f"Returned {len(results)} relevant nodes for query '{query}'")
         return JSONResponse(content=response)
 
     except Exception as e:
