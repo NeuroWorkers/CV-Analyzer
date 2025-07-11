@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { fetchCards } from './core/api/api';
-import { setCards, setTotalCount } from './core/store/slices/cardsSlice';
+import { setCards, setTotalCount, setConnectionError } from './core/store/slices/cardsSlice';
 import type { RootState } from './core/store';
 import { Home } from './pages/home/Home';
 
@@ -21,11 +21,20 @@ export const App = () => {
   const loadCards = useCallback(async (pageToLoad: number, query: string) => {
     setIsLoading(true)
     try {
-      const { cards, totalCount } = await fetchCards(URL, pageToLoad, query);
-      dispatch(setCards(cards))
-      dispatch(setTotalCount(totalCount))
+      const { cards, totalCount, error } = await fetchCards(URL, pageToLoad, query);
+      
+      if (error) {
+        dispatch(setConnectionError(true))
+        dispatch(setCards([]))
+        dispatch(setTotalCount(0))
+      } else {
+        dispatch(setConnectionError(false))
+        dispatch(setCards(cards))
+        dispatch(setTotalCount(totalCount))
+      }
     } catch (error) {
       console.error('Error loading cards:', error)
+      dispatch(setConnectionError(true))
       dispatch(setCards([]))
       dispatch(setTotalCount(0))
     } finally {

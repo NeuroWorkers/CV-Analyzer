@@ -5,6 +5,7 @@ const initialState: CardsState = {
   cards: [],
   searchQuery: '',
   totalCount: 0,
+  connectionError: false,
 };
 
 const cardsSlice = createSlice({
@@ -21,8 +22,11 @@ const cardsSlice = createSlice({
     setTotalCount: (state, action: PayloadAction<number>) => {
       state.totalCount = action.payload;
     },
+    setConnectionError: (state, action: PayloadAction<boolean>) => {
+      state.connectionError = action.payload;
+    },
   },
 });
 
-export const { setCards, setSearchQuery, resetSearch, setTotalCount } = cardsSlice.actions;
+export const { setCards, setSearchQuery, resetSearch, setTotalCount, setConnectionError } = cardsSlice.actions;
 export default cardsSlice.reducer;

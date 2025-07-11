@@ -10,6 +10,7 @@ export interface CardsState {
   cards: ICardData[];
   searchQuery: string;
   totalCount: number;
+  connectionError: boolean;
 }
 
 export interface ICardProps {

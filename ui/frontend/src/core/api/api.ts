@@ -12,7 +12,7 @@ interface ApiResponse {
   highlight_text?: string[][];
 }
 
-export const fetchCards = async (url: string, pageNum: number, search: string): Promise<{ cards: ICardData[]; totalCount: number }> => {
+export const fetchCards = async (url: string, pageNum: number, search: string): Promise<{ cards: ICardData[]; totalCount: number; error?: string }> => {
   try {
     const sessionId = getSessionId();
     const endpoint = search
@@ -64,6 +64,15 @@ export const fetchCards = async (url: string, pageNum: number, search: string): 
     }
   } catch (error) {
     console.error('Fetch error:', error);
-    return { cards: [], totalCount: 0 };
+    
+    // Определяем тип ошибки
+    let errorMessage = 'Неизвестная ошибка';
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      errorMessage = 'Ошибка соединения с сервером';
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    
+    return { cards: [], totalCount: 0, error: errorMessage };
   }
 };

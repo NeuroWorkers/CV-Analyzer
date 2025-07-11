@@ -6,15 +6,16 @@ import { CardComponent, NoResultsAlert } from '../../ui';
 
 interface CardsGridProps {
   isLoading?: boolean;
+  onGoToHome?: () => void;
 }
 
-export const CardsGrid = ({ isLoading = false }: CardsGridProps) => {
+export const CardsGrid = ({ isLoading = false, onGoToHome }: CardsGridProps) => {
   const cards = useSelector((state: RootState) => state.cards.cards);
   const searchQuery = useSelector((state: RootState) => state.cards.searchQuery);
   
   // Не показываем "Ничего не найдено" во время загрузки
   if (!isLoading && cards.length === 0) {
-    return <NoResultsAlert searchQuery={searchQuery} />;
+    return <NoResultsAlert searchQuery={searchQuery} onGoToHome={onGoToHome} />;
   }
   
   return (
