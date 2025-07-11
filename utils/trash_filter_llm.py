@@ -5,12 +5,12 @@ from typing import List, Dict, Any
 import httpx
 from tqdm.asyncio import tqdm_asyncio
 
-from configs.cfg import relevant_text_path
+from configs.cfg import relevant_text_path, filter_trash_model
 
-INPUT_PATH = os.path.join(relevant_text_path, "cv.json")
-OUTPUT_PATH = os.path.join(relevant_text_path, "non_trash_cv.json")
+INPUT_PATH = os.path.join(relevant_text_path, "cv_with_trash.json")
+OUTPUT_PATH = os.path.join(relevant_text_path, "cv.json")
 BATCH_SIZE = 10
-MODEL_NAME = "google/gemini-2.5-flash"
+MODEL_NAME = filter_trash_model
 
 
 def extract_contents_from_dict(data: Dict[str, List[Dict[str, Any]]]) -> List[str]:

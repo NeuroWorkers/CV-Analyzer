@@ -26,5 +26,5 @@ python3 utils/clean_empty_records.py -o data/relevant/text/result.json \
 echo "------ RUN utils/merge_json.py ----"
 echo "-- Merge cv json and tg account json"
 python3 utils/merge_json.py data/relevant/text/cv_main.json \
-data/relevant/text/result.json -o data/relevant/text/cv.json
+data/relevant/text/result.json -o data/relevant/text/cv_with_trash.json
 

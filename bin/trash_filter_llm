@@ -1,0 +1,7 @@
+#!/bin/bash
+cd `dirname $0`;cd ../; p=`pwd`
+
+source ./bin/begin.sh
+
+# параметры из конфига
+python3 utils/trash_filter_llm.py 
