@@ -74,9 +74,10 @@ def split_into_chunks(text: str) -> List[str]:
     sentences = re.split(r'(?<=[.!?])\s+', text.strip())
     sentences = [s.strip() for s in sentences if s.strip()]
     tokens = text.strip().lower().split()
+    onegrams = [' '.join(tokens[i:i+1]) for i in range(len(tokens))]
     bigrams = [' '.join(tokens[i:i+2]) for i in range(len(tokens) - 1)]
     trigrams = [' '.join(tokens[i:i+3]) for i in range(len(tokens) - 2)]
-    return sentences + bigrams + trigrams
+    return sentences + onegrams + bigrams + trigrams
 
 
 def build_or_update_index():
