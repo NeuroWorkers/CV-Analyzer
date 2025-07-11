@@ -7,7 +7,7 @@ analyze_query_model = "openai/gpt-4"
 highlight_model = "google/gemini-2.5-flash"
 
 faiss_deep = 100
-chunk_threshold = 0.8
+chunk_threshold = 0.85
 N_LIST = 100
 EMBEDDING_DIM = 384
 N_PROBE = 20
