@@ -134,7 +134,6 @@ async def get_relevant_nodes(session_id: str, query: str, request: Request = Non
     Args:
         session_id (str): Идентификатор пользовательской сессии.
         query (str): Поисковый запрос.
-        page_number (int): Номер страницы.
         request (Request): Объект запроса.
 
     Returns:
