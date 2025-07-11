@@ -53,15 +53,6 @@ export const Home = ({
           </Text>
         )}
         
-        {/* Показываем пагинацию только если не в режиме поиска и нет ошибки соединения */}
-        {!isSearchMode && !connectionError && (
-          <Pagination
-            total={Math.ceil(totalCount / 6)}
-            page={page}
-            onChange={handlePageChange}
-          />
-        )}
-        
         {/* Показываем количество найденных записей при поиске и без ошибки соединения */}
         {isSearchMode && totalCount > 0 && !connectionError && (
           <Text ta="center" size="sm" c="dimmed">
@@ -85,6 +76,17 @@ export const Home = ({
           }}
         >
           <CardsGrid isLoading={isLoading} onGoToHome={handleGoToHome} />
+          <br />
+          
+          {/* Показываем пагинацию только если не в режиме поиска и нет ошибки соединения */}
+          {!isSearchMode && !connectionError && (
+            <Pagination
+              total={Math.ceil(totalCount / 6)}
+              page={page}
+              onChange={handlePageChange}
+            />
+          )}
+          
           <br />
         </div>
       </Stack>
