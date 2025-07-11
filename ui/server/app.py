@@ -126,8 +126,8 @@ async def get_all_nodes(session_id: str, page_number: int = 1, request: Request 
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
-@app.get("/get_relevant_nodes/{session_id}/{query}/{page_number}")
-async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, request: Request = None):
+@app.get("/get_relevant_nodes/{session_id}/{query}")
+async def get_relevant_nodes(session_id: str, query: str, request: Request = None):
     """
     Возвращает релевантные записи на основе запроса, включая подсвеченные фрагменты.
 
@@ -141,7 +141,7 @@ async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, 
         JSONResponse: Результаты поиска с подсветкой.
     """
     logger.info(
-        f"GET /get_relevant_nodes/{session_id}/'{query}'/{page_number} - Client IP: {request.client.host if request else 'unknown'}")
+        f"GET /get_relevant_nodes/{session_id}/'{query}' - Client IP: {request.client.host if request else 'unknown'}")
 
     try:
         if session_id not in session_cache:
@@ -154,11 +154,9 @@ async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, 
             nodes, highlights = await full_pipeline(query)
             session_cache[session_id][query] = (nodes, highlights)
 
-        start = (page_number - 1) * 6
-        end = page_number * 6
         results = []
 
-        for idx, node in enumerate(nodes[start:end]):
+        for idx, node in enumerate(nodes):
             media_url = None
             if node["media_path"]:
                 media_path = os.path.join(DATA_PATH, str(node["media_path"]))
@@ -172,7 +170,7 @@ async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, 
                 "photo": media_url
             })
 
-        page_highlights = highlights[start:end] if highlights else []
+        page_highlights = highlights if highlights else []
 
         response = {
             "data": results,
