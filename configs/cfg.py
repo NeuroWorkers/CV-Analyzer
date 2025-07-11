@@ -17,11 +17,13 @@ faiss_model = configs.ai_config_sample.faiss_model
 sort_model = configs.ai_config_sample.sort_model
 analyze_query_model = configs.ai_config_sample.analyze_query_model
 highlight_model = configs.ai_config_sample.highlight_model
+filter_trash_model = configs.ai_config_sample.filter_trash_model
 faiss_deep = configs.ai_config_sample.faiss_deep
 chunk_threshold = configs.ai_config_sample.chunk_threshold
 EMBEDDING_DIM = configs.ai_config_sample.EMBEDDING_DIM
 N_LIST = configs.ai_config_sample.N_LIST
 N_PROBE = configs.ai_config_sample.N_PROBE
+
 
 SERVER_HOST = configs.server_config_sample.SERVER_HOST
 SERVER_PORT = configs.server_config_sample.SERVER_PORT
