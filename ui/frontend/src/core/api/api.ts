@@ -16,7 +16,7 @@ export const fetchCards = async (url: string, pageNum: number, search: string): 
   try {
     const sessionId = getSessionId();
     const endpoint = search
-      ? `${url}/get_relevant_nodes/${sessionId}/${encodeURIComponent(search)}/${pageNum}`
+      ? `${url}/get_relevant_nodes/${sessionId}/${encodeURIComponent(search)}`
       : `${url}/get_all_nodes/${sessionId}/${pageNum}`;
 
     const response = await fetch(endpoint, {
@@ -36,12 +36,11 @@ export const fetchCards = async (url: string, pageNum: number, search: string): 
     if (responseData.data && Array.isArray(responseData.data)) {
       const cards = responseData.data;
       const totalCount = responseData.count ?? 0;
-      const highlightTexts = responseData.highlight_text ?? [];
       
-      const data: ICardData[] = cards.map((card, index) => ({
+      const data: ICardData[] = cards.map((card) => ({
         author: String(card.author ?? 'N/A'),
         text: String(card.text ?? 'No content available.'),
-        highlight_text: highlightTexts[index] || null,
+        highlight_text: Array.isArray(card.hl) ? card.hl : (card.hl ? [String(card.hl)] : null),
         photo: card.photo ? `${card.photo}` : 'https://i0.wp.com/zblibrary.info/wp-content/uploads/sites/76/2017/03/default-user.png',
         date: String(card.date ?? new Date().toISOString()),
       }));
