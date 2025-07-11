@@ -10,9 +10,9 @@ import torch
 from sentence_transformers import SentenceTransformer
 
 from configs.cfg import (
-    faiss_index_path,
-    faiss_metadata_path,
-    faiss_chunk_vectors_path,
+    faiss_content_index_path,
+    faiss_content_metadata_path,
+    faiss_content_chunk_vectors_path,
     faiss_deep,
     faiss_model,
     chunk_threshold,
@@ -70,13 +70,13 @@ def init_resources():
     logger.info(f"[INIT RESOURCES] device: {device}")
     model = SentenceTransformer(faiss_model, device=device)
 
-    index = faiss.read_index(faiss_index_path)
+    index = faiss.read_index(faiss_content_index_path)
     index.nprobe = N_PROBE
 
-    with open(faiss_metadata_path, "r", encoding="utf-8") as f:
+    with open(faiss_content_metadata_path, "r", encoding="utf-8") as f:
         metadata = json.load(f)
 
-    chunk_vectors = np.load(faiss_chunk_vectors_path, allow_pickle=True)
+    chunk_vectors = np.load(faiss_content_chunk_vectors_path, allow_pickle=True)
 
 
 def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[list[dict[str, float | Any]], list[Any]]:

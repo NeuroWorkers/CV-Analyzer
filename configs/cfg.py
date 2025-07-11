@@ -160,9 +160,13 @@ tg_dump_media_path = os.path.join(tg_dump_path, "media")
 tg_dump_text_path = os.path.join(tg_dump_path, "text")
 tg_dump_last_dump_path = os.path.join(tg_dump_path, "last_dump")
 
-faiss_index_path = os.path.join(FAISS_PATH, "cv_faiss.index")
-faiss_metadata_path = os.path.join(FAISS_PATH, "cv_metadata.json")
-faiss_chunk_vectors_path = os.path.join(FAISS_PATH, "faiss_chunks.npy")
+faiss_content_index_path = os.path.join(FAISS_PATH, "cv_faiss_c.index")
+faiss_content_metadata_path = os.path.join(FAISS_PATH, "cv_metadata_c.json")
+faiss_content_chunk_vectors_path = os.path.join(FAISS_PATH, "faiss_chunks_c.npy")
+
+faiss_author_index_path = os.path.join(FAISS_PATH, "cv_faiss_a.index")
+faiss_author_metadata_path = os.path.join(FAISS_PATH, "cv_metadata_a.json")
+faiss_author_chunk_vectors_path = os.path.join(FAISS_PATH, "faiss_chunks_a.npy")
 
 db_path = os.path.join(DATABASE_PATH, "database")
 db_schema_path = os.path.join(db_path, "dbschema")
