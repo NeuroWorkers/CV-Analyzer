@@ -74,6 +74,9 @@ try:
         if hasattr(configs.ai_config, 'highlight_model'):
             highlight_model = configs.ai_config.highlight_model
 
+        if hasattr(configs.ai_config, 'filter_trash_model'):
+            filter_trash_model = configs.ai_config.filter_trash_model
+
         if hasattr(configs.ai_config, 'sort_model'):
             sort_model = configs.ai_config.sort_model
 
