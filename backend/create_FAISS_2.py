@@ -50,7 +50,7 @@ def flatten_json_data(json_data: Dict) -> List[Dict]:
     records = []
     for _, items in json_data.items():
         for item in items:
-            if item["downloaded_text"][2]:  # Проверка наличия текста
+            if item["downloaded_text"][2]:
                 records.append({
                     "telegram_id": item["downloaded_text"][0],
                     "date": item["downloaded_text"][1],
@@ -113,7 +113,7 @@ def build_or_update_index():
         chunk_metadata = []
 
         for record in new_records:
-            chunks = split_into_chunks(record["content"])
+            chunks = split_into_chunks(f"Автор: {record['author']}. Текст: {record['content']}")
             for chunk in chunks:
                 all_chunks.append(chunk)
                 chunk_metadata.append({
@@ -167,7 +167,7 @@ def build_or_update_index():
         chunk_metadata = []
 
         for record in records:
-            chunks = split_into_chunks(record["content"])
+            chunks = split_into_chunks(f"Автор: {record['author']}. Текст: {record['content']}")
             for chunk in chunks:
                 all_chunks.append(chunk)
                 chunk_metadata.append({
