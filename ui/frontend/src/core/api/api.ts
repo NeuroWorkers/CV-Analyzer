@@ -60,7 +60,7 @@ export const fetchCards = async (url: string, pageNum: number, search: string): 
       return { cards: data, totalCount };
     } else {
       // Для обратной совместимости с предыдущим форматом
-      const rawData: RawDataItem[] = responseData as any;
+      const rawData: RawDataItem[] = responseData as unknown as RawDataItem[];
       const cards = rawData.filter((item, index) => index !== rawData.length - 1 || !('count' in item));
       const totalCount = rawData[rawData.length - 1]?.count ?? 0;
       
