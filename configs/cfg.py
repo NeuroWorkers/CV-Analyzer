@@ -17,12 +17,12 @@ faiss_model = configs.ai_config_sample.faiss_model
 sort_model = configs.ai_config_sample.sort_model
 analyze_query_model = configs.ai_config_sample.analyze_query_model
 highlight_model = configs.ai_config_sample.highlight_model
-db_conn_name = configs.ai_config_sample.db_conn_name
+db_conn_name = configs.main_paths_config_sample.db_conn_name
 faiss_deep = configs.ai_config_sample.faiss_deep
 chunk_threshold = configs.ai_config_sample.chunk_threshold
-top_k = configs.ai_config_sample.top_k
 EMBEDDING_DIM = configs.ai_config_sample.EMBEDDING_DIM
 N_LIST = configs.ai_config_sample.N_LIST
+N_PROBE = configs.ai_config_sample.N_PROBE
 
 SERVER_HOST = configs.server_config_sample.SERVER_HOST
 SERVER_PORT = configs.server_config_sample.SERVER_PORT
@@ -55,6 +55,9 @@ try:
 
         if hasattr(configs.main_paths_config, 'FAISS_PATH'):
             FAISS_PATH = configs.main_paths_config.FAISS_PATH
+
+        if hasattr(configs.main_paths_config, 'db_conn_name'):
+            db_conn_name = configs.main_paths_config.db_conn_name
 except Exception as e:
     print(e)
 
@@ -77,23 +80,20 @@ try:
         if hasattr(configs.ai_config, 'sort_model'):
             sort_model = configs.ai_config.sort_model
 
-        if hasattr(configs.ai_config, 'db_conn_name'):
-            db_conn_name = configs.ai_config.db_conn_name
-
         if hasattr(configs.ai_config, 'faiss_deep'):
             faiss_deep = configs.ai_config.faiss_deep
 
         if hasattr(configs.ai_config, 'chunk_threshold'):
             chunk_threshold = configs.ai_config.chunk_threshold
 
-        if hasattr(configs.ai_config, 'top_k'):
-            top_k = configs.ai_config.top_k
-
         if hasattr(configs.ai_config, 'EMBEDDING_DIM'):
             EMBEDDING_DIM = configs.ai_config.EMBEDDING_DIM
 
         if hasattr(configs.ai_config, 'N_LIST'):
             N_LIST = configs.ai_config.N_LIST
+
+        if hasattr(configs.ai_config, 'N_PROBE'):
+            N_PROBE = configs.ai_config.N_PROBE
 except Exception as e:
     print(e)
 

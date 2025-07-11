@@ -3,6 +3,7 @@ import json
 import faiss
 import numpy as np
 from typing import List, Dict
+import re
 
 import torch
 from sentence_transformers import SentenceTransformer
@@ -23,6 +24,12 @@ metadata = None
 
 
 def init_resources():
+    """
+    Инициализация модели SentenceTransformer и настройка Faiss для многопоточности на CPU.
+
+    Выбирает устройство ('mps' или 'cpu') и загружает модель с указанным faiss_model.
+    Для CPU устанавливает количество потоков Faiss равным числу ядер процессора.
+    """
     global model
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     if device == "cpu":
@@ -31,10 +38,19 @@ def init_resources():
 
 
 def flatten_json_data(json_data: Dict) -> List[Dict]:
+    """
+    Преобразует вложенный JSON с резюме в плоский список записей.
+
+    Args:
+        json_data (Dict): Словарь с исходными данными.
+
+    Returns:
+        List[Dict]: Список записей с ключами telegram_id, date, content, author, media_path.
+    """
     records = []
     for _, items in json_data.items():
         for item in items:
-            if item["downloaded_text"][2]:
+            if item["downloaded_text"][2]:  # Проверка наличия текста
                 records.append({
                     "telegram_id": item["downloaded_text"][0],
                     "date": item["downloaded_text"][1],
@@ -46,11 +62,35 @@ def flatten_json_data(json_data: Dict) -> List[Dict]:
 
 
 def split_into_chunks(text: str) -> List[str]:
-    words = text.split()
-    return words
+    """
+    Разбивает текст на чанки: предложения, биграммы и триграммы.
+
+    Args:
+        text (str): Исходный текст.
+
+    Returns:
+        List[str]: Список чанков (предложений и n-грамм).
+    """
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    sentences = [s.strip() for s in sentences if s.strip()]
+    tokens = text.strip().lower().split()
+    bigrams = [' '.join(tokens[i:i+2]) for i in range(len(tokens) - 1)]
+    trigrams = [' '.join(tokens[i:i+3]) for i in range(len(tokens) - 2)]
+    return sentences + bigrams + trigrams
 
 
 def build_or_update_index():
+    """
+    Создаёт или обновляет FAISS индекс и сопутствующие метаданные.
+
+    Если индекс и метаданные существуют, добавляет только новые записи.
+    Для каждой записи создаются эмбеддинги чанков (предложений и n-грамм),
+    обновляется FAISS индекс, метаданные и файл с эмбеддингами чанков.
+
+    Если индекс отсутствует, создаёт новый с нуля.
+
+    Выводит прогресс и количество добавленных записей/чанков.
+    """
     with open(os.path.join(relevant_text_path, "cv.json"), "r", encoding="utf-8") as f:
         json_data = json.load(f)
 
@@ -69,50 +109,78 @@ def build_or_update_index():
             print("[FAISS] Нет новых записей для добавления.")
             return
 
-        texts = [r["content"] for r in new_records]
+        all_chunks = []
+        chunk_metadata = []
 
-        print(f"Создаем эмбеддинги для {len(texts)} новых записей.")
-        embeddings = model.encode([t.lower() for t in texts], show_progress_bar=True, batch_size=32, normalize_embeddings=True)
+        for record in new_records:
+            chunks = split_into_chunks(record["content"])
+            for chunk in chunks:
+                all_chunks.append(chunk)
+                chunk_metadata.append({
+                    "telegram_id": record["telegram_id"],
+                    "date": record["date"],
+                    "content": record['content'],
+                    "author": record["author"],
+                    "media_path": record["media_path"],
+                    "chunk": chunk
+                })
+
+        print(f"Создаем эмбеддинги для {len(all_chunks)} новых чанков.")
+        embeddings = model.encode(all_chunks, show_progress_bar=True, batch_size=32, normalize_embeddings=True)
 
         index = faiss.read_index(faiss_index_path)
         index.add(embeddings)
         faiss.write_index(index, faiss_index_path)
 
-        print("\nОбработка чанков для новых записей")
-        with open(faiss_chunk_vectors_path, "rb") as f:
-            existing_chunk_vectors = np.load(f, allow_pickle=True)
-
-        new_metadata = []
-        new_chunk_vectors = []
-
-        for record in new_records:
-            chunks = split_into_chunks(record["text"])
-            chunk_embeds = model.encode(chunks, batch_size=16, normalize_embeddings=True)
-
-            new_metadata.append({
-                "telegram_id": record["telegram_id"],
-                "date": record["date"],
-                "content": record["content"],
-                "author": record["author"],
-                "media_path": record['media_path'],
-                "chunks": chunks
-            })
-            new_chunk_vectors.append(chunk_embeds)
-
-        updated_metadata = existing_metadata + new_metadata
-        updated_chunk_vectors = np.concatenate([existing_chunk_vectors, np.array(new_chunk_vectors, dtype=object)])
-
+        updated_metadata = existing_metadata + chunk_metadata
         with open(faiss_metadata_path, "w", encoding="utf-8") as f:
             json.dump(updated_metadata, f, ensure_ascii=False, indent=2)
+
+        if os.path.exists(faiss_chunk_vectors_path):
+            existing_chunk_vectors = np.load(faiss_chunk_vectors_path, allow_pickle=True)
+        else:
+            existing_chunk_vectors = np.empty((0,), dtype=object)
+
+        new_grouped_vectors = []
+        current_id = None
+        temp_vecs = []
+
+        for meta, vec in zip(chunk_metadata, embeddings):
+            telegram_id = meta["telegram_id"]
+            if telegram_id != current_id:
+                if temp_vecs:
+                    new_grouped_vectors.append(np.array(temp_vecs))
+                temp_vecs = []
+                current_id = telegram_id
+            temp_vecs.append(vec)
+        if temp_vecs:
+            new_grouped_vectors.append(np.array(temp_vecs))
+
+        updated_chunk_vectors = np.concatenate([existing_chunk_vectors, np.array(new_grouped_vectors, dtype=object)])
         np.save(faiss_chunk_vectors_path, updated_chunk_vectors)
 
-        print(f"[FAISS] Добавлено {len(new_records)} новых записей и {sum(len(c) for c in new_chunk_vectors)} чанков.")
+        print(f"[FAISS] Добавлено {len(new_records)} новых записей и {len(all_chunks)} чанков.")
+
     else:
         print("[FAISS] Индекс не найден — создаём новый.")
-        texts = [r["content"] for r in records]
+        all_chunks = []
+        chunk_metadata = []
 
-        print(f"Создаем эмбеддинги для {len(texts)} записей.")
-        embeddings = model.encode([t.lower() for t in texts], show_progress_bar=True, batch_size=32, normalize_embeddings=True)
+        for record in records:
+            chunks = split_into_chunks(record["content"])
+            for chunk in chunks:
+                all_chunks.append(chunk)
+                chunk_metadata.append({
+                    "telegram_id": record["telegram_id"],
+                    "date": record["date"],
+                    "content": record['content'],
+                    "author": record["author"],
+                    "media_path": record["media_path"],
+                    "chunk": chunk
+                })
+
+        print(f"Создаем эмбеддинги для {len(all_chunks)} чанков.")
+        embeddings = model.encode(all_chunks, show_progress_bar=True, batch_size=32, normalize_embeddings=True)
 
         print("\nСоздание индекса")
         quantizer = faiss.IndexFlatIP(EMBEDDING_DIM)
@@ -120,34 +188,27 @@ def build_or_update_index():
 
         print("Тренинг")
         index.train(embeddings)
-
-        print("Добавляем векторы...")
         index.add(embeddings)
         faiss.write_index(index, faiss_index_path)
 
-        print("\nОбработка чанков для подсветки")
-        all_chunks = []
-        chunk_vectors = []
-        metadata = []
-
-        for record in records:
-            chunks = split_into_chunks(record["content"])
-            chunk_embeds = model.encode(chunks, batch_size=16, normalize_embeddings=True)
-
-            metadata.append({
-                "telegram_id": record["telegram_id"],
-                "date": record["date"],
-                "content": record["content"],
-                "author": record["author"],
-                "media_path": record['media_path'],
-                "chunks": chunks
-            })
-
-            all_chunks.append(chunks)
-            chunk_vectors.append(chunk_embeds)
-
         with open(faiss_metadata_path, "w", encoding="utf-8") as f:
-            json.dump(metadata, f, ensure_ascii=False, indent=2)
-        np.save(faiss_chunk_vectors_path, np.array(chunk_vectors, dtype=object))
+            json.dump(chunk_metadata, f, ensure_ascii=False, indent=2)
 
-        print(f"\nНовый индекс создан. Всего записей: {len(records)}, чанков сохранено: {sum(len(c) for c in all_chunks)}")
+        grouped_vectors = []
+        current_id = None
+        temp_vecs = []
+
+        for meta, vec in zip(chunk_metadata, embeddings):
+            telegram_id = meta["telegram_id"]
+            if telegram_id != current_id:
+                if temp_vecs:
+                    grouped_vectors.append(np.array(temp_vecs))
+                temp_vecs = []
+                current_id = telegram_id
+            temp_vecs.append(vec)
+        if temp_vecs:
+            grouped_vectors.append(np.array(temp_vecs))
+
+        np.save(faiss_chunk_vectors_path, np.array(grouped_vectors, dtype=object))
+
+        print(f"\nНовый индекс создан. Всего чанков: {len(all_chunks)}")

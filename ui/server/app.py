@@ -1,32 +1,42 @@
 import os
-import backend
-import uvicorn
 import traceback
+import uvicorn
+
 from fastapi import FastAPI
 from starlette.requests import Request
-from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
-from backend.question_analyzer_FAISS_2 import init_resources
-
-from configs.cfg import relevant_media_path, DATA_PATH
-from configs.cfg import SERVER_PORT, SERVER_HOST, SEARCH_MODE
-
-from backend.question_analyzer_FAISS_2 import fetch_all_messages, full_pipeline
-
+from backend.question_analyzer_FAISS_2 import (
+    init_resources,
+    fetch_all_messages,
+    full_pipeline
+)
+from configs.cfg import (
+    relevant_media_path,
+    DATA_PATH,
+    SERVER_PORT,
+    SERVER_HOST,
+    SEARCH_MODE
+)
 from utils.logger import setup_logger
 
 logger = setup_logger("server")
 
+session_cache = {}
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    Жизненный цикл приложения FastAPI:
+    инициализация FAISS-ресурсов при запуске и логирование завершения при остановке.
+    """
     logger.info("Starting application lifespan")
     init_resources()
     logger.info("FAISS resources initialized successfully")
-    logger.info("Application startup completed")
     yield
     logger.info("Application shutdown completed")
 
@@ -41,52 +51,59 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/media", StaticFiles(directory=relevant_media_path), name="media")
+
 
 @app.get("/")
 async def home():
     """
-    Корневая точка API для проверки статуса сервера.
+    Корневая точка API. Проверка статуса сервера.
 
     Returns:
-        dict: Сообщение о успешном запуске сервера.
+        dict: Сообщение об успешной инициализации.
     """
     return {"message": "BACKEND SERVER SUCCESSFULLY STARTED"}
-
-
-app.mount("/media", StaticFiles(directory=relevant_media_path), name="media")
 
 
 @app.get("/init437721")
 async def init437721():
     """
-    Тестовая точка API для проверки статуса.
+    Вспомогательная ручка для тестирования доступности сервера.
 
     Returns:
-        dict: Статус "ok".
+        dict: Статус OK.
     """
     return {"status": "ok"}
 
 
 @app.get("/get_all_nodes/{session_id}/{page_number}")
 async def get_all_nodes(session_id: str, page_number: int = 1, request: Request = None):
-    logger.info(f"GET /get_all_nodes/{session_id}/{page_number} - Client IP: {request.client.host if request else 'unknown'}")
+    """
+    Возвращает все доступные записи (узлы) постранично.
+
+    Args:
+        session_id (str): Идентификатор пользовательской сессии.
+        page_number (int): Номер страницы.
+        request (Request): Объект запроса для получения IP клиента.
+
+    Returns:
+        JSONResponse: Список всех узлов на текущей странице.
+    """
+    logger.info(
+        f"GET /get_all_nodes/{session_id}/{page_number} - Client IP: {request.client.host if request else 'unknown'}")
 
     try:
         nodes = await fetch_all_messages()
-
         start = (page_number - 1) * 6
         end = page_number * 6
         results = []
 
-        logger.debug(f"Processing nodes from index {start} to {end}")
-
         for idx, node in enumerate(nodes[start:end]):
             media_url = None
             if node.media_path:
-                current_media_path = os.path.join(DATA_PATH, str(node.media_path))
-                if os.path.exists(current_media_path):
-                    media_url = f"/media/{os.path.basename(current_media_path)}"
-                    logger.debug(f"Found media file for node {idx}: {media_url}")
+                media_path = os.path.join(DATA_PATH, str(node.media_path))
+                if os.path.exists(media_path):
+                    media_url = f"/media/{os.path.basename(media_path)}"
 
             results.append({
                 "author": node.author,
@@ -95,45 +112,45 @@ async def get_all_nodes(session_id: str, page_number: int = 1, request: Request 
                 "photo": media_url
             })
 
-        count = len(nodes)
-        logger.info(f"Returning {len(results)} nodes out of {count} total (page {page_number})")
-
-        res_struct = {
+        response = {
             "data": results,
-            "count": count,
+            "count": len(nodes),
             "session_id": session_id
         }
+        logger.info(f"Returned {len(results)} nodes out of {len(nodes)}")
 
-        return JSONResponse(content=res_struct)
+        return JSONResponse(content=response)
 
     except Exception as e:
         logger.error(f"Error in get_all_nodes: {str(e)}\n{traceback.format_exc()}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
-session_cache = {}
-nodes = None
-highlights = None
-
-
 @app.get("/get_relevant_nodes/{session_id}/{query}/{page_number}")
 async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, request: Request = None):
+    """
+    Возвращает релевантные записи на основе запроса, включая подсвеченные фрагменты.
+
+    Args:
+        session_id (str): Идентификатор пользовательской сессии.
+        query (str): Поисковый запрос.
+        page_number (int): Номер страницы.
+        request (Request): Объект запроса.
+
+    Returns:
+        JSONResponse: Результаты поиска с подсветкой.
+    """
     logger.info(
         f"GET /get_relevant_nodes/{session_id}/'{query}'/{page_number} - Client IP: {request.client.host if request else 'unknown'}")
 
     try:
-        if session_id in session_cache:
-            if query in session_cache[session_id]:
-                nodes, highlights = session_cache[session_id][query]
-                other_queries = list(session_cache[session_id].keys())
-                for other_query in other_queries:
-                    if other_query != query:
-                        del session_cache[session_id][other_query]
-            else:
-                nodes, highlights = await full_pipeline(query)
-                session_cache[session_id][query] = (nodes, highlights)
-        else:
+        if session_id not in session_cache:
             session_cache[session_id] = {}
+
+        if query in session_cache[session_id]:
+            nodes, highlights = session_cache[session_id][query]
+            session_cache[session_id] = {query: (nodes, highlights)}
+        else:
             nodes, highlights = await full_pipeline(query)
             session_cache[session_id][query] = (nodes, highlights)
 
@@ -141,41 +158,31 @@ async def get_relevant_nodes(session_id: str, query: str, page_number: int = 1, 
         end = page_number * 6
         results = []
 
-        logger.debug(f"Processing relevant nodes from index {start} to {end}")
-
         for idx, node in enumerate(nodes[start:end]):
             media_url = None
-            print(node)
-            if node['media_path']:
-                current_media_path = os.path.join(DATA_PATH, str(node['media_path']))
-                if os.path.exists(current_media_path):
-                    media_url = f"/media/{os.path.basename(current_media_path)}"
-                    logger.debug(f"Found media file for relevant node {idx}: {media_url}")
+            if node["media_path"]:
+                media_path = os.path.join(DATA_PATH, str(node["media_path"]))
+                if os.path.exists(media_path):
+                    media_url = f"/media/{os.path.basename(media_path)}"
 
             results.append({
-                "date": node['date'] if node['date'] else None,
-                "text": node['content'],
-                "author": node['author'],
+                "date": node["date"],
+                "text": node["content"],
+                "author": node["author"],
                 "photo": media_url
             })
 
-        count = len(nodes)
-
         page_highlights = highlights[start:end] if highlights else []
 
-        logger.info(
-            f"Returning {len(results)} relevant nodes out of {count} total for query '{query}' (page {page_number})")
-        logger.debug(f"Page highlights: {page_highlights}")
-
-        logger.info(f"{results}")
-        res_struct = {
+        response = {
             "data": results,
-            "count": count,
+            "count": len(nodes),
             "highlight_text": page_highlights,
             "session_id": session_id
         }
 
-        return JSONResponse(content=res_struct)
+        logger.info(f"Returned {len(results)} relevant nodes for query '{query}' (page {page_number})")
+        return JSONResponse(content=response)
 
     except Exception as e:
         logger.error(f"Error in get_relevant_nodes for query '{query}': {str(e)}\n{traceback.format_exc()}")

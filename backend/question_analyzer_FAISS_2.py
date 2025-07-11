@@ -1,10 +1,8 @@
 import json
 import os
-import asyncio
-from pprint import pformat
 
 import edgedb
-from typing import List, Any, Tuple, Dict
+from typing import List, Any
 
 import faiss
 import numpy as np
@@ -18,8 +16,8 @@ from configs.cfg import (
     faiss_deep,
     faiss_model,
     chunk_threshold,
-    top_k,
-    db_conn_name
+    db_conn_name,
+    N_PROBE
 )
 
 from utils.logger import setup_logger
@@ -36,6 +34,17 @@ client = edgedb.create_async_client(db_conn_name)
 
 
 async def fetch_all_messages() -> List[dict[str, Any]]:
+    """
+    Загружает все сообщения с резюме из базы данных EdgeDB.
+
+    Returns:
+        List[dict[str, Any]]: Список словарей с полями резюме:
+            'telegram_id' (int),
+            'content' (str),
+            'author' (str),
+            'created_at' (datetime),
+            'media_path' (str|None).
+    """
     return await client.query("""
         SELECT ResumeMessage {
             telegram_id,
@@ -48,6 +57,10 @@ async def fetch_all_messages() -> List[dict[str, Any]]:
 
 
 def init_resources():
+    """
+    Инициализирует модель SentenceTransformer, загружает FAISS индекс,
+    метаданные и эмбеддинги чанков.
+    """
     global model, index, metadata, chunk_vectors
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
@@ -58,7 +71,7 @@ def init_resources():
     model = SentenceTransformer(faiss_model, device=device)
 
     index = faiss.read_index(faiss_index_path)
-    index.nprobe = 20
+    index.nprobe = N_PROBE
 
     with open(faiss_metadata_path, "r", encoding="utf-8") as f:
         metadata = json.load(f)
@@ -66,93 +79,62 @@ def init_resources():
     chunk_vectors = np.load(faiss_chunk_vectors_path, allow_pickle=True)
 
 
-def get_relevant_chunks(query_vector: np.ndarray, chunks: List[str], chunk_embeds: np.ndarray, threshold: float = 0.85, top_k: int = 10) -> List[str]:
+def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[list[dict[str, float | Any]], list[Any]]:
     """
-    Возвращает наиболее релевантные чанки текста на основе косинусной близости.
+    Выполняет поиск по векторному FAISS индексу.
 
     Args:
-        query_vector (np.ndarray): Вектор запроса, shape=(embedding_dim,)
-        chunks (List[str]): Список текстовых чанков
-        chunk_embeds (np.ndarray): Матрица эмбеддингов чанков, shape=(N, embedding_dim)
-        threshold (float): Минимальная косинусная близость
-        top_k (int): Максимальное число возвращаемых чанков (по убыванию релевантности)
+        optimized_query (str): Поисковый запрос.
+        k (int): Количество возвращаемых результатов.
 
     Returns:
-        List[str]: Отфильтрованные и отсортированные по релевантности чанки
+        tuple[list[dict], list]: Список результатов с метаданными и список подсветок чанков.
     """
-    query_norm = query_vector / np.linalg.norm(query_vector)
-    chunk_norms = chunk_embeds / np.linalg.norm(chunk_embeds, axis=1, keepdims=True)
-
-    similarities = np.dot(chunk_norms, query_norm.T)
-
-    relevant_indices = np.where(similarities >= threshold)[0]
-
-    sorted_indices = relevant_indices[np.argsort(similarities[relevant_indices])[::-1]]
-
-    top_indices = sorted_indices[:top_k]
-
-    return [chunks[i] for i in top_indices]
-
-
-async def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[List[Dict[str, Any]], List[List[str]]]:
     logger.debug(f"Starting vector search for query: '{optimized_query}' with k={k}")
 
     query_vec = model.encode([optimized_query], normalize_embeddings=True)
     scores, indices = index.search(np.array(query_vec), k)
 
     results = []
-    highlights_list = []
+    highlights = []
 
-    for idx in indices[0]:
+    for idx, score in zip(indices[0], scores[0]):
         if idx == -1:
             continue
 
         item = metadata[idx]
-        chunk_embeds = chunk_vectors[idx]
-        chunks = item.get("chunks", [])
 
-        if not chunks or len(chunk_embeds) == 0:
-            continue
-
-        highlights = get_relevant_chunks(query_vec[0], chunks, chunk_embeds, chunk_threshold, top_k)
-        if not highlights:
+        if float(score) < chunk_threshold:
             continue
 
         results.append({
             "telegram_id": item["telegram_id"],
             "date": item["date"],
-            "content": item["content"],
+            "content": item['content'],
             "author": item["author"],
-            "media_path": item['media_path'],
-            "highlights": highlights
+            "media_path": item["media_path"],
+            "score": float(score)
         })
-        highlights_list.append(highlights)
+        highlights.append(item.get("chunk", ""))
 
-    logger.info(f"Vector search returned {len(results)} records with highlights")
-    logger.debug(f"Top results: {pformat(results)}")
-
-    return results, highlights_list
+    logger.info(f"Vector search returned {len(results)} chunks")
+    return results, highlights
 
 
-async def full_pipeline(user_query: str) -> Tuple[List[Dict[str, Any]], List[List[str]]]:
+async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], list[Any]]:
+    """
+    Запускает полный пайплайн поиска по запросу: поиск в FAISS и возврат результатов.
+
+    Args:
+        user_query (str): Поисковый запрос пользователя.
+
+    Returns:
+        tuple[list[dict], list]: Результаты поиска и подсветки.
+    """
     logger.info(f"Starting full pipeline for query: '{user_query}'")
     try:
-        raw_results, highlights = await vector_search(user_query)
-        return raw_results, highlights
+        results, highlights = vector_search(user_query)
+        return results, highlights
     except Exception as e:
         logger.error(f"Error in full pipeline: {str(e)}")
         raise
-
-
-def test() -> None:
-    init_resources()
-    query = "искусственный интеллект"
-    results, highlights = asyncio.run(full_pipeline(query))
-
-    for r, hl in zip(results, highlights):
-        print(f"{r['meta']['author']}: {r['text'][:120]}...")
-        print(f"[Подсветка]: {hl}\n")
-
-
-if __name__ == "__main__":
-    test()
