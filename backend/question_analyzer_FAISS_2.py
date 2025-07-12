@@ -305,6 +305,7 @@ async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], 
         tuple[list[dict], list]: Результаты поиска и подсветки.
     """
     logger.info(f"Starting full pipeline for query: '{user_query}'")
+    user_query=capitalize_sentence(user_query)
     try:
         if POST_PROCESSING_FLAG:
             results, highlights = vector_search(user_query)
