@@ -63,7 +63,7 @@ def split_chunks(text: str) -> List[str]:
     """
     sentences = re.split(r'(?<=[.!?])\s+', text.strip())
     sentences = [s.strip() for s in sentences if s.strip()]
-    tokens = text.lower().split()
+    tokens = text.split()
     return (
         sentences +
         [' '.join(tokens[i:i + 1]) for i in range(len(tokens))] +
