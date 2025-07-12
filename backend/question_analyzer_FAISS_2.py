@@ -121,6 +121,38 @@ def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[list[dict[
     return results, highlights
 
 
+async def analyze_user_query(user_query: str) -> str:
+    """
+    Оптимизирует пользовательский запрос, расширяя его синонимами,
+    связанными терминами и аббревиатурами через вызов OpenRouter.
+
+    Args:
+        user_query (str): Исходный текст запроса пользователя.
+
+    Returns:
+        str: Оптимизированный запрос — строка с ключевыми словами и синонимами.
+    """
+    logger.debug(f"Analyzing user query: {user_query}")
+
+    system_prompt = (
+        "Ты ИИ-ассистент по поиску резюме. Преобразуй запрос пользователя в короткий список ключевых слов, "
+        "синонимов и связанных терминов. Добавляй формы слов, синонимы, аббревиатуры, связанные роли. "
+        "Игнорируй нерелевантные слова. Верни одну строку. Все слова в твоем ответе должны быть продублированы следующим образом: "
+        "если слово на русском, то оно также должно быть продублировано на английский и наоборот."
+    )
+
+    result = await chat_completion_openrouter([
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_query},
+    ], model=analyze_query_model)
+    
+    
+
+    result=shorten_string(result)
+    logger.debug(f"Optimized query result: {result}")
+    return result
+
+
 async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], list[Any]]:
     """
     Запускает полный пайплайн поиска по запросу: поиск в FAISS и возврат результатов.
@@ -133,7 +165,8 @@ async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], 
     """
     logger.info(f"Starting full pipeline for query: '{user_query}'")
     try:
-        results, highlights = vector_search(user_query)
+        optimized_query = await analyze_user_query(user_query)
+        results, highlights = vector_search(optimized_query)
         return results, highlights
     except Exception as e:
         logger.error(f"Error in full pipeline: {str(e)}")
