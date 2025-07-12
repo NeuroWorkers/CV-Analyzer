@@ -177,5 +177,5 @@ def build_or_update_index():
     records = flatten_json(data)
     print(f"[FAISS] Найдено {len(records)} записей.")
 
-    process_index(faiss_author_index_path, faiss_author_metadata_path, faiss_author_chunk_vectors_path, records, "author")
+    # process_index(faiss_author_index_path, faiss_author_metadata_path, faiss_author_chunk_vectors_path, records, "author")
     process_index(faiss_content_index_path, faiss_content_metadata_path, faiss_content_chunk_vectors_path, records, "content")
