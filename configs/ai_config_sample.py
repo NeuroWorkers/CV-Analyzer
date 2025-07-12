@@ -8,7 +8,7 @@ highlight_model = "google/gemini-2.5-flash"
 filter_trash_model = "google/gemini-2.5-flash"
 
 faiss_deep = 100
-chunk_threshold = 0.85
+chunk_threshold = 0.81
 N_LIST = 100
 EMBEDDING_DIM = 384
 N_PROBE = 20

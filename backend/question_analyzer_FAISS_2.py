@@ -95,7 +95,7 @@ def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[list[dict[
     query_vec = model.encode([optimized_query], normalize_embeddings=True)
     scores, indices = index.search(np.array(query_vec), k)
 
-    results = []
+    results = {}
     highlights = []
 
     for idx, score in zip(indices[0], scores[0]):
@@ -107,18 +107,22 @@ def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[list[dict[
         if float(score) < chunk_threshold:
             continue
 
-        results.append({
-            "telegram_id": item["telegram_id"],
-            "date": item["date"],
-            "content": item['content'],
-            "author": item["author"],
-            "media_path": item["media_path"],
-            "score": float(score)
-        })
-        highlights.append(item.get("chunk", ""))
+        telegram_id = item["telegram_id"]
 
-    logger.info(f"Vector search returned {len(results)} chunks")
-    return results, highlights
+        if telegram_id not in results or results[telegram_id]["score"] < float(score):
+            results[telegram_id] = {
+                "telegram_id": telegram_id,
+                "date": item["date"],
+                "content": item['content'],
+                "author": item["author"],
+                "media_path": item["media_path"],
+                "score": float(score)
+            }
+            highlights.append(item.get("chunk", ""))
+
+    logger.info(f"Vector search returned {len(results)} unique telegram_ids")
+
+    return list(results.values()), highlights
 
 
 async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], list[Any]]:

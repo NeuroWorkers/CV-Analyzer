@@ -104,7 +104,7 @@ def save_chunk_vectors(path: str, new_data: List[np.ndarray]):
     np.save(path, updated)
 
 
-def process_index(index_path: str, meta_path: str, vectors_path: str, records: List[Dict], field: str):
+def process_index(index_path: str, meta_path: str, vectors_path: str, records: List[Dict]):
     """
     Создаёт или обновляет индекс и метаданные для заданного поля ('author' или 'content').
 
@@ -113,7 +113,6 @@ def process_index(index_path: str, meta_path: str, vectors_path: str, records: L
         meta_path (str): Путь к JSON-файлу с метаданными.
         vectors_path (str): Путь к файлу с эмбеддингами чанков.
         records (List[Dict]): Список всех записей.
-        field (str): Поле, по которому будет вестись индексация (например, 'content').
     """
     if os.path.exists(index_path) and os.path.exists(meta_path):
         with open(meta_path, "r", encoding="utf-8") as f:
@@ -121,7 +120,7 @@ def process_index(index_path: str, meta_path: str, vectors_path: str, records: L
         known_ids = {entry["telegram_id"] for entry in existing_meta}
         records = [r for r in records if r["telegram_id"] not in known_ids]
         if not records:
-            print(f"[FAISS] Новых записей для поля {field} нет.")
+            print(f"[FAISS] Новых записей нет.")
             return
         index = faiss.read_index(index_path)
     else:
@@ -130,18 +129,18 @@ def process_index(index_path: str, meta_path: str, vectors_path: str, records: L
 
     all_chunks, chunk_meta = [], []
     for rec in records:
-        chunks = split_chunks(rec[field])
+        chunks = split_chunks(f"{rec['author']}. {rec['content']}")
         for ch in chunks:
             all_chunks.append(ch)
             chunk_meta.append({**rec, "chunk": ch})
 
-    print(f"[FAISS:{field}] Эмбеддинг {len(all_chunks)} чанков.")
+    print(f"[FAISS] Эмбеддинг {len(all_chunks)} чанков.")
     embs = model.encode(all_chunks, batch_size=32, show_progress_bar=True, normalize_embeddings=True)
 
     if index is None:
         dim = model.get_sentence_embedding_dimension()
         index = prepare_index(index_path, dim)
-        print(f"[FAISS:{field}] Тренировка индекса.")
+        print(f"[FAISS: Тренировка индекса.")
         index.train(embs)
     index.add(embs)
     faiss.write_index(index, index_path)
@@ -162,7 +161,7 @@ def process_index(index_path: str, meta_path: str, vectors_path: str, records: L
         grouped.append(np.array(temp_vecs))
 
     save_chunk_vectors(vectors_path, grouped)
-    print(f"[FAISS:{field}] Обработано {len(records)} записей, {len(all_chunks)} чанков.")
+    print(f"[FAISS] Обработано {len(records)} записей, {len(all_chunks)} чанков.")
 
 
 def build_or_update_index():
@@ -177,5 +176,4 @@ def build_or_update_index():
     records = flatten_json(data)
     print(f"[FAISS] Найдено {len(records)} записей.")
 
-    # process_index(faiss_author_index_path, faiss_author_metadata_path, faiss_author_chunk_vectors_path, records, "author")
-    process_index(faiss_content_index_path, faiss_content_metadata_path, faiss_content_chunk_vectors_path, records, "content")
+    process_index(faiss_content_index_path, faiss_content_metadata_path, faiss_content_chunk_vectors_path, records)
