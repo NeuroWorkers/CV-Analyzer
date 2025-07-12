@@ -12,7 +12,7 @@ import numpy as np
 import torch
 from sentence_transformers import SentenceTransformer
 
-from misc_func import capitalize_sentence
+from utils.misc_func import capitalize_sentence
 
 from configs.cfg import (
     POST_PROCESSING_FLAG,
