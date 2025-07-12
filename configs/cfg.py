@@ -23,6 +23,7 @@ chunk_threshold = configs.ai_config_sample.chunk_threshold
 EMBEDDING_DIM = configs.ai_config_sample.EMBEDDING_DIM
 N_LIST = configs.ai_config_sample.N_LIST
 N_PROBE = configs.ai_config_sample.N_PROBE
+POST_PROCESSING_FLAG = configs.ai_config_sample.POST_PROCESSING_FLAG
 
 
 SERVER_HOST = configs.server_config_sample.SERVER_HOST
@@ -96,6 +97,9 @@ try:
 
         if hasattr(configs.ai_config, 'N_PROBE'):
             N_PROBE = configs.ai_config.N_PROBE
+
+        if hasattr(configs.ai_config, 'POST_PROCESSING_FLAG'):
+            POST_PROCESSING_FLAG = configs.ai_config.POST_PROCESSING_FLAG
 except Exception as e:
     print(e)
 

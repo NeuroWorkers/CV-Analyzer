@@ -11,4 +11,5 @@ faiss_deep = 100
 chunk_threshold = 0.81
 N_LIST = 100
 EMBEDDING_DIM = 384
-N_PROBE = 20
+N_PROBE = 100
+POST_PROCESSING_FLAG = False
