@@ -13,7 +13,7 @@ import torch
 from sentence_transformers import SentenceTransformer
 
 from utils.misc_func import capitalize_sentence
-from abbr_f import abbr_capitalize,abbr1
+from utils.abbr_f import abbr_capitalize,abbr1
 
 from configs.cfg import (
     POST_PROCESSING_FLAG,
