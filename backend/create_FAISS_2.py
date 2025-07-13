@@ -50,16 +50,26 @@ def flatten_json(json_data: Dict) -> List[Dict]:
     ]
 
 
+def split_author_chunks(text: str) -> List[str]:
+    tokens = text.split()
+    return ([' '.join(tokens[i:i + 1]) for i in range(len(tokens))] +
+            [' '.join(tokens[i:i + 2]) for i in range(len(tokens) - 1)])
+
+
+def split_content_chunks(text: str) -> List[str]:
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    sentences = [s.strip() for s in sentences if s.strip()]
+    tokens = text.split()
+    return (
+            sentences +
+            [' '.join(tokens[i:i + 1]) for i in range(len(tokens))] +
+            [' '.join(tokens[i:i + 2]) for i in range(len(tokens) - 1)] +
+            [' '.join(tokens[i:i + 3]) for i in range(len(tokens) - 2)]
+    )
+
+
+"""
 def split_chunks(text: str) -> List[str]:
-    """
-    Разбивает текст на предложения, а также извлекает униграммы, биграммы и триграммы.
-
-    Args:
-        text (str): Исходный текст.
-
-    Returns:
-        List[str]: Список чанков — предложений и n-грамм (n=1,2,3).
-    """
     sentences = re.split(r'(?<=[.!?])\s+', text.strip())
     sentences = [s.strip() for s in sentences if s.strip()]
     tokens = text.split()
@@ -69,6 +79,7 @@ def split_chunks(text: str) -> List[str]:
         [' '.join(tokens[i:i + 2]) for i in range(len(tokens) - 1)] +
         [' '.join(tokens[i:i + 3]) for i in range(len(tokens) - 2)]
     )
+"""
 
 
 def prepare_index(path: str, dim: int) -> faiss.IndexIVFFlat:
@@ -128,7 +139,9 @@ def process_index(index_path: str, meta_path: str, vectors_path: str, records: L
 
     all_chunks, chunk_meta = [], []
     for rec in records:
-        chunks = split_chunks(f"{rec['author']}. {rec['content']}")
+        a_chunks = split_author_chunks(f"{rec['author']}")
+        c_chunks = split_content_chunks(f"{rec['content']}")
+        chunks = a_chunks + c_chunks
         for ch in chunks:
             all_chunks.append(ch)
             chunk_meta.append({**rec, "chunk": ch})
@@ -168,6 +181,7 @@ def build_or_update_index():
     Загружает JSON с данными, извлекает записи и вызывает процессинг индексов
     для полей 'author' и 'content', создавая или обновляя FAISS индексы и метаданные.
     """
+
     with open(os.path.join(relevant_text_path, "cv.json"), encoding="utf-8") as f:
         data = json.load(f)
 

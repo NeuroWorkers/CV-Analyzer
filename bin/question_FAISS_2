@@ -8,7 +8,6 @@ import asyncio
 from backend.question_analyzer_FAISS_2 import full_pipeline, init_resources
 import backend.create_FAISS_2
 
-
 async def main():
     backend.create_FAISS_2.init_resources()
     backend.create_FAISS_2.build_or_update_index()
