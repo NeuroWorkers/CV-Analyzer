@@ -1,3 +1,11 @@
+
+Sun 13 Jul 2025 06:02:14 PM +04
+Переименование
+result-withempty.json  -> account_data_non_filtered.json
+result.json -> account_data_filtered.json
+cv_main.json -> sort_cv.json
+
+
 cvanlyzer-0.38
  Sun 13 Jul 2025 12:32:21 AM +04
 1 стабильная, ищет имена.
