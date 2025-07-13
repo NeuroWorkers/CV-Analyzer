@@ -5,6 +5,7 @@ import asyncio
 
 import edgedb
 from typing import List, Any
+import re
 
 import faiss
 import numpy as np
@@ -12,6 +13,7 @@ import torch
 from sentence_transformers import SentenceTransformer
 
 from utils.misc_func import capitalize_sentence
+from abbr_f import abbr_capitalize,abbr1
 
 from configs.cfg import (
     POST_PROCESSING_FLAG,
@@ -259,6 +261,8 @@ async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], 
     """
     logger.info(f"Starting full pipeline for query: '{user_query}'")
     user_query=capitalize_sentence(user_query)
+    user_query=abbr_capitalize(user_query,abbr1)
+    logger.info(f"Rewrited: '{user_query}'")
     try:
         if POST_PROCESSING_FLAG:
             results, highlights = vector_search(user_query)
