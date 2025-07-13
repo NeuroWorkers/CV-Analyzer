@@ -2,11 +2,10 @@ import os
 import time
 import json
 import asyncio
-import httpx
 
-from configs.cfg import max_processing_message_count, openrouter_api_key
-from configs.cfg import tg_dump_text_path, relevant_text_path, sort_model
-
+from configs.cfg import max_processing_message_count
+from configs.cfg import tg_dump_text_path, relevant_text_path
+from utils.openrouter_request import chat_completion_openrouter
 
 PROMPT_TEMPLATE = """
 Ты — помощник, который помогает отбирать сообщения, содержащие CV (резюме) или подробное описание профессионального опыта, навыков и достижений человека.
@@ -45,39 +44,6 @@ REAL_AUTHOR_PROMPT = """
 """
 
 
-HEADERS = {
-    "Authorization": f"Bearer {openrouter_api_key}",
-    "Content-Type": "application/json"
-}
-
-
-async def chat_completion(messages: list[dict], model: str = sort_model) -> str:
-    """
-    Отправляет запрос в OpenRouter API для генерации ответа модели чат-ИИ.
-
-    Args:
-        messages (list[dict]): Список сообщений (словарей с ролями и контентом) для диалога.
-        model (str): Название модели ИИ (по умолчанию "openai/gpt-4").
-
-    Returns:
-        str: Текст ответа модели.
-    """
-    payload = {
-        "model": model,
-        "messages": messages,
-        "temperature": 0.2
-    }
-
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        response = await client.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers=HEADERS,
-            json=payload
-        )
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"].strip()
-
-
 def is_cv(text: str) -> bool:
     """
     Определяет, является ли текст резюме (CV) с помощью модели ИИ.
@@ -90,7 +56,7 @@ def is_cv(text: str) -> bool:
     """
     try:
         prompt = PROMPT_TEMPLATE.format(text=text)
-        result = asyncio.run(chat_completion([
+        result = asyncio.run(chat_completion_openrouter([
             {"role": "user", "content": prompt}
         ]))
         return "yes" in result.lower()
@@ -117,7 +83,7 @@ def detect_real_author(text: str, system_author: str, fwd_author: str) -> str:
             system_author=system_author or "",
             fwd_author=fwd_author or ""
         )
-        result = asyncio.run(chat_completion([
+        result = asyncio.run(chat_completion_openrouter([
             {"role": "user", "content": prompt}
         ]))
         return result if result else system_author

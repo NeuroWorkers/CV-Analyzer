@@ -2,10 +2,10 @@ import json
 import os
 from typing import List, Dict, Any
 
-import httpx
 from tqdm.asyncio import tqdm_asyncio
 
 from configs.cfg import relevant_text_path, filter_trash_model
+from utils.openrouter_request import chat_completion_openrouter
 
 INPUT_PATH = os.path.join(relevant_text_path, "cv_with_trash.json")
 OUTPUT_PATH = os.path.join(relevant_text_path, "cv.json")
@@ -93,45 +93,3 @@ async def main():
 
     print(
         f"\nСохранили {sum(len(v) for v in structured.values())} записей из {sum(len(v) for v in raw_data.values())}")
-
-
-async def chat_completion_openrouter(messages: List[Dict[str, str]], model) -> str:
-    """
-    Отправляет запрос к OpenRouter API и получает ответ от модели.
-
-    Args:
-        messages (List[Dict[str, str]]): Список сообщений с ролями для диалога (например, system, user).
-        model (str): Имя модели OpenRouter для использования (по умолчанию "google/gemini-2.5-flash").
-
-    Returns:
-        str: Текстовый ответ от модели.
-    """
-    from configs.cfg import openrouter_api_key
-
-    headers = {
-        "Authorization": f"Bearer {openrouter_api_key}",
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "model": model,
-        "messages": messages,
-        "temperature": 0
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=60.0) as client_http:
-            response = await client_http.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers=headers,
-                json=payload
-            )
-            response.raise_for_status()
-
-            result = response.json()["choices"][0]["message"]["content"].strip()
-            return result
-
-    except httpx.HTTPStatusError as e:
-        raise
-    except Exception as e:
-        raise

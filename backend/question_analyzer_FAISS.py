@@ -11,6 +11,7 @@ import httpx
 import torch
 from sentence_transformers import SentenceTransformer
 
+from utils.openrouter_request import chat_completion_openrouter
 from configs.cfg import faiss_index_path, faiss_metadata_path, faiss_deep
 from configs.cfg import faiss_model, highlight_model, db_conn_name, analyze_query_model
 
@@ -200,54 +201,6 @@ async def filter_and_highlight(user_query: str, results: List[Dict[str, Any]]) -
     logger.debug(f"Final highlights: {pformat(highlights)}")
 
     return filtered, highlights
-
-
-async def chat_completion_openrouter(messages: List[Dict[str, str]], model) -> str:
-    """
-    Отправляет запрос к OpenRouter API и получает ответ от модели.
-
-    Args:
-        messages (List[Dict[str, str]]): Список сообщений с ролями для диалога (например, system, user).
-        model (str): Имя модели OpenRouter для использования (по умолчанию "google/gemini-2.5-flash").
-
-    Returns:
-        str: Текстовый ответ от модели.
-    """
-    from configs.cfg import openrouter_api_key
-
-    logger.debug(f"Sending request to OpenRouter API with model: {model}")
-
-    headers = {
-        "Authorization": f"Bearer {openrouter_api_key}",
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "model": model,
-        "messages": messages,
-        "temperature": 0
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=60.0) as client_http:
-            logger.debug("Making HTTP request to OpenRouter API")
-            response = await client_http.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers=headers,
-                json=payload
-            )
-            response.raise_for_status()
-
-            result = response.json()["choices"][0]["message"]["content"].strip()
-            logger.debug(f"OpenRouter API response received, length: {len(result)} characters")
-            return result
-
-    except httpx.HTTPStatusError as e:
-        logger.error(f"HTTP error from OpenRouter API: {e.response.status_code} - {e.response.text}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error in OpenRouter API call: {str(e)}")
-        raise
 
 
 async def full_pipeline(user_query: str) -> Tuple[List[Dict[str, Any]], List[List[str]]]:

@@ -4,10 +4,9 @@ import re
 import asyncio
 
 import edgedb
-from typing import List, Any, Dict
+from typing import List, Any
 
 import faiss
-import httpx
 import numpy as np
 import torch
 from sentence_transformers import SentenceTransformer
@@ -17,15 +16,17 @@ from utils.misc_func import capitalize_sentence
 from configs.cfg import (
     POST_PROCESSING_FLAG,
     highlight_model,
-    faiss_content_index_path,
-    faiss_content_metadata_path,
-    faiss_content_chunk_vectors_path,
+    faiss_index_path,
+    faiss_metadata_path,
+    faiss_chunk_vectors_path,
     faiss_deep,
     faiss_model,
     chunk_threshold,
     db_conn_name,
     N_PROBE
 )
+
+from utils.openrouter_request import chat_completion_openrouter
 
 from utils.logger import setup_logger
 
@@ -77,13 +78,13 @@ def init_resources():
     logger.info(f"[INIT RESOURCES] device: {device}")
     model = SentenceTransformer(faiss_model, device=device)
 
-    index = faiss.read_index(faiss_content_index_path)
+    index = faiss.read_index(faiss_index_path)
     index.nprobe = N_PROBE
 
-    with open(faiss_content_metadata_path, "r", encoding="utf-8") as f:
+    with open(faiss_metadata_path, "r", encoding="utf-8") as f:
         metadata = json.load(f)
 
-    chunk_vectors = np.load(faiss_content_chunk_vectors_path, allow_pickle=True)
+    chunk_vectors = np.load(faiss_chunk_vectors_path, allow_pickle=True)
 
 
 def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[list[dict[str, float | Any]], list[Any]]:
@@ -244,54 +245,6 @@ async def filter_with_llm(user_query: str, results: List[dict], highlights: List
     flat_results = [item for sublist in all_filtered for item in sublist]
     logger.info(f"Фильтрация по highlights завершена: {len(flat_results)} из {len(results)}")
     return flat_results
-
-
-async def chat_completion_openrouter(messages: List[Dict[str, str]], model) -> str:
-    """
-    Отправляет запрос к OpenRouter API и получает ответ от модели.
-
-    Args:
-        messages (List[Dict[str, str]]): Список сообщений с ролями для диалога (например, system, user).
-        model (str): Имя модели OpenRouter для использования (по умолчанию "google/gemini-2.5-flash").
-
-    Returns:
-        str: Текстовый ответ от модели.
-    """
-    from configs.cfg import openrouter_api_key
-
-    logger.debug(f"Sending request to OpenRouter API with model: {model}")
-
-    headers = {
-        "Authorization": f"Bearer {openrouter_api_key}",
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "model": model,
-        "messages": messages,
-        "temperature": 0
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=60.0) as client_http:
-            logger.debug("Making HTTP request to OpenRouter API")
-            response = await client_http.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers=headers,
-                json=payload
-            )
-            response.raise_for_status()
-
-            result = response.json()["choices"][0]["message"]["content"].strip()
-            logger.debug(f"OpenRouter API response received, length: {len(result)} characters")
-            return result
-
-    except httpx.HTTPStatusError as e:
-        logger.error(f"HTTP error from OpenRouter API: {e.response.status_code} - {e.response.text}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error in OpenRouter API call: {str(e)}")
-        raise
 
 
 async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], list[Any]]:

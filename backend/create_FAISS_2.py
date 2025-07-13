@@ -9,8 +9,7 @@ from sentence_transformers import SentenceTransformer
 
 from configs.cfg import (
     N_LIST, faiss_model, relevant_text_path,
-    faiss_content_index_path, faiss_content_metadata_path, faiss_content_chunk_vectors_path,
-    faiss_author_index_path, faiss_author_metadata_path, faiss_author_chunk_vectors_path
+    faiss_index_path, faiss_metadata_path, faiss_chunk_vectors_path
 )
 
 model = None
@@ -176,4 +175,4 @@ def build_or_update_index():
     records = flatten_json(data)
     print(f"[FAISS] Найдено {len(records)} записей.")
 
-    process_index(faiss_content_index_path, faiss_content_metadata_path, faiss_content_chunk_vectors_path, records)
+    process_index(faiss_index_path, faiss_metadata_path, faiss_chunk_vectors_path, records)
