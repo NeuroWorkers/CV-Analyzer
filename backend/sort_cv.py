@@ -146,5 +146,5 @@ def sort_cv() -> None:
             time.sleep(1.2)
 
     os.makedirs(relevant_text_path, exist_ok=True)
-    with open(os.path.join(relevant_text_path, "cv_main.json"), "w", encoding="utf-8") as f:
+    with open(os.path.join(relevant_text_path, "sort_cv.json"), "w", encoding="utf-8") as f:
         json.dump(filtered, f, ensure_ascii=False, indent=4)

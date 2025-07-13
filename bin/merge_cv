@@ -5,9 +5,6 @@ source ./bin/begin.sh
 
 #jq -s '.[0] * .[1]' file1 file2
 #cd data/relevant/text/
-#cp cv_main.json cv.json
-#jq -s '.[0] * .[1]' cv_main.json result.json > 1.json
-#jq -s "add" cv_main.json result.json > 1.json
 
 if [ ! -f "data/tgaccs/prm_dump.sql" ]; then
 echo "data/tgaccs/prm_dump.sql Not found, exit"
@@ -15,16 +12,16 @@ exit
 fi
 
 echo "------ RUN utils/sql2json.py ----"
-python3 utils/sql2json.py -o data/relevant/text/result-withempty.json \
+python3 utils/sql2json.py -o data/relevant/text/account_data_non_filtered.json \
  data/tgaccs/prm_dump.sql
 
 echo "------ RUN utils/clean_empty_records.py ----"
 echo "-- Remove records witj empty 'about'"
-python3 utils/clean_empty_records.py -o data/relevant/text/result.json \
- data/relevant/text/result-withempty.json 
+python3 utils/clean_empty_records.py -o data/relevant/text/account_data_filtered.json \
+ data/relevant/text/account_data_non_filtered.json
 
 echo "------ RUN utils/merge_json.py ----"
 echo "-- Merge cv json and tg account json"
-python3 utils/merge_json.py data/relevant/text/cv_main.json \
+python3 utils/merge_json.py data/relevant/text/sort_cv.json \
 data/relevant/text/result.json -o data/relevant/text/cv_with_trash.json
 
