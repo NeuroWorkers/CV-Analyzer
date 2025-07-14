@@ -9,11 +9,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from backend.question_analyzer_FAISS_openai import (
-    init_resources,
-    fetch_all_messages,
-    full_pipeline
-)
 from configs.cfg import (
     relevant_media_path,
     DATA_PATH,
@@ -21,6 +16,9 @@ from configs.cfg import (
     SERVER_HOST,
     SEARCH_MODE
 )
+
+from backend.search_LLM import full_pipeline, fetch_all_messages
+
 from utils.logger import setup_logger
 
 logger = setup_logger("server")
@@ -35,7 +33,7 @@ async def lifespan(app: FastAPI):
     инициализация FAISS-ресурсов при запуске и логирование завершения при остановке.
     """
     logger.info("Starting application lifespan")
-    init_resources()
+    # init_resources()
     logger.info("FAISS resources initialized successfully")
     yield
     logger.info("Application shutdown completed")
@@ -166,7 +164,7 @@ async def get_relevant_nodes(session_id: str, query: str, request: Request = Non
                 "date": node["date"],
                 "text": node["content"],
                 "author": node["author"],
-                "hl": highlights[idx] if highlights[idx] else [],
+                "hl":  node["highlight"],
                 "photo": media_url
             })
 

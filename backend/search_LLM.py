@@ -42,9 +42,6 @@ def batchify(data: List[Dict], batch_size: int) -> List[List[Dict]]:
 
 
 def clean_json_response(text: str) -> str:
-    """
-    Убирает Markdown-обёртку ```json ... ``` из ответа модели.
-    """
     if text.startswith("```json"):
         text = text.strip()[7:]
     if text.endswith("```"):
@@ -52,18 +49,19 @@ def clean_json_response(text: str) -> str:
     return text.strip()
 
 
-async def process_batch(batch: List[Dict[str, str]], user_query: str, model: str) -> List[Dict[str, str]]:
+async def process_batch_highlight(batch: List[Dict[str, str]], user_query: str, model: str) -> List[Dict[str, str]]:
     content_block = "\n".join(
-        [f"{i + 1}. Автор: {entry['author']}\n   Контент: {entry['content']}" for i, entry in enumerate(batch)]
+        [f"{i+1}. telegram_id: {entry['telegram_id']}\nАвтор: {entry['author']}\nКонтент: {entry['content']}" for i, entry in enumerate(batch)]
     )
 
     messages = [
         {
             "role": "system",
             "content": (
-                "Ты помощник, который помогает находить релевантные записи по запросу пользователя. "
-                "Пользователь предоставил вопрос и список записей. Выбери и выведи только те записи, которые наиболее соответствуют вопросу. "
-                "Ответ должен быть в JSON-массиве, где каждая запись имеет поля 'author' и 'content'."
+                "Ты помощник, который помогает находить релевантные записи по вопросу пользователя. "
+                "Пользователь прислал список записей (telegram_id, author, content) и вопрос. "
+                "Верни только те записи, которые максимально соответствуют вопросу, в формате JSON-массива. "
+                "Каждая запись должна содержать telegram_id и highlight — короткий фрагмент текста, который наиболее релевантен запросу."
             )
         },
         {
@@ -71,7 +69,7 @@ async def process_batch(batch: List[Dict[str, str]], user_query: str, model: str
             "content": (
                 f"Вопрос пользователя: {user_query}\n\n"
                 f"Список записей:\n{content_block}\n\n"
-                f"Ответи JSON-массивом релевантных записей."
+                f"Ответи JSON-массивом релевантных записей: telegram_id и highlight."
             )
         }
     ]
@@ -82,11 +80,11 @@ async def process_batch(batch: List[Dict[str, str]], user_query: str, model: str
         relevant = json.loads(clean)
         return relevant if isinstance(relevant, list) else []
     except Exception as e:
-        print(e)
+        print(f"[Ошибка в батче] {e}")
+        return []
 
 
-async def find_relevant_records_parallel_for_ui(user_query: str, model: str = "google/gemini-2.5-flash", batch_size: int = 10, max_batches: int = 20) -> List[Dict[str, str]]:
-    json_path = os.path.join(relevant_text_path, "cv.json")
+async def find_relevant_telegram_ids_with_highlights(json_path: str, user_query: str, model: str = "google/gemini-2.5-flash", batch_size: int = 10, max_batches: int = 70) -> List[Dict[str, str]]:
     with open(json_path, "r", encoding="utf-8") as f:
         raw = json.load(f)
 
@@ -94,66 +92,92 @@ async def find_relevant_records_parallel_for_ui(user_query: str, model: str = "g
     for group in raw.values():
         for item in group:
             try:
-                text_fields = item["downloaded_text"]
-                content = text_fields[2]
-                author = text_fields[3]
-                timestamp = text_fields[1]
-                media_path = item.get("downloaded_media", {}).get("path", None)
+                fields = item["downloaded_text"]
+                telegram_id = fields[0]
+                timestamp = fields[1]
+                content = fields[2]
+                author = fields[3]
 
                 all_entries.append({
+                    "telegram_id": telegram_id,
                     "author": author,
                     "content": content,
-                    "date": timestamp,
-                    "media_path": media_path
+                    "date": timestamp
                 })
             except Exception as e:
-                print(f"Ошибка при парсинге: {e}")
+                print(f"[Парсинг] Ошибка: {e}")
 
-    print(f"Всего подходящих записей: {len(all_entries)}")
+    print(f"Всего записей: {len(all_entries)}")
 
-    entries_for_llm = [{"author": e["author"], "content": e["content"]} for e in all_entries]
-    batches = batchify(entries_for_llm, batch_size)
+    batches = batchify(all_entries, batch_size)
     if max_batches:
         batches = batches[:max_batches]
 
-    tasks = [process_batch(batch, user_query, model) for batch in batches]
+    tasks = [process_batch_highlight(batch, user_query, model) for batch in batches]
     results = await asyncio.gather(*tasks)
 
     relevant = []
     for r in results:
         relevant.extend(r)
 
-    entry_lookup = {
-        (entry["author"], entry["content"]): entry
-        for entry in all_entries
-    }
-
-    final_results = []
-    for match in relevant:
-        entry = entry_lookup.get((match["author"], match["content"]))
-        if not entry:
-            continue
-
-        photo_url = (
-            f"/media/{os.path.basename(entry['media_path'])}"
-            if entry["media_path"] and os.path.exists(
-                os.path.join("relevant", "media", os.path.basename(entry["media_path"])))
-            else None
-        )
-
-        final_results.append({
-            "author": entry["author"],
-            "date": datetime.fromisoformat(entry["date"]).isoformat() if entry["date"] else None,
-            "content": entry["content"],
-            "media_path": photo_url
-        })
-
-    return final_results
+    return relevant
 
 
-async def main():
-    query = "Найди записи, где авторы пишут про работу с большими языковыми моделями"
+def get_records_by_telegram_ids_from_json(
+    json_path: str,
+    telegram_ids: List[int]
+) -> List[Dict[str, Any]]:
+    """
+    Извлекает полные записи из cv.json по списку telegram_id.
 
-    results = await find_relevant_records_parallel_for_ui(query, batch_size=30, max_batches=30)
-    for r in results:
-        print(r)
+    Args:
+        json_path (str): Путь к файлу cv.json.
+        telegram_ids (List[int]): Список целевых telegram_id.
+
+    Returns:
+        List[Dict[str, Any]]: Список словарей с полными данными.
+    """
+    with open(json_path, "r", encoding="utf-8") as f:
+        raw = json.load(f)
+
+    result = []
+    telegram_ids_set = set(telegram_ids)
+
+    for group in raw.values():
+        for item in group:
+            try:
+                fields = item["downloaded_text"]
+                tg_id = fields[0]
+                timestamp = fields[1]
+                content = fields[2]
+                author = fields[3]
+                media_path = item.get("downloaded_media", {}).get("path", None)
+
+                if tg_id in telegram_ids_set:
+                    result.append({
+                        "telegram_id": tg_id,
+                        "author": author,
+                        "content": content,
+                        "date": timestamp,
+                        "media_path": media_path
+                    })
+            except Exception as e:
+                print(f"[Ошибка при извлечении записи] {e}")
+
+    return result
+
+
+async def full_pipeline(user_query: str):
+    json_path = os.path.join(relevant_text_path, "cv.json")
+    relevant = await find_relevant_telegram_ids_with_highlights(json_path=json_path, user_query=user_query)
+
+    ids = [r["telegram_id"] for r in relevant]
+
+    full_records = get_records_by_telegram_ids_from_json(json_path, ids)
+
+    highlight_map = {r["telegram_id"]: r["highlight"] for r in relevant}
+
+    for rec in full_records:
+        rec["highlight"] = highlight_map.get(rec["telegram_id"])
+
+    return full_records, highlight_map
