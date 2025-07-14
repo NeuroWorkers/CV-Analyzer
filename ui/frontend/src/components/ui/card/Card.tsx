@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import type { ICardProps } from '../../../core/types/ui-types/cardTypes';
 import type { RootState } from '../../../core/store';
 import { ModalWindow } from '../modal/ModalWindow';
-import { extractFullName, extractUsername } from '../../../core/utils/extractFunctions';
+import { extractFullName, extractUsername, extractUsernameWithoutAt } from '../../../core/utils/extractFunctions';
 import { truncateMarkdownByWords } from '../../../core/utils/truncateUtils';
 import { HighlightWithMarkdown } from '../hightlight/HighlightWithMarkdown';
 import { MarkdownRenderer } from '../markdown/MarkdownRenderer';
@@ -29,7 +29,7 @@ export const CardComponent = ({ data }: ICardProps) => {
               )}
               <div className={styles.authorInfo}>
                 {data.author && !data.author.includes('собаки') && (
-                  <Anchor href={`https://t.me/${extractUsername(data.author)}`} target="_blank">
+                  <Anchor href={`https://t.me/${extractUsernameWithoutAt(data.author)}`} target="_blank">
                     {data.highlight_text ? (
                       <HighlightWithMarkdown 
                         text={extractUsername(data.author)} 
