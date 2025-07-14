@@ -54,7 +54,7 @@ def flatten_json(json_data: Dict) -> List[Dict]:
 
 def split_author_chunks(text: str) -> List[str]:
     tokens = text.split()
-    return ([' '.join(tokens[i:i + 1]) for i in range(len(tokens))] +
+    return (remove_interjections([' '.join(tokens[i:i + 1]) for i in range(len(tokens))]) +
             [' '.join(tokens[i:i + 2]) for i in range(len(tokens) - 1)])
 
 
@@ -147,6 +147,10 @@ def process_index(index_path: str, meta_path: str, vectors_path: str, records: L
         for ch in chunks:
             all_chunks.append(ch)
             chunk_meta.append({**rec, "chunk": ch})
+
+    with open(meta_path, "w", encoding="utf-8") as f:
+        json.dump(existing_meta + chunk_meta, f, ensure_ascii=False, indent=2)
+    exit()
 
     print(f"[FAISS] Эмбеддинг {len(all_chunks)} чанков.")
     embs = model.encode(all_chunks, batch_size=32, show_progress_bar=True, normalize_embeddings=True)

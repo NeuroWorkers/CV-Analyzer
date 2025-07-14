@@ -102,6 +102,14 @@ RUSSIAN_INTERJECTIONS_AND_CONJUNCTIONS = [
     "все",  # all
     "всего",  # only
     "раз",  # time
+    "в",
+    "-",
+    "за",
+    "не",
+    "из",
+    "тех",
+    "он",
+    "от"
 ]
 
 
@@ -125,10 +133,13 @@ def remove_interjections(strings):
         arr = string.split()
         for s in arr:
             s_t=re.sub(r'[,.]', '', s)
+            if len(s_t) < 2 :
+                continue
             if not s_t in inter:
                 s2.append(s)
             else:
-               print("found=" + s)
+               pass
+               #print("found=" + s)
         
         #cleaned_strings.append(cleaned_string)
 
