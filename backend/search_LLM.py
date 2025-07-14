@@ -3,8 +3,6 @@ import asyncio
 import os
 from typing import List, Dict, Any
 
-from datetime import datetime
-
 import edgedb
 
 from utils.openrouter_request import chat_completion_openrouter
