@@ -2,6 +2,8 @@ import re
 
 abbr1 = ["СММ","ИИ", "IT", "CEO", "CPO", "CX", "LBS", "OKR", "EX", "HR", "INST", "1С", "CMO", "AI", "ИТ", "GR", "НК", "UTC", "БФЛ", "CTO", "СЕО", "ИК", "IT", "УК", "SEO", "СПб", "МСК", "3D", "РФ", "СМО", "ООО", "В2В", "ТГ", "ИИ", "ТГ", "HR", "РГ", "PM", "ML", "MVP", "CFO", "IR", "VC", "ecom", "KFC", "ЦСР", "МГУ", "АО", "FB", "КСП", "КСГ", "MIPT", "CV", "ID", "COO", "ACC", "ICF", "PRO", "b2b", "b2c", "UX", "UI", "OZON", "HSE", "ISPRAS", "QA", "RU", "ES", "CCO", "L&D", "UK", "CET", "CRM", "PMM", "IB", "M&A", "ПО", "SERM", "MD", "CHO", "CMS", "КР", "n8n", "ceo", "АИС", "UA", "LLM", "ITMO", "MISIS", "IM", "СНГ", "NDT", "США", "BCN", "ФРИИ", "АМР", "PR", "UMI.CMS", "TDI", "FOM", "CIO", "vp", "GSOM", "IOC", "FIFA"]
 
+trans1={ "ИИ" : "AI", "СММ" : "SMM" }
+
 
 def abbr_capitalize(input_string, short_words):
     """
@@ -24,3 +26,10 @@ def abbr_capitalize(input_string, short_words):
             result_words.append(word)
 
     return " ".join(result_words)
+
+############
+
+def abbr_trans(inp):
+    return trans1.get(inp,inp)
+
+

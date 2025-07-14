@@ -13,7 +13,7 @@ import torch
 from sentence_transformers import SentenceTransformer
 
 from utils.misc_func import capitalize_sentence
-from utils.abbr_f import abbr_capitalize,abbr1
+from utils.abbr_f import abbr_capitalize,abbr1,abbr_trans,trans
 
 from configs.cfg import (
     POST_PROCESSING_FLAG,
@@ -262,6 +262,7 @@ async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], 
     logger.info(f"Starting full pipeline for query: '{user_query}'")
     user_query=capitalize_sentence(user_query)
     user_query=abbr_capitalize(user_query,abbr1)
+    user_query=abbr_trans(user_query)
     logger.info(f"Rewrited: '{user_query}'")
     try:
         if POST_PROCESSING_FLAG:
