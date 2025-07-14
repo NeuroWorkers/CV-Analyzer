@@ -1,0 +1,23 @@
+#!/bin/bash
+cd `dirname $0`;cd ../
+
+source ./bin/begin.sh
+
+if [ -f configs/proxy.sh ]; then
+source configs/proxy.sh
+else
+source configs/proxy.sh.sample
+fi
+echo $HTTP_PROXY
+
+
+#python3 bin/parse_cv.py
+python3 -c '
+import asyncio
+import backend.create_FAISS_openai
+
+async def main():
+    backend.create_FAISS_openai.build_or_update_index()
+
+asyncio.run(main())
+'
