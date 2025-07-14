@@ -23,7 +23,7 @@ from configs.cfg import (
     faiss_chunk_vectors_path,
     faiss_deep,
     faiss_model,
-    chunk_threshold,
+    st_chunk_threshold,
     db_conn_name,
     N_PROBE
 )
@@ -114,7 +114,7 @@ def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[list[dict[
 
         item = metadata[idx]
 
-        if float(score) < chunk_threshold:
+        if float(score) < st_chunk_threshold:
             continue
 
         telegram_id = item["telegram_id"]

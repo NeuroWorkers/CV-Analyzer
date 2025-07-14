@@ -11,7 +11,8 @@ filter_trash_model = "google/gemini-2.5-flash"
 
 
 faiss_deep = 100
-chunk_threshold = 0.4
+st_chunk_threshold = 0.81
+openai_chunk_threshold = 0.5
 N_LIST = 100
 EMBEDDING_DIM = 384
 EMBEDDING_DIM_OPENAI = 3072

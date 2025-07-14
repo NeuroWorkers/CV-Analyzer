@@ -19,7 +19,7 @@ from configs.cfg import (
     faiss_index_path,
     faiss_metadata_path,
     faiss_chunk_vectors_path,
-    chunk_threshold,
+    openai_chunk_threshold,
     db_conn_name,
     N_PROBE,
     EMBEDDING_DIM_OPENAI
@@ -98,7 +98,7 @@ def vector_search(optimized_query: str, k: int = 30):
 
         item = metadata[idx]
 
-        if float(score) < chunk_threshold:
+        if float(score) < openai_chunk_threshold:
             continue
 
         telegram_id = item["telegram_id"]

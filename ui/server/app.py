@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from backend.question_analyzer_FAISS_2 import (
+from backend.question_analyzer_FAISS_openai import (
     init_resources,
     fetch_all_messages,
     full_pipeline

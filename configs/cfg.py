@@ -20,7 +20,8 @@ analyze_query_model = configs.ai_config_sample.analyze_query_model
 highlight_model = configs.ai_config_sample.highlight_model
 filter_trash_model = configs.ai_config_sample.filter_trash_model
 faiss_deep = configs.ai_config_sample.faiss_deep
-chunk_threshold = configs.ai_config_sample.chunk_threshold
+st_chunk_threshold = configs.ai_config_sample.st_chunk_threshold
+openai_chunk_threshold = configs.ai_config_sample.openai_chunk_threshold
 EMBEDDING_DIM = configs.ai_config_sample.EMBEDDING_DIM
 N_LIST = configs.ai_config_sample.N_LIST
 N_PROBE = configs.ai_config_sample.N_PROBE
@@ -87,8 +88,11 @@ try:
         if hasattr(configs.ai_config, 'faiss_deep'):
             faiss_deep = configs.ai_config.faiss_deep
 
-        if hasattr(configs.ai_config, 'chunk_threshold'):
-            chunk_threshold = configs.ai_config.chunk_threshold
+        if hasattr(configs.ai_config, 'st_chunk_threshold'):
+            st_chunk_threshold = configs.ai_config.st_chunk_threshold
+
+        if hasattr(configs.ai_config, 'openai_chunk_threshold'):
+            openai_chunk_threshold = configs.ai_config.openai_chunk_threshold
 
         if hasattr(configs.ai_config, 'EMBEDDING_DIM'):
             EMBEDDING_DIM = configs.ai_config.EMBEDDING_DIM
