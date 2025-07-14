@@ -14,6 +14,7 @@ FAISS_PATH = configs.main_paths_config_sample.FAISS_PATH
 
 max_processing_message_count = configs.ai_config_sample.max_processing_message_count
 faiss_model = configs.ai_config_sample.faiss_model
+faiss_openai_model = configs.ai_config_sample.faiss_openai_model
 sort_model = configs.ai_config_sample.sort_model
 analyze_query_model = configs.ai_config_sample.analyze_query_model
 highlight_model = configs.ai_config_sample.highlight_model
@@ -24,7 +25,7 @@ EMBEDDING_DIM = configs.ai_config_sample.EMBEDDING_DIM
 N_LIST = configs.ai_config_sample.N_LIST
 N_PROBE = configs.ai_config_sample.N_PROBE
 POST_PROCESSING_FLAG = configs.ai_config_sample.POST_PROCESSING_FLAG
-
+EMBEDDING_DIM_OPENAI = configs.ai_config_sample.EMBEDDING_DIM_OPENAI
 
 SERVER_HOST = configs.server_config_sample.SERVER_HOST
 SERVER_PORT = configs.server_config_sample.SERVER_PORT
@@ -100,6 +101,12 @@ try:
 
         if hasattr(configs.ai_config, 'POST_PROCESSING_FLAG'):
             POST_PROCESSING_FLAG = configs.ai_config.POST_PROCESSING_FLAG
+
+        if hasattr(configs.ai_config, 'faiss_openai_model'):
+            faiss_openai_model = configs.ai_config.faiss_openai_model
+
+        if hasattr(configs.ai_config, 'EMBEDDING_DIM_OPENAI'):
+            EMBEDDING_DIM_OPENAI = configs.ai_config.EMBEDDING_DIM_OPENAI
 except Exception as e:
     print(e)
 

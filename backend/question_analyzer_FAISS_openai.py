@@ -1,31 +1,28 @@
 import json
-import os
-import re
 import asyncio
 
 import edgedb
 from typing import List, Any
 import re
+import openai
 
 import faiss
 import numpy as np
-import torch
-from sentence_transformers import SentenceTransformer
 
 from utils.misc_func import capitalize_sentence
-from utils.abbr_f import abbr_capitalize, abbr1, abbr_trans, trans1
+from utils.abbr_f import abbr_capitalize, abbr1
 
 from configs.cfg import (
     POST_PROCESSING_FLAG,
     highlight_model,
+    faiss_openai_model,
     faiss_index_path,
     faiss_metadata_path,
     faiss_chunk_vectors_path,
-    faiss_deep,
-    faiss_model,
     chunk_threshold,
     db_conn_name,
-    N_PROBE
+    N_PROBE,
+    EMBEDDING_DIM_OPENAI
 )
 
 from utils.openrouter_request import chat_completion_openrouter
@@ -67,18 +64,7 @@ async def fetch_all_messages() -> List[dict[str, Any]]:
 
 
 def init_resources():
-    """
-    Инициализирует модель SentenceTransformer, загружает FAISS индекс,
-    метаданные и эмбеддинги чанков.
-    """
-    global model, index, metadata, chunk_vectors
-
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
-    if device == "cpu":
-        faiss.omp_set_num_threads(os.cpu_count())
-
-    logger.info(f"[INIT RESOURCES] device: {device}")
-    model = SentenceTransformer(faiss_model, device=device)
+    global index, metadata, chunk_vectors
 
     index = faiss.read_index(faiss_index_path)
     index.nprobe = N_PROBE
@@ -89,21 +75,19 @@ def init_resources():
     chunk_vectors = np.load(faiss_chunk_vectors_path, allow_pickle=True)
 
 
-def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[list[dict[str, float | Any]], list[Any]]:
-    """
-    Выполняет поиск по векторному FAISS индексу.
+def get_openai_embedding(text: str, model: str = faiss_openai_model) -> np.ndarray:
+    try:
+        response = openai.Embedding.create(input=text, model=model)
+        return np.array(response.data[0].embedding, dtype="float32").reshape(1, -1)
+    except Exception as e:
+        print(f"[OpenAI] Ошибка эмбеддинга: {e}")
+        return np.zeros((1, EMBEDDING_DIM_OPENAI), dtype="float32")
 
-    Args:
-        optimized_query (str): Поисковый запрос.
-        k (int): Количество возвращаемых результатов.
 
-    Returns:
-        tuple[list[dict], list]: Список результатов с метаданными и список подсветок чанков.
-    """
-    logger.debug(f"Starting vector search for query: '{optimized_query}' with k={k}")
+def vector_search(optimized_query: str, k: int = 30):
+    query_vec = get_openai_embedding(optimized_query)
 
-    query_vec = model.encode([optimized_query], normalize_embeddings=True)
-    scores, indices = index.search(np.array(query_vec), k)
+    scores, indices = index.search(query_vec, k)
 
     results = {}
     highlights = []
@@ -130,8 +114,6 @@ def vector_search(optimized_query: str, k: int = faiss_deep) -> tuple[list[dict[
             }
             highlights.append(item.get("chunk", ""))
 
-    logger.info(f"Vector search returned {len(results)} unique telegram_ids")
-
     return list(results.values()), highlights
 
 
@@ -141,56 +123,7 @@ def chunk_list(lst, size):
         yield lst[i:i + size]
 
 
-"""
-БЕЗ МНОГОПОТОЧКИ
-async def filter_with_llm(user_query: str, results: List[dict]) -> List[dict]:
-    if not results:
-        return []
-
-    system_prompt = (
-        "Ты — ИИ, фильтрующий резюме по запросу пользователя.\n"
-        "На входе — запрос и список результатов. Каждый результат содержит telegram_id, автора и текст.\n"
-        "Верни JSON-массив объектов вида: {'telegram_id': <id>, 'релевантно': 'Да'} — только для релевантных результатов.\n"
-        "Если результат нерелевантен — просто не включай его в ответ."
-    )
-
-    resume_blocks = []
-    for r in results:
-        resume_blocks.append(f"[{r['telegram_id']}] Автор: {r['author']}\nТекст: {r['content']}")
-
-    user_prompt = f"Запрос: {user_query}\nРезультаты:\n" + "\n\n".join(resume_blocks)
-
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt}
-    ]
-
-    response = await chat_completion_openrouter(messages, model=highlight_model)
-
-    try:
-        clean = re.sub(r"```json\s*|```", "", response).strip()
-        parsed = json.loads(clean)
-    except Exception as e:
-        logger.error(f"Ошибка парсинга ответа LLM: {e}")
-        return []
-
-    # Сопоставляем по telegram_id
-    telegram_id_to_result = {r["telegram_id"]: r for r in results}
-    filtered = []
-
-    for item in parsed:
-        tid = item.get("telegram_id")
-        if item.get("релевантно", "").lower().startswith("да") and tid in telegram_id_to_result:
-            filtered.append(telegram_id_to_result[tid])
-
-    logger.info(f"LLM-фильтрация завершена: {len(filtered)} релевантных результатов из {len(results)}")
-
-    return filtered
-"""
-
-
-async def filter_with_llm(user_query: str, results: List[dict], highlights: List[str], chunk_size: int = 5) -> List[
-    dict]:
+async def filter_with_llm(user_query: str, results: List[dict], highlights: List[str], chunk_size: int = 5) -> List[dict]:
     """
     Фильтрует результаты поиска, отправляя LLM только highlights вместо полного текста.
 
@@ -263,7 +196,6 @@ async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], 
     logger.info(f"Starting full pipeline for query: '{user_query}'")
     user_query = capitalize_sentence(user_query)
     user_query = abbr_capitalize(user_query, abbr1)
-    user_query = abbr_trans(user_query)
     logger.info(f"Rewrited: '{user_query}'")
     try:
         if POST_PROCESSING_FLAG:
