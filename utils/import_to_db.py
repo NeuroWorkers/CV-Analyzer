@@ -3,12 +3,13 @@ import pytz
 import json
 import edgedb
 from datetime import datetime
-from backend.create_FAISS import build_or_update_index
+#from backend.create_FAISS import build_or_update_index
 from configs.cfg import db_conn_name, relevant_text_path
 
 
 def update_FAISS():
-    build_or_update_index()
+    #build_or_update_index()
+    pass
 
 
 def make_aware(dt_str: str | None) -> datetime | None:
