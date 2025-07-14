@@ -7,6 +7,8 @@ import numpy as np
 from typing import List, Dict
 from sentence_transformers import SentenceTransformer
 
+from utils.ij_remover import remove_interjections
+
 from configs.cfg import (
     N_LIST, faiss_model, relevant_text_path,
     faiss_index_path, faiss_metadata_path, faiss_chunk_vectors_path
@@ -62,7 +64,7 @@ def split_content_chunks(text: str) -> List[str]:
     tokens = text.split()
     return (
             sentences +
-            [' '.join(tokens[i:i + 1]) for i in range(len(tokens))] +
+            remove_interjections([' '.join(tokens[i:i + 1]) for i in range(len(tokens))]) +
             [' '.join(tokens[i:i + 2]) for i in range(len(tokens) - 1)] +
             [' '.join(tokens[i:i + 3]) for i in range(len(tokens) - 2)]
     )
