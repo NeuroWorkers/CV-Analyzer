@@ -35,8 +35,29 @@ async def fetch_all_messages() -> List[dict[str, Any]]:
     """)
 
 
-def batchify(data: List[Dict], batch_size: int) -> List[List[Dict]]:
-    return [data[i:i + batch_size] for i in range(0, len(data), batch_size)]
+def batchify_by_token_estimate(data: List[Dict], max_chars: int = 6000) -> List[List[Dict]]:
+    """
+    Разбивает список записей на батчи, ограниченные по символам (примерно как токены).
+    Это позволяет сделать батчи примерно равномерными по нагрузке.
+    """
+    batches = []
+    current_batch = []
+    current_len = 0
+
+    for entry in data:
+        entry_len = len(entry["content"]) + len(entry["author"]) + 50
+        if current_len + entry_len > max_chars and current_batch:
+            batches.append(current_batch)
+            current_batch = [entry]
+            current_len = entry_len
+        else:
+            current_batch.append(entry)
+            current_len += entry_len
+
+    if current_batch:
+        batches.append(current_batch)
+
+    return batches
 
 
 def clean_json_response(text: str) -> str:
@@ -56,10 +77,13 @@ async def process_batch_highlight(batch: List[Dict[str, str]], user_query: str, 
         {
             "role": "system",
             "content": (
-                "Ты помощник, который помогает находить релевантные записи по вопросу пользователя. "
-                "Пользователь прислал список записей (telegram_id, author, content) и вопрос. "
-                "Верни только те записи, которые максимально соответствуют вопросу, в формате JSON-массива. "
-                "Каждая запись должна содержать telegram_id и highlight — короткий фрагмент текста, который наиболее релевантен запросу."
+                "Ты эксперт, который помогает находить только строго релевантные записи по смыслу. "
+                "Пользователь прислал список (telegram_id, author, content) и свой запрос. "
+                "Твоя задача — выбрать ТОЛЬКО те записи, которые:\n"
+                "1. Содержат явное совпадение по ключевым словам ИЛИ\n"
+                "2. Тесно связаны по смыслу и тематике с вопросом.\n\n"
+                "Не добавляй записи, которые слабо связаны или просто поверхностно упоминают тему.\n"
+                "Выводи только точные совпадения. Ответ — JSON-массив с telegram_id и highlight."
             )
         },
         {
@@ -82,7 +106,13 @@ async def process_batch_highlight(batch: List[Dict[str, str]], user_query: str, 
         return []
 
 
-async def find_relevant_telegram_ids_with_highlights(json_path: str, user_query: str, model: str = "google/gemini-2.5-flash", batch_size: int = 10, max_batches: int = 70) -> List[Dict[str, str]]:
+async def find_relevant_telegram_ids_with_highlights(
+    json_path: str,
+    user_query: str,
+    model: str = "openai/gpt-4",
+    max_chars_per_batch: int = 6000,
+    max_batches: int = 70
+) -> List[Dict[str, str]]:
     with open(json_path, "r", encoding="utf-8") as f:
         raw = json.load(f)
 
@@ -107,7 +137,7 @@ async def find_relevant_telegram_ids_with_highlights(json_path: str, user_query:
 
     print(f"Всего записей: {len(all_entries)}")
 
-    batches = batchify(all_entries, batch_size)
+    batches = batchify_by_token_estimate(all_entries, max_chars=max_chars_per_batch)
     if max_batches:
         batches = batches[:max_batches]
 
