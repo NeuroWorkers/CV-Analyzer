@@ -29,7 +29,24 @@ def abbr_capitalize(input_string, short_words):
 
 ############
 
-def abbr_trans(inp):
-    return trans1.get(inp,inp)
+def abbr_trans(text, trans1 = trans1):
+    """
+    Translates words in a string using the trans1 dictionary.
+
+    Args:
+        text: The input string.
+        trans1: The translation dictionary.
+
+    Returns:
+        The translated string.
+    """
+    words = text.split()
+    for i in range(len(words)):
+        if words[i] in trans1:
+            words[i] = trans1[words[i]]
+    translated_text = " ".join(words)
+    return translated_text
+
+
 
 
