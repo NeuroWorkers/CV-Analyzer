@@ -69,7 +69,7 @@ async def process_batch_highlight(batch: List[Dict[str, str]], user_query: str, 
             "content": (
                 f"Вопрос пользователя: {user_query}\n\n"
                 f"Список записей:\n{content_block}\n\n"
-                f"Ответи JSON-массивом релевантных записей: telegram_id и highlight."
+                f"Ответь JSON-массивом релевантных записей: telegram_id и highlight."
             )
         }
     ]
