@@ -150,7 +150,6 @@ def process_index(index_path: str, meta_path: str, vectors_path: str, records: L
 
     with open(meta_path, "w", encoding="utf-8") as f:
         json.dump(existing_meta + chunk_meta, f, ensure_ascii=False, indent=2)
-    exit()
 
     print(f"[FAISS] Эмбеддинг {len(all_chunks)} чанков.")
     embs = model.encode(all_chunks, batch_size=32, show_progress_bar=True, normalize_embeddings=True)
