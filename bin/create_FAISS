@@ -14,12 +14,11 @@ echo $HTTP_PROXY
 #python3 bin/parse_cv.py
 python3 -c '
 import asyncio
-from backend.question_analyzer_FAISS_2 import full_pipeline, init_resources
-import backend.create_FAISS_2
+import backend.create_FAISS
 
 async def main():
-    backend.create_FAISS_2.init_resources()
-    backend.create_FAISS_2.build_or_update_index()
+    backend.create_FAISS.init_resources()
+    backend.create_FAISS.build_or_update_index()
 
 asyncio.run(main())
 '
