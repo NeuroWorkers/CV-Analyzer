@@ -119,6 +119,9 @@ def process_index(index_path: str, meta_path: str, vectors_path: str, records: L
 
     print(f"[FAISS] Эмбеддинг {len(all_chunks)} чанков.")
 
+    with open(meta_path, "w", encoding="utf-8") as f:
+        json.dump(existing_meta + chunk_meta, f, ensure_ascii=False, indent=2)
+
     embs = None
     if EMBEDDING_MODE == "sentence_transformers":
         init_resources()
@@ -137,8 +140,8 @@ def process_index(index_path: str, meta_path: str, vectors_path: str, records: L
     index.add(embs)
     faiss.write_index(index, index_path)
 
-    with open(meta_path, "w", encoding="utf-8") as f:
-        json.dump(existing_meta + chunk_meta, f, ensure_ascii=False, indent=2)
+    #with open(meta_path, "w", encoding="utf-8") as f:
+    #    json.dump(existing_meta + chunk_meta, f, ensure_ascii=False, indent=2)
 
     grouped, temp_vecs, current_id = [], [], None
     for meta, vec in zip(chunk_meta, embs):
