@@ -19,6 +19,7 @@ if type -P $CMD ; then
   echo "$CMD is found in PATH."
 else
   echo "$CMD is NOT found in PATH."
+  exit
 fi
 
 echo "database/ - gel db here, hardcoded"
