@@ -26,7 +26,7 @@ echo "database/ - gel db here, hardcoded"
 
 
 echo "Run: gel project init"
-(cd database/; gel project init)
+#(cd database/; gel project init)
 
 echo ""; echo "----------- instance-name ----------------"
 instance_name=`(cd database/;gel project info --get instance-name)`
@@ -36,7 +36,7 @@ echo
 #read
 echo "ADDING db_conn_name=$instance_name into server_config.py."
 echo '' >> configs/server_config.py
-echo 'db_conn_name = "$instance_name"' >> ./configs/server_config.py
+echo "db_conn_name = \"$instance_name\"" >> ./configs/server_config.py
 echo '' >> configs/server_config.py
 
 echo
