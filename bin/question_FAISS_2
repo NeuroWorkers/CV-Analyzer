@@ -6,16 +6,15 @@ source ./bin/begin.sh
 python3 -c '
 import asyncio
 import sys
-from backend.question_analyzer_FAISS_2 import full_pipeline, init_resources
+from backend.search_FAISS import full_pipeline, init_resources
 
 question_default="Валера"
 
 async def main():
-    backend.create_FAISS_2.init_resources()
-    #backend.create_FAISS_2.build_or_update_index()
+    backend.create_FAISS.init_resources()
     q=sys.argv[1]
     if str(q) == "" :
-	q=question_default
+        q=question_default
     res=full_pipeline(q)
     print(res)
 
