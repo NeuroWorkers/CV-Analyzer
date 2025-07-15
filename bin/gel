@@ -1,0 +1,7 @@
+#!/bin/bash
+cd `dirname $0`;cd ../; p=`pwd`
+
+source ./bin/begin.sh
+
+cd database
+gel

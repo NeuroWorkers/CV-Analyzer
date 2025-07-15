@@ -11,11 +11,12 @@ from backend.search_FAISS import full_pipeline, init_resources
 question_default="Валера"
 
 async def main():
-    backend.create_FAISS.init_resources()
-    q=sys.argv[1]
-    if str(q) == "" :
+    init_resources()
+    if len(sys.argv) > 1:
+        q=sys.argv[1]
+    else:
         q=question_default
-    res=full_pipeline(q)
+    res=await full_pipeline(q)
     print(res)
 
 asyncio.run(main())
