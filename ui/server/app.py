@@ -17,7 +17,10 @@ from configs.cfg import (
     SEARCH_MODE
 )
 
-from backend.search_LLM import full_pipeline, fetch_all_messages
+from utils.get_database import fetch_all_messages
+
+import backend.search_FAISS
+import backend.search_LLM
 
 from utils.logger import setup_logger
 
@@ -33,7 +36,8 @@ async def lifespan(app: FastAPI):
     инициализация FAISS-ресурсов при запуске и логирование завершения при остановке.
     """
     logger.info("Starting application lifespan")
-    # init_resources()
+    if SEARCH_MODE == "FAISS":
+        backend.search_FAISS.init_resources()
     logger.info("FAISS resources initialized successfully")
     yield
     logger.info("Application shutdown completed")
@@ -148,7 +152,13 @@ async def get_relevant_nodes(session_id: str, query: str, request: Request = Non
             nodes, highlights = session_cache[session_id][query]
             session_cache[session_id] = {query: (nodes, highlights)}
         else:
-            nodes, highlights = await full_pipeline(query)
+            if SEARCH_MODE == "FAISS":
+                nodes, highlights = await backend.search_FAISS.full_pipeline(query)
+            else:
+                if SEARCH_MODE == "LLM":
+                    nodes, highlights = await backend.search_LLM.full_pipeline(query)
+                else:
+                    raise ValueError("ОШИБКА ПОЛУЧЕНИЯ ПАЙПЛАЙНА")
             session_cache[session_id][query] = (nodes, highlights)
 
         results = []
@@ -164,7 +174,7 @@ async def get_relevant_nodes(session_id: str, query: str, request: Request = Non
                 "date": node["date"],
                 "text": node["content"],
                 "author": node["author"],
-                "hl":  node["highlight"],
+                "hl":  [],
                 "photo": media_url
             })
 

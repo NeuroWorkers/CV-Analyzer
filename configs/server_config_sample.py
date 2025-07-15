@@ -1,9 +1,4 @@
 SERVER_PORT = 24637
 SERVER_HOST = "0.0.0.0"
 
-SEARCH_MODE = ""
-# SEARCH_MODE = "EDGE_EMBED"
-# SEARCH_MODE = "LLM"
-# SEARCH_MODE = "FAISS"
-
 db_conn_name = "database"

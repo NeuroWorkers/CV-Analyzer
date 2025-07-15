@@ -3,61 +3,13 @@ import asyncio
 import os
 from typing import List, Dict, Any
 
-import edgedb
-
 from utils.openrouter_request import chat_completion_openrouter
 
-from configs.cfg import relevant_text_path, db_conn_name
-
-client = edgedb.create_async_client(db_conn_name)
+from configs.cfg import relevant_text_path
 
 
-async def fetch_all_messages() -> List[dict[str, Any]]:
-    """
-    Загружает все сообщения с резюме из базы данных EdgeDB.
-
-    Returns:
-        List[dict[str, Any]]: Список словарей с полями резюме:
-            'telegram_id' (int),
-            'content' (str),
-            'author' (str),
-            'created_at' (datetime),
-            'media_path' (str|None).
-    """
-    return await client.query("""
-        SELECT ResumeMessage {
-            telegram_id,
-            content,
-            author,
-            created_at,
-            media_path
-        }
-    """)
-
-
-def batchify_by_token_estimate(data: List[Dict], max_chars: int = 6000) -> List[List[Dict]]:
-    """
-    Разбивает список записей на батчи, ограниченные по символам (примерно как токены).
-    Это позволяет сделать батчи примерно равномерными по нагрузке.
-    """
-    batches = []
-    current_batch = []
-    current_len = 0
-
-    for entry in data:
-        entry_len = len(entry["content"]) + len(entry["author"]) + 50
-        if current_len + entry_len > max_chars and current_batch:
-            batches.append(current_batch)
-            current_batch = [entry]
-            current_len = entry_len
-        else:
-            current_batch.append(entry)
-            current_len += entry_len
-
-    if current_batch:
-        batches.append(current_batch)
-
-    return batches
+def batchify(data: List[Dict], batch_size: int) -> List[List[Dict]]:
+    return [data[i:i + batch_size] for i in range(0, len(data), batch_size)]
 
 
 def clean_json_response(text: str) -> str:
@@ -70,7 +22,8 @@ def clean_json_response(text: str) -> str:
 
 async def process_batch_highlight(batch: List[Dict[str, str]], user_query: str, model: str) -> List[Dict[str, str]]:
     content_block = "\n".join(
-        [f"{i+1}. telegram_id: {entry['telegram_id']}\nАвтор: {entry['author']}\nКонтент: {entry['content']}" for i, entry in enumerate(batch)]
+        [f"{i + 1}. telegram_id: {entry['telegram_id']}\nАвтор: {entry['author']}\nКонтент: {entry['content']}" for
+         i, entry in enumerate(batch)]
     )
 
     messages = [
@@ -106,13 +59,9 @@ async def process_batch_highlight(batch: List[Dict[str, str]], user_query: str, 
         return []
 
 
-async def find_relevant_telegram_ids_with_highlights(
-    json_path: str,
-    user_query: str,
-    model: str = "openai/gpt-4",
-    max_chars_per_batch: int = 6000,
-    max_batches: int = 70
-) -> List[Dict[str, str]]:
+async def find_relevant_telegram_ids_with_highlights(json_path: str, user_query: str, model: str = "openai/gpt-4",
+                                                     batch_size: int = 10, max_batches: int = 70) -> List[
+    Dict[str, str]]:
     with open(json_path, "r", encoding="utf-8") as f:
         raw = json.load(f)
 
@@ -137,7 +86,7 @@ async def find_relevant_telegram_ids_with_highlights(
 
     print(f"Всего записей: {len(all_entries)}")
 
-    batches = batchify_by_token_estimate(all_entries, max_chars=max_chars_per_batch)
+    batches = batchify(all_entries, batch_size)
     if max_batches:
         batches = batches[:max_batches]
 
@@ -151,10 +100,7 @@ async def find_relevant_telegram_ids_with_highlights(
     return relevant
 
 
-def get_records_by_telegram_ids_from_json(
-    json_path: str,
-    telegram_ids: List[int]
-) -> List[Dict[str, Any]]:
+def get_records_by_telegram_ids_from_json(json_path: str, telegram_ids: List[int]) -> List[Dict[str, Any]]:
     """
     Извлекает полные записи из cv.json по списку telegram_id.
 

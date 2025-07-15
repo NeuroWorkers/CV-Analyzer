@@ -1,18 +1,18 @@
-import os
 import json
+import os
 import re
+import time
+from typing import Dict, List
+
 import faiss
-import torch
 import numpy as np
-from typing import List, Dict
+import openai
+import torch
 from sentence_transformers import SentenceTransformer
 
+from configs.cfg import N_LIST, EMBEDDING_MODE, embedding_model, embedding_dim, index_path, metadata_path, chunk_path, \
+    relevant_text_path
 from utils.ij_remover import remove_interjections
-
-from configs.cfg import (
-    N_LIST, faiss_model, relevant_text_path,
-    faiss_index_path, faiss_metadata_path, faiss_chunk_vectors_path
-)
 
 model = None
 
@@ -23,22 +23,32 @@ def init_resources():
     Использует 'mps' на Mac, если доступно, иначе 'cpu'.
     """
     global model
+
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     if device == "cpu":
         faiss.omp_set_num_threads(os.cpu_count())
-    model = SentenceTransformer(faiss_model, device=device)
+
+    model = SentenceTransformer(embedding_model, device=device)
+
+
+def get_openai_embeddings(texts: list[str], emb_model: str = embedding_model, batch_size: int = 1000) -> np.ndarray:
+    embeddings = []
+    total = len(texts)
+    for i in range(0, total, batch_size):
+        batch = texts[i:i + batch_size]
+        print(f"[OpenAI] Обработка батча {i}–{i + len(batch)} из {total}")
+        try:
+            response = openai.Embedding.create(input=batch, model=emb_model)
+            batch_embeddings = [item["embedding"] for item in sorted(response["data"], key=lambda x: x["index"])]
+            embeddings.extend(batch_embeddings)
+        except Exception as e:
+            print(f"[OpenAI] Ошибка на батче {i}–{i + len(batch)}: {e}")
+            embeddings.extend([[0.0] * embedding_dim] * len(batch))
+            time.sleep(1)
+    return np.array(embeddings, dtype="float32")
 
 
 def flatten_json(json_data: Dict) -> List[Dict]:
-    """
-    Преобразует вложенный JSON с резюме в плоский список словарей с данными.
-
-    Args:
-        json_data (Dict): Вложенный словарь с исходными данными.
-
-    Returns:
-        List[Dict]: Список словарей с полями telegram_id, date, content, author и media_path.
-    """
     return [
         {
             "telegram_id": item["downloaded_text"][0],
@@ -54,8 +64,8 @@ def flatten_json(json_data: Dict) -> List[Dict]:
 
 def split_author_chunks(text: str) -> List[str]:
     tokens = text.split()
-    return (remove_interjections([' '.join(tokens[i:i + 1]) for i in range(len(tokens))]) +
-            [' '.join(tokens[i:i + 2]) for i in range(len(tokens) - 1)])
+    return remove_interjections([' '.join(tokens[i:i + 1]) for i in range(len(tokens))]) + \
+           [' '.join(tokens[i:i + 2]) for i in range(len(tokens) - 1)]
 
 
 def split_content_chunks(text: str) -> List[str]:
@@ -63,51 +73,19 @@ def split_content_chunks(text: str) -> List[str]:
     sentences = [s.strip() for s in sentences if s.strip()]
     tokens = text.split()
     return (
-            sentences +
-            remove_interjections([' '.join(tokens[i:i + 1]) for i in range(len(tokens))]) +
-            [' '.join(tokens[i:i + 2]) for i in range(len(tokens) - 1)] +
-            [' '.join(tokens[i:i + 3]) for i in range(len(tokens) - 2)]
-    )
-
-
-"""
-def split_chunks(text: str) -> List[str]:
-    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
-    sentences = [s.strip() for s in sentences if s.strip()]
-    tokens = text.split()
-    return (
         sentences +
-        [' '.join(tokens[i:i + 1]) for i in range(len(tokens))] +
+        remove_interjections([' '.join(tokens[i:i + 1]) for i in range(len(tokens))]) +
         [' '.join(tokens[i:i + 2]) for i in range(len(tokens) - 1)] +
         [' '.join(tokens[i:i + 3]) for i in range(len(tokens) - 2)]
     )
-"""
 
 
-def prepare_index(path: str, dim: int) -> faiss.IndexIVFFlat:
-    """
-    Создаёт новый FAISS индекс с заданной размерностью.
-
-    Args:
-        path (str): Путь к файлу индекса.
-        dim (int): Размерность эмбеддингов.
-
-    Returns:
-        faiss.IndexIVFFlat: Новый индекс FAISS.
-    """
+def prepare_index(dim: int) -> faiss.IndexIVFFlat:
     quantizer = faiss.IndexFlatIP(dim)
-    index = faiss.IndexIVFFlat(quantizer, dim, N_LIST, faiss.METRIC_INNER_PRODUCT)
-    return index
+    return faiss.IndexIVFFlat(quantizer, dim, N_LIST, faiss.METRIC_INNER_PRODUCT)
 
 
 def save_chunk_vectors(path: str, new_data: List[np.ndarray]):
-    """
-    Сохраняет эмбеддинги чанков в .npy-файл, добавляя их к существующим (если есть).
-
-    Args:
-        path (str): Путь к файлу с эмбеддингами.
-        new_data (List[np.ndarray]): Список массивов эмбеддингов для каждого документа.
-    """
     if os.path.exists(path):
         existing = np.load(path, allow_pickle=True)
         updated = np.concatenate([existing, np.array(new_data, dtype=object)])
@@ -117,15 +95,6 @@ def save_chunk_vectors(path: str, new_data: List[np.ndarray]):
 
 
 def process_index(index_path: str, meta_path: str, vectors_path: str, records: List[Dict]):
-    """
-    Создаёт или обновляет индекс и метаданные для заданного поля ('author' или 'content').
-
-    Args:
-        index_path (str): Путь к файлу FAISS индекса.
-        meta_path (str): Путь к JSON-файлу с метаданными.
-        vectors_path (str): Путь к файлу с эмбеддингами чанков.
-        records (List[Dict]): Список всех записей.
-    """
     if os.path.exists(index_path) and os.path.exists(meta_path):
         with open(meta_path, "r", encoding="utf-8") as f:
             existing_meta = json.load(f)
@@ -148,17 +117,23 @@ def process_index(index_path: str, meta_path: str, vectors_path: str, records: L
             all_chunks.append(ch)
             chunk_meta.append({**rec, "chunk": ch})
 
-    with open(meta_path, "w", encoding="utf-8") as f:
-        json.dump(existing_meta + chunk_meta, f, ensure_ascii=False, indent=2)
-
     print(f"[FAISS] Эмбеддинг {len(all_chunks)} чанков.")
-    embs = model.encode(all_chunks, batch_size=32, show_progress_bar=True, normalize_embeddings=True)
+
+    embs = None
+    if EMBEDDING_MODE == "sentence_transformers":
+        init_resources()
+        embs = model.encode(all_chunks, batch_size=32, show_progress_bar=True, normalize_embeddings=True)
+    else:
+        if EMBEDDING_MODE == "openai":
+            embs = get_openai_embeddings(all_chunks)
+        else:
+            raise ValueError("ОШИБКА ПОЛУЧЕНИЯ ЕБМЕДДИНГОВ")
 
     if index is None:
-        dim = model.get_sentence_embedding_dimension()
-        index = prepare_index(index_path, dim)
-        print(f"[FAISS: Тренировка индекса.")
+        index = prepare_index(embedding_dim)
+        print(f"[FAISS] Тренировка индекса.")
         index.train(embs)
+
     index.add(embs)
     faiss.write_index(index, index_path)
 
@@ -182,11 +157,6 @@ def process_index(index_path: str, meta_path: str, vectors_path: str, records: L
 
 
 def build_or_update_index():
-    """
-    Загружает JSON с данными, извлекает записи и вызывает процессинг индексов
-    для полей 'author' и 'content', создавая или обновляя FAISS индексы и метаданные.
-    """
-
     with open(os.path.join(relevant_text_path, "cv.json"), encoding="utf-8") as f:
         data = json.load(f)
 
@@ -194,4 +164,4 @@ def build_or_update_index():
     records = flatten_json(data)
     print(f"[FAISS] Найдено {len(records)} записей.")
 
-    process_index(faiss_index_path, faiss_metadata_path, faiss_chunk_vectors_path, records)
+    process_index(index_path, metadata_path, chunk_path, records)
