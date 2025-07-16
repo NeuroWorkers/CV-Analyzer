@@ -104,9 +104,12 @@ async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], 
         query = None
         if PRE_PROCESSING_SIMPLE_FLAG:
             query = query_preprocess_faiss(user_query)
+            logger.info(f"\nquery_preprocess_faiss return: {query}\n")
         if PRE_PROCESSING_LLM_FLAG:
+            logger.info(f"\n backend.subprocessing_LLM.pre_proccessing() Start\n")
             # query = capitalize_sentence(user_query) # query = abbr_capitalize(query, abbr1)
             query = await backend.subprocessing_LLM.pre_proccessing(user_query)
+            logger.info(f"\nbackend.subprocessing_LLM.pre_proccessing() Return: {query}\n")
         if query  == None:
             query = user_query
         
