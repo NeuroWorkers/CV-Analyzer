@@ -26,7 +26,7 @@ echo "database/ - gel db here, hardcoded"
 
 
 echo "Run: gel project init"
-#(cd database/; gel project init)
+(cd database/; gel project init)
 
 echo ""; echo "----------- instance-name ----------------"
 instance_name=`(cd database/;gel project info --get instance-name)`
