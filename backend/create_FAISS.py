@@ -55,7 +55,8 @@ def flatten_json(json_data: Dict) -> List[Dict]:
             "date": item["downloaded_text"][1],
             "content": item["downloaded_text"][2],
             "author": item["downloaded_text"][3],
-            "media_path": item["downloaded_media"]["path"]
+            "media_path": item["downloaded_media"]["path"],
+            "c_translated" : item["c_translated"]
         }
         for items in json_data.values() for item in items
         if item["downloaded_text"][2]
@@ -78,6 +79,8 @@ def split_content_chunks(text: str) -> List[str]:
         [' '.join(tokens[i:i + 2]) for i in range(len(tokens) - 1)] +
         [' '.join(tokens[i:i + 3]) for i in range(len(tokens) - 2)]
     )
+
+
 
 
 def prepare_index(dim: int) -> faiss.IndexIVFFlat:
@@ -112,7 +115,12 @@ def process_index(index_path: str, meta_path: str, vectors_path: str, records: L
     for rec in records:
         a_chunks = split_author_chunks(f"{rec['author']}")
         c_chunks = split_content_chunks(f"{rec['content']}")
-        chunks = a_chunks + c_chunks
+        # no split_engcontent_chunks(), same function
+        if 'c_translated' in rec:
+            d_chunks = split_content_chunks(f"{rec['c_translated']}")
+        else:
+            print ("No translation")
+        chunks = a_chunks + c_chunks + d_chunks
         for ch in chunks:
             all_chunks.append(ch)
             chunk_meta.append({**rec, "chunk": ch})
