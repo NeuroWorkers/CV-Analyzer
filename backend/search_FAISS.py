@@ -10,9 +10,11 @@ from sentence_transformers import SentenceTransformer
 
 from utils.logger import setup_logger
 from configs.cfg import index_path, metadata_path, chunk_path, embedding_model, embedding_dim, threshold, db_conn_name, \
-    N_PROBE, EMBEDDING_MODE, POST_PROCESSING_FLAG, PRE_PROCESSING_FLAG
+    N_PROBE, EMBEDDING_MODE, POST_PROCESSING_FLAG, PRE_PROCESSING_LLM_FLAG, PRE_PROCESSING_SIMPLE_FLAG
 
 import backend.subprocessing_LLM
+from backend.q_preprocess import query_preprocess_faiss
+
 
 logger = setup_logger("faiss")
 
@@ -99,15 +101,15 @@ async def vector_search(optimized_query: str, k: int = 30):
 
 async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], list[Any]]:
     try:
-        # query = capitalize_sentence(user_query)
-        # query = abbr_capitalize(query, abbr1)
         query = None
-        if PRE_PROCESSING_FLAG:
+        if PRE_PROCESSING_SIMPLE_FLAG:
+            query = query_preprocess_faiss(user_query)
+        if PRE_PROCESSING_LLM_FLAG:
+            # query = capitalize_sentence(user_query) # query = abbr_capitalize(query, abbr1)
             query = await backend.subprocessing_LLM.pre_proccessing(user_query)
-            logger.info(f"\nFORMATTED QUERY: {query}\n")
-        else:
+        if query  == None:
             query = user_query
-
+        
         filtered, highlights = await vector_search(query)
         logger.info(f"\nfiltered: {filtered}\n")
         logger.info(f"\nhighlights: {highlights}\n")

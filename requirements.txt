@@ -16,3 +16,4 @@ faiss-cpu~=1.11.0
 httpx~=0.28.1
 torch~=2.7.1
 tqdm~=4.67.1
+deep_translator
