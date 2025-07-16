@@ -35,7 +35,8 @@ N_PROBE = configs.ai_config_sample.N_PROBE
 EMBEDDING_MODE = configs.ai_config_sample.EMBEDDING_MODE
 SEARCH_MODE = configs.ai_config_sample.SEARCH_MODE
 
-PRE_PROCESSING_FLAG = configs.ai_config_sample.PRE_PROCESSING_FLAG
+PRE_PROCESSING_LLM_FLAG = configs.ai_config_sample.PRE_PROCESSING_LLM_FLAG
+PRE_PROCESSING_SIMPLE_FLAG = configs.ai_config_sample.PRE_PROCESSING_SIMPLE_FLAG
 POST_PROCESSING_FLAG = configs.ai_config_sample.POST_PROCESSING_FLAG
 
 
@@ -125,8 +126,11 @@ try:
         if hasattr(configs.ai_config, 'SEARCH_MODE'):
             SEARCH_MODE = configs.ai_config.SEARCH_MODE
 
-        if hasattr(configs.ai_config, 'PRE_PROCESSING_FLAG'):
-            PRE_PROCESSING_FLAG = configs.ai_config.PRE_PROCESSING_FLAG
+        if hasattr(configs.ai_config, 'PRE_PROCESSING_LLM_FLAG'):
+            PRE_PROCESSING_LLM_FLAG = configs.ai_config.PRE_PROCESSING_LLM_FLAG
+
+        if hasattr(configs.ai_config, 'PRE_PROCESSING_SIMPLE_FLAG'):
+            PRE_PROCESSING_SIMPLE_FLAG = configs.ai_config.PRE_PROCESSING_SIMPLE_FLAG
 
         if hasattr(configs.ai_config, 'POST_PROCESSING_FLAG'):
             POST_PROCESSING_FLAG = configs.ai_config.POST_PROCESSING_FLAG

@@ -1,3 +1,8 @@
+cvanlyzer-0.43
+Change PRE_PROCESSING_FLAG -> PRE_PROCESSING_LLM_FLAG
+add translation to en on input
+разное
+
 cvanlyzer-0.42
 refactoring to new architecture, new data structure
 scripts works. more deploy code
