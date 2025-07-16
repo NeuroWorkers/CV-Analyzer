@@ -17,11 +17,11 @@ faiss_deep = 100
 N_LIST = 100
 N_PROBE = 20
 
-EMBEDDING_MODE = "sentence_transformers"
-# EMBEDDING_MODE = "openai"
+# EMBEDDING_MODE = "sentence_transformers"
+EMBEDDING_MODE = "openai"
 
 SEARCH_MODE = "FAISS"
 # SEARCH_MODE = "LLM"
 
-PRE_PROCESSING_FLAG = False
+PRE_PROCESSING_FLAG = True
 POST_PROCESSING_FLAG = False

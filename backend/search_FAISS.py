@@ -104,14 +104,18 @@ async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], 
         query = None
         if PRE_PROCESSING_FLAG:
             query = await backend.subprocessing_LLM.pre_proccessing(user_query)
+            logger.info(f"\nFORMATTED QUERY: {query}\n")
         else:
             query = user_query
 
         filtered, highlights = await vector_search(query)
+        logger.info(f"\nfiltered: {filtered}\n")
+        logger.info(f"\nhighlights: {highlights}\n")
 
         if POST_PROCESSING_FLAG:
             filtered, highlights = await backend.subprocessing_LLM.post_proccessing(query, filtered, highlights)
-
+            logger.info(f"\nPost filtered: {filtered}\n")
+            logger.info(f"\nPost highlights: {highlights}\n")
         return filtered, highlights
     except Exception as e:
         print(e)
