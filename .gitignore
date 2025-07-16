@@ -19,6 +19,9 @@ configs/telegram_config.py
 
 configs/*.sh 
 
+logs/*
+
+data/
 data/relevant/media/
 data/relevant/text/
 data/tg_dump/media/

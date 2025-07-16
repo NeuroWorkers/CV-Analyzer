@@ -1,3 +1,7 @@
+cvanlyzer-0.42
+refactoring to new architecture, new data structure
+scripts works. more deploy code
+
 cvanlyzer-0.41
 openai embeddings working (large model)
 
