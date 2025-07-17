@@ -1,7 +1,9 @@
 import json
 import os
+import re
 from typing import Any
 
+import re
 import faiss
 import numpy as np
 import openai
@@ -15,7 +17,6 @@ from configs.cfg import index_path, metadata_path, chunk_path, embedding_model, 
 import backend.subprocessing_LLM
 import backend.subprocessing_nltk
 from backend.q_preprocess import query_preprocess_faiss
-from utils.misc_func import filter_to_print
 
 logger = setup_logger("faiss")
 
@@ -102,26 +103,53 @@ async def vector_search(optimized_query: str, k: int = 30):
     return list(results.values()), highlights
 
 
+def split_query_by_lang(query: str) -> tuple[str, str]:
+    """
+    Разделяет запрос на русские и английские слова.
+    Возвращает две подстроки.
+    """
+    words = re.findall(r'\b\w+\b', query)
+    ru_words = [w for w in words if re.search(r'[а-яА-Я]', w)]
+    en_words = [w for w in words if re.search(r'[a-zA-Z]', w)]
+    return " ".join(ru_words), " ".join(en_words)
+
+
 async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], list[Any]]:
     try:
         query = None
+
         if PRE_PROCESSING_SIMPLE_FLAG:
             query = query_preprocess_faiss(user_query)
             logger.info(f"\n[FAISS/FULL_PIPELINE] Предобработанный запрос пользователя: {query}\n")
+
         if PRE_PROCESSING_LLM_FLAG:
             logger.info(f"\n backend.subprocessing_LLM.pre_proccessing() Start\n")
-            # query = capitalize_sentence(user_query) # query = abbr_capitalize(query, abbr1)
             query = await backend.subprocessing_LLM.pre_proccessing(user_query)
             logger.info(f"\n[FAISS/FULL_PIPELINE] Обогащенный запрос пользователя: {query}\n")
+
         if query is None:
             query = user_query
-        
-        filtered, highlights = await vector_search(query)
-        logger.info(f"\n[FAISS/FULL_PIPELINE] Релевантные хайлайты: {highlights}\n")
+
+        ru_query, en_query = split_query_by_lang(query)
+        logger.info(f"[FAISS/FULL_PIPELINE] RU-query: {ru_query}")
+        logger.info(f"[FAISS/FULL_PIPELINE] EN-query: {en_query}")
+
+        results_ru, highlights_ru = await vector_search(ru_query) if ru_query else ([], [])
+        results_en, highlights_en = await vector_search(en_query) if en_query else ([], [])
+
+        merged_results = results_ru + results_en
+        merged_highlights = highlights_ru + highlights_en
+
+        logger.info(f"\n[FAISS/FULL_PIPELINE] Релевантные хайлайты: {merged_highlights}\n")
 
         if POST_PROCESSING_FLAG:
-            filtered, highlights = await backend.subprocessing_nltk.post_proccessing(query, filtered, highlights)
-            logger.info(f"\n[FAISS/FULL_PIPELINE] Постобработанные хайлайты: {highlights}\n")
-        return filtered, highlights
+            merged_results, merged_highlights = await backend.subprocessing_nltk.post_proccessing(
+                query, merged_results, merged_highlights
+            )
+            logger.info(f"\n[FAISS/FULL_PIPELINE] Постобработанные хайлайты: {merged_highlights}\n")
+
+        return merged_results, merged_highlights
+
     except Exception as e:
-        print(e)
+        logger.error(f"[FAISS/FULL_PIPELINE] Ошибка: {e}")
+        return [], []
