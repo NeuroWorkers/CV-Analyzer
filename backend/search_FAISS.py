@@ -104,27 +104,41 @@ async def vector_search(optimized_query: str, k: int = 30):
 
 def split_query_by_lang(query: str) -> tuple[str, str]:
     """
-    Разделяет запрос на русские и английские слова.
-    Возвращает два подстроки.
+    Разделяет запрос на русскую и английскую части,
+    сохраняя знаки препинания и пробелы.
+
+    Возвращает две подстроки: русскую и английскую.
     """
-    words = re.findall(r'\b\w+\b', query)
-    ru_words = [w for w in words if re.search(r'[а-яА-Я]', w)]
-    en_words = [w for w in words if re.search(r'[a-zA-Z]', w)]
-    return " ".join(ru_words), " ".join(en_words)
+    ru_parts = []
+    en_parts = []
+
+    tokens = re.findall(r'[а-яА-ЯёЁa-zA-Z]+|\s+|[^\s\w]', query)
+
+    for token in tokens:
+        if re.search(r'[а-яА-ЯёЁ]', token):
+            ru_parts.append(token)
+        elif re.search(r'[a-zA-Z]', token):
+            en_parts.append(token)
+        else:
+            ru_parts.append(token)
+            en_parts.append(token)
+
+    return "".join(ru_parts).strip(), "".join(en_parts).strip()
 
 
 async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], list[Any]]:
     try:
         query = None
-        logger.info(f"\n[FAISS/FULL_PIPELINE] Запрос пользователя: {user_query}\n")
 
         if PRE_PROCESSING_SIMPLE_FLAG:
             query = query_preprocess_faiss(user_query)
             logger.info(f"\n[FAISS/FULL_PIPELINE] Предобработанный запрос пользователя: {query}\n")
+
         if PRE_PROCESSING_LLM_FLAG:
             logger.info(f"\n backend.subprocessing_LLM.pre_proccessing() Start\n")
             query = await backend.subprocessing_LLM.pre_proccessing(user_query)
             logger.info(f"\n[FAISS/FULL_PIPELINE] Обогащенный запрос пользователя: {query}\n")
+
         if query is None:
             query = user_query
 
@@ -135,16 +149,8 @@ async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], 
         results_ru, highlights_ru = await vector_search(ru_query) if ru_query else ([], [])
         results_en, highlights_en = await vector_search(en_query) if en_query else ([], [])
 
-        seen_ids = set()
-        merged_results = []
-        merged_highlights = []
-
-        for result, highlight in zip(results_ru + results_en, highlights_ru + highlights_en):
-            tid = result["telegram_id"]
-            if tid not in seen_ids:
-                merged_results.append(result)
-                merged_highlights.append(highlight)
-                seen_ids.add(tid)
+        merged_results = results_ru + results_en
+        merged_highlights = highlights_ru + highlights_en
 
         logger.info(f"\n[FAISS/FULL_PIPELINE] Релевантные хайлайты: {merged_highlights}\n")
 
