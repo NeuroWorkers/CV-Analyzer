@@ -3,6 +3,7 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 
 import type { IHighlightProps } from '../../../core/types/ui-types/highlightTypes';
+import { extractHighlightTexts } from '../../../core/utils/extractFunctions';
 import styles from './Highlight.module.css'; 
 
 export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps) => {
@@ -15,11 +16,12 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
       const rawList = typeof input === 'string' ? [input] : Array.isArray(input) ? input : [];
 
       return rawList
+        .flatMap(item => extractHighlightTexts(item)) // Извлекаем тексты из markdown ссылок
         .flatMap(item =>
           item
             .split(/[\s,;|]+/)
             .map(word => word.trim())
-            .filter(word => word.length >= 3)
+            .filter(word => word.length >= 2) // Изменено с 3 на 2 для поддержки "AI", "IT" и т.д.
         );
     };
 
@@ -51,14 +53,30 @@ export const HighlightWithMarkdown = ({ text, highlights = [] }: IHighlightProps
           h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         );
 
-        const regex = new RegExp(
-          `(?<!\\p{L})(${escapedHighlights.join('|')})(?!\\p{L})`,
-          'giu'
-        );
+        // Более безопасная подсветка, которая не нарушает HTML структуру
+        const highlightInTextNodes = (html: string) => {
+          // Разбиваем HTML на части: теги и текст
+          const parts = html.split(/(<[^>]*>)/);
+          
+          return parts.map(part => {
+            // Если это HTML тег, оставляем как есть
+            if (part.startsWith('<') && part.endsWith('>')) {
+              return part;
+            }
+            
+            // Если это текст, применяем подсветку
+            const regex = new RegExp(
+              `(?<!\\p{L})(${escapedHighlights.join('|')})(?!\\p{L})`,
+              'giu'
+            );
+            
+            return part.replace(regex, (match) => {
+              return `<mark class="${styles.highlight}">${match}</mark>`;
+            });
+          }).join('');
+        };
 
-        cleanHtml = cleanHtml.replace(regex, (match) => {
-          return `<mark class="${styles.highlight}">${match}</mark>`;
-        });
+        cleanHtml = highlightInTextNodes(cleanHtml);
       }
 
       return cleanHtml;
