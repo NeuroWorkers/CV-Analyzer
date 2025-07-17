@@ -9,7 +9,7 @@ import torch
 from sentence_transformers import SentenceTransformer
 
 from utils.logger import setup_logger
-from configs.cfg import index_path, metadata_path, chunk_path, embedding_model, embedding_dim, threshold, db_conn_name, \
+from configs.cfg import index_path, metadata_path, chunk_path, embedding_model, embedding_dim, threshold, \
     N_PROBE, EMBEDDING_MODE, POST_PROCESSING_FLAG, PRE_PROCESSING_LLM_FLAG, PRE_PROCESSING_SIMPLE_FLAG
 
 import backend.subprocessing_LLM

@@ -174,7 +174,7 @@ async def get_relevant_nodes(session_id: str, query: str, request: Request = Non
                 "date": node["date"],
                 "text": node["content"],
                 "author": node["author"],
-                "hl":  [],
+                "hl":  highlights[idx] if highlights[idx] else [],
                 "photo": media_url
             })
 

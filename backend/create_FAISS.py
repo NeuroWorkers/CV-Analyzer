@@ -148,7 +148,7 @@ def process_index(index_path: str, meta_path: str, vectors_path: str, records: L
     index.add(embs)
     faiss.write_index(index, index_path)
 
-    #with open(meta_path, "w", encoding="utf-8") as f:
+    # with open(meta_path, "w", encoding="utf-8") as f:
     #    json.dump(existing_meta + chunk_meta, f, ensure_ascii=False, indent=2)
 
     grouped, temp_vecs, current_id = [], [], None

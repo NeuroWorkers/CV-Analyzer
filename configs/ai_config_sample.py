@@ -8,7 +8,7 @@ openai_embedding_model = "text-embedding-3-large"
 openai_embedding_dim = 3072
 openai_threshold = 0.4
 
-preprocessing_model = "google/gemini-2.5-flash"
+preprocessing_model = "openai/gpt-4o-mini"
 postprocessing_model = "google/gemini-2.5-flash"
 
 llm_search_model = "openai/gpt-4"
@@ -23,6 +23,6 @@ EMBEDDING_MODE = "openai"
 SEARCH_MODE = "FAISS"
 # SEARCH_MODE = "LLM"
 
-PRE_PROCESSING_LLM_FLAG = False
+PRE_PROCESSING_LLM_FLAG = True
 PRE_PROCESSING_SIMPLE_FLAG = False
 POST_PROCESSING_FLAG = False
