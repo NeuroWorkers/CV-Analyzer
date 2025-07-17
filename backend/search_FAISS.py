@@ -96,6 +96,8 @@ async def vector_search(optimized_query: str, k: int = 30):
             }
             highlights.append(item.get("chunk", ""))
 
+    logger.info(f"[FAISS/VECTOR_SEARCH] было отдано {len(results)} записей на FASTAPI")
+
     return list(results.values()), highlights
 
 
@@ -104,23 +106,21 @@ async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], 
         query = None
         if PRE_PROCESSING_SIMPLE_FLAG:
             query = query_preprocess_faiss(user_query)
-            logger.info(f"\nquery_preprocess_faiss return: {query}\n")
+            logger.info(f"\n[FAISS/FULL_PIPELINE] Предобработанный запрос пользователя: {query}\n")
         if PRE_PROCESSING_LLM_FLAG:
             logger.info(f"\n backend.subprocessing_LLM.pre_proccessing() Start\n")
             # query = capitalize_sentence(user_query) # query = abbr_capitalize(query, abbr1)
             query = await backend.subprocessing_LLM.pre_proccessing(user_query)
-            logger.info(f"\nbackend.subprocessing_LLM.pre_proccessing() Return: {query}\n")
-        if query  == None:
+            logger.info(f"\n[FAISS/FULL_PIPELINE] Обогащенный запрос пользователя: {query}\n")
+        if query is None:
             query = user_query
         
         filtered, highlights = await vector_search(query)
-        logger.info(f"\nfiltered: {filtered}\n")
-        logger.info(f"\nhighlights: {highlights}\n")
+        logger.info(f"\n[FAISS/FULL_PIPELINE] Релевантные хайлайты: {highlights}\n")
 
         if POST_PROCESSING_FLAG:
             filtered, highlights = await backend.subprocessing_LLM.post_proccessing(query, filtered, highlights)
-            logger.info(f"\nPost filtered: {filtered}\n")
-            logger.info(f"\nPost highlights: {highlights}\n")
+            logger.info(f"\n[FAISS/FULL_PIPELINE] Постобработанные хайлайты: {highlights}\n")
         return filtered, highlights
     except Exception as e:
         print(e)

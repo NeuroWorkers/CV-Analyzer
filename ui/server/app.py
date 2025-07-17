@@ -119,7 +119,7 @@ async def get_all_nodes(session_id: str, page_number: int = 1, request: Request 
             "count": len(nodes),
             "session_id": session_id
         }
-        logger.info(f"Returned {len(results)} nodes out of {len(nodes)}")
+        logger.info(f"[FASTAPI/GET_ALL_NODES] Пришло {len(results)} из {len(nodes)} записей.")
 
         return JSONResponse(content=response)
 
@@ -170,6 +170,7 @@ async def get_relevant_nodes(session_id: str, query: str, request: Request = Non
                 if os.path.exists(media_path):
                     media_url = f"/media/{os.path.basename(media_path)}"
 
+            logger.info(f"[FASTAPI/GET_RELEVANT_NODES] Хайлайт {highlights[idx]} для {idx} записи.")
             results.append({
                 "date": node["date"],
                 "text": node["content"],
@@ -184,7 +185,7 @@ async def get_relevant_nodes(session_id: str, query: str, request: Request = Non
             "session_id": session_id
         }
 
-        logger.info(f"Returned {len(results)} relevant nodes for query '{query}'")
+        logger.info(f"[FASTAPI/GET_RELEVANT_NODES] На фронтенд уходит {len(results)} записей по запросу '{query}'")
         return JSONResponse(content=response)
 
     except Exception as e:
