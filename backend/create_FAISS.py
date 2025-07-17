@@ -69,6 +69,48 @@ def split_author_chunks(text: str) -> List[str]:
            [' '.join(tokens[i:i + 2]) for i in range(len(tokens) - 1)]
 
 
+def clean_formatting(text: str) -> str:
+    """
+    Удаляет markdown-форматирование из текста.
+    Убирает парные и одиночные теги: **, *, __, _, ~~, ``, и т.д.
+    """
+    if not text:
+        return text
+    
+    # Удаляем парные теги (жирный, курсив, зачеркнутый, код)
+    patterns = [
+        r'\*\*(.*?)\*\*',  # **bold**
+        r'__(.*?)__',      # __bold__
+        r'\*(.*?)\*',      # *italic*
+        r'_(.*?)_',        # _italic_
+        r'~~(.*?)~~',      # ~~strikethrough~~
+        r'`(.*?)`',        # `code`
+        r'```(.*?)```',    # ```code block```
+    ]
+    
+    for pattern in patterns:
+        text = re.sub(pattern, r'\1', text, flags=re.DOTALL)
+    
+    # Удаляем одиночные форматирующие символы в начале и конце
+    single_patterns = [
+        r'^(\*\*|\*|__|_|~~|`)(.*)$',  # начинающиеся с форматирования
+        r'^(.*?)(\*\*|\*|__|_|~~|`)$', # заканчивающиеся форматированием
+    ]
+    
+    for pattern in single_patterns:
+        match = re.match(pattern, text.strip())
+        if match:
+            if pattern.startswith('^(\\*\\*'):  # начинающиеся
+                text = match.group(2).strip()
+            else:  # заканчивающиеся
+                text = match.group(1).strip()
+    
+    # Удаляем множественные пробелы
+    text = re.sub(r'\s+', ' ', text).strip()
+    
+    return text
+
+
 def split_content_chunks(text: str) -> List[str]:
     sentences = re.split(r'(?<=[.!?])\s+', text.strip())
     sentences = [s.strip() for s in sentences if s.strip()]
@@ -116,14 +158,17 @@ def process_index(index_path: str, meta_path: str, vectors_path: str, records: L
         a_chunks = split_author_chunks(f"{rec['author']}")
         c_chunks = split_content_chunks(f"{rec['content']}")
         # no split_engcontent_chunks(), same function
-        if 'c_translated' in rec:
+        d_chunks = []
+        if 'c_translated' in rec and rec['c_translated']:
             d_chunks = split_content_chunks(f"{rec['c_translated']}")
         else:
             print ("No translation")
         chunks = a_chunks + c_chunks + d_chunks
         for ch in chunks:
-            all_chunks.append(ch)
-            chunk_meta.append({**rec, "chunk": ch})
+            cleaned_chunk = clean_formatting(ch)
+            if cleaned_chunk:  # добавляем только непустые чанки
+                all_chunks.append(cleaned_chunk)
+                chunk_meta.append({**rec, "chunk": cleaned_chunk})
 
     print(f"[FAISS] Эмбеддинг {len(all_chunks)} чанков.")
 
