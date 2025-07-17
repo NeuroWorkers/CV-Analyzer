@@ -1,3 +1,8 @@
+cvanlyzer-0.44
+--- major release ----
+after tests LL-preprocess + english translation + openai embbeddings works.
+everything works more-less adequate. bug with highlights fixed
+
 cvanlyzer-0.43
 Change PRE_PROCESSING_FLAG -> PRE_PROCESSING_LLM_FLAG
 add translation to en on input
