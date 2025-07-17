@@ -149,8 +149,16 @@ async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], 
         results_ru, highlights_ru = await vector_search(ru_query) if ru_query else ([], [])
         results_en, highlights_en = await vector_search(en_query) if en_query else ([], [])
 
-        merged_results = results_ru + results_en
-        merged_highlights = highlights_ru + highlights_en
+        seen_ids = set()
+        merged_results = []
+        merged_highlights = []
+
+        for result, highlight in zip(results_ru + results_en, highlights_ru + highlights_en):
+            tid = result["telegram_id"]
+            if tid not in seen_ids:
+                merged_results.append(result)
+                merged_highlights.append(highlight)
+                seen_ids.add(tid)
 
         logger.info(f"\n[FAISS/FULL_PIPELINE] Релевантные хайлайты: {merged_highlights}\n")
 
