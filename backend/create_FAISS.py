@@ -56,7 +56,7 @@ def flatten_json(json_data: Dict) -> List[Dict]:
             "content": item["downloaded_text"][2],
             "author": item["downloaded_text"][3],
             "media_path": item["downloaded_media"]["path"],
-            "c_translated" : item["c_translated"]
+            "c_translated": item["c_translated"]
         }
         for items in json_data.values() for item in items
         if item["downloaded_text"][2]
@@ -66,7 +66,7 @@ def flatten_json(json_data: Dict) -> List[Dict]:
 def split_author_chunks(text: str) -> List[str]:
     tokens = text.split()
     return remove_interjections([' '.join(tokens[i:i + 1]) for i in range(len(tokens))]) + \
-           [' '.join(tokens[i:i + 2]) for i in range(len(tokens) - 1)]
+        [' '.join(tokens[i:i + 2]) for i in range(len(tokens) - 1)]
 
 
 def clean_formatting(text: str) -> str:
@@ -76,27 +76,27 @@ def clean_formatting(text: str) -> str:
     """
     if not text:
         return text
-    
+
     # Удаляем парные теги (жирный, курсив, зачеркнутый, код)
     patterns = [
         r'\*\*(.*?)\*\*',  # **bold**
-        r'__(.*?)__',      # __bold__
-        r'\*(.*?)\*',      # *italic*
-        r'_(.*?)_',        # _italic_
-        r'~~(.*?)~~',      # ~~strikethrough~~
-        r'`(.*?)`',        # `code`
-        r'```(.*?)```',    # ```code block```
+        r'__(.*?)__',  # __bold__
+        r'\*(.*?)\*',  # *italic*
+        r'_(.*?)_',  # _italic_
+        r'~~(.*?)~~',  # ~~strikethrough~~
+        r'`(.*?)`',  # `code`
+        r'```(.*?)```',  # ```code block```
     ]
-    
+
     for pattern in patterns:
         text = re.sub(pattern, r'\1', text, flags=re.DOTALL)
-    
+
     # Удаляем одиночные форматирующие символы в начале и конце
     single_patterns = [
         r'^(\*\*|\*|__|_|~~|`)(.*)$',  # начинающиеся с форматирования
-        r'^(.*?)(\*\*|\*|__|_|~~|`)$', # заканчивающиеся форматированием
+        r'^(.*?)(\*\*|\*|__|_|~~|`)$',  # заканчивающиеся форматированием
     ]
-    
+
     for pattern in single_patterns:
         match = re.match(pattern, text.strip())
         if match:
@@ -104,10 +104,10 @@ def clean_formatting(text: str) -> str:
                 text = match.group(2).strip()
             else:  # заканчивающиеся
                 text = match.group(1).strip()
-    
+
     # Удаляем множественные пробелы
     text = re.sub(r'\s+', ' ', text).strip()
-    
+
     return text
 
 
@@ -116,13 +116,11 @@ def split_content_chunks(text: str) -> List[str]:
     sentences = [s.strip() for s in sentences if s.strip()]
     tokens = text.split()
     return (
-        sentences +
-        remove_interjections([' '.join(tokens[i:i + 1]) for i in range(len(tokens))]) +
-        [' '.join(tokens[i:i + 2]) for i in range(len(tokens) - 1)] +
-        [' '.join(tokens[i:i + 3]) for i in range(len(tokens) - 2)]
+            sentences +
+            remove_interjections([' '.join(tokens[i:i + 1]) for i in range(len(tokens))]) +
+            [' '.join(tokens[i:i + 2]) for i in range(len(tokens) - 1)] +
+            [' '.join(tokens[i:i + 3]) for i in range(len(tokens) - 2)]
     )
-
-
 
 
 def prepare_index(dim: int) -> faiss.IndexIVFFlat:
@@ -162,7 +160,7 @@ def process_index(index_path: str, meta_path: str, vectors_path: str, records: L
         if 'c_translated' in rec and rec['c_translated']:
             d_chunks = split_content_chunks(f"{rec['c_translated']}")
         else:
-            print ("No translation")
+            print("No translation")
         chunks = a_chunks + c_chunks + d_chunks
         for ch in chunks:
             cleaned_chunk = clean_formatting(ch)
