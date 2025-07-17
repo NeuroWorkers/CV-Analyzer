@@ -116,6 +116,7 @@ def split_query_by_lang(query: str) -> tuple[str, str]:
 
 async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], list[Any]]:
     try:
+        logger.info(f"\n[FAISS/FULL_PIPELINE] Запрос пользователя: {user_query}\n")
         query = None
 
         if PRE_PROCESSING_SIMPLE_FLAG:
