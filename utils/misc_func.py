@@ -65,3 +65,33 @@ def clean_words(text: str) -> str:
     """
     cleaned = re.sub(r"[^\w\s]", "", text, flags=re.UNICODE)
     return cleaned.strip()
+
+# фильтр для логов - фильтрует длинное
+def filter_to_print(data):
+    """
+    Filters the input data structure by:
+    - Shortening 'content' field to max 20 characters
+    - Removing 'media_path' field
+    - Keeping other fields intact
+    """
+    filtered_data = []
+    
+    for item in data:
+        filtered_item = {}
+        for key, value in item.items():
+            if key == 'media_path':
+                continue  # Skip media_path field
+            elif key == 'content':
+                # Shorten content to max 20 characters
+                filtered_item[key] = value[:20] if len(value) > 20 else value
+            elif key == 'date':
+                continue  # Skip
+            else:
+                # Keep other fields intact
+                filtered_item[key] = value
+        #print (filtered_item)
+        filtered_data.append(filtered_item)
+    
+    return filtered_data
+
+

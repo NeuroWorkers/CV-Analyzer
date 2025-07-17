@@ -3,11 +3,19 @@ cd "$(dirname "$0")/../"
 
 source ./bin/begin.sh
 
+if [ -f configs/proxy.sh ]; then
+source configs/proxy.sh
+else
+source configs/proxy.sh.sample
+fi
+
+
 #python3 utils/search_LLM_run.py $1 #exit
 python3 -c '
 import asyncio
 import sys
 from backend.search_FAISS import full_pipeline, init_resources
+from utils.misc_func import filter_to_print
 
 from utils.logger import setup_logger 
 logger = setup_logger("CLI")
@@ -25,9 +33,10 @@ async def main():
         q=sys.argv[1]
     else:
         q=question_default
-    res=await full_pipeline(q)
-    #print(res)
-    logger.info(str(res))
+    res,hl=await full_pipeline(q)
+    res=filter_to_print(res)
+    #print("res=" + str(res))
+    logger.info("RESULT=" + str(res))
 
 asyncio.run(main())
 ' $1

@@ -15,7 +15,7 @@ from configs.cfg import index_path, metadata_path, chunk_path, embedding_model, 
 import backend.subprocessing_LLM
 import backend.subprocessing_nltk
 from backend.q_preprocess import query_preprocess_faiss
-
+from utils.misc_func import filter_to_print
 
 logger = setup_logger("faiss")
 
