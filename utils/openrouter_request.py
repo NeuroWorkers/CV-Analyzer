@@ -29,7 +29,7 @@ async def chat_completion_openrouter(messages: List[Dict[str, str]], model, temp
     }
 
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client_http:
+        async with httpx.AsyncClient(timeout=6.0) as client_http:
             response = await client_http.post(
                 "https://openrouter.ai/api/v1/chat/completions",
                 headers=headers,

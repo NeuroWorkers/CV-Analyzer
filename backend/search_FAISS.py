@@ -13,6 +13,7 @@ from configs.cfg import index_path, metadata_path, chunk_path, embedding_model, 
     N_PROBE, EMBEDDING_MODE, POST_PROCESSING_FLAG, PRE_PROCESSING_LLM_FLAG, PRE_PROCESSING_SIMPLE_FLAG
 
 import backend.subprocessing_LLM
+import backend.subprocessing_nltk
 from backend.q_preprocess import query_preprocess_faiss
 
 
@@ -119,7 +120,7 @@ async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], 
         logger.info(f"\n[FAISS/FULL_PIPELINE] Релевантные хайлайты: {highlights}\n")
 
         if POST_PROCESSING_FLAG:
-            filtered, highlights = await backend.subprocessing_LLM.post_proccessing(query, filtered, highlights)
+            filtered, highlights = await backend.subprocessing_nltk.post_proccessing(query, filtered, highlights)
             logger.info(f"\n[FAISS/FULL_PIPELINE] Постобработанные хайлайты: {highlights}\n")
         return filtered, highlights
     except Exception as e:
