@@ -1,7 +1,7 @@
 import json
 import os
 import re
-from typing import Any
+from typing import Any, Tuple
 
 import faiss
 import numpy as np
@@ -102,28 +102,38 @@ async def vector_search(optimized_query: str, k: int = 30):
     return list(results.values()), highlights
 
 
-def split_query_by_lang(query: str) -> tuple[str, str]:
+def split_query_by_lang(query: str) -> Tuple[str, str]:
     """
-    Разделяет запрос на русскую и английскую части,
-    сохраняя знаки препинания и пробелы.
-
+    Разделяет запрос на русские и английские слова, убирая знаки препинания и лишние пробелы.
     Возвращает две подстроки: русскую и английскую.
     """
-    ru_parts = []
-    en_parts = []
+    ru_words = []
+    en_words = []
 
-    tokens = re.findall(r'[а-яА-ЯёЁa-zA-Z]+|\s+|[^\s\w]', query)
+    tokens = re.findall(r'\b[\w-]+\b', query)
 
     for token in tokens:
         if re.search(r'[а-яА-ЯёЁ]', token):
-            ru_parts.append(token)
+            ru_words.append(token)
         elif re.search(r'[a-zA-Z]', token):
-            en_parts.append(token)
-        else:
-            ru_parts.append(token)
-            en_parts.append(token)
+            en_words.append(token)
 
-    return "".join(ru_parts).strip(), "".join(en_parts).strip()
+    return ", ".join(ru_words), ", ".join(en_words)
+
+
+def merge_results(res1, res2, hl1, hl2):
+    seen_ids = set()
+    merged_results = []
+    merged_highlights = []
+
+    for result, highlight in zip(res1 + res2, hl1 + hl2):
+        tid = result["telegram_id"]
+        if tid not in seen_ids:
+            merged_results.append(result)
+            merged_highlights.append(highlight)
+            seen_ids.add(tid)
+
+    return merged_results, merged_highlights
 
 
 async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], list[Any]]:
@@ -149,16 +159,7 @@ async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], 
         results_ru, highlights_ru = await vector_search(ru_query) if ru_query else ([], [])
         results_en, highlights_en = await vector_search(en_query) if en_query else ([], [])
 
-        seen_ids = set()
-        merged_results = []
-        merged_highlights = []
-
-        for result, highlight in zip(results_ru + results_en, highlights_ru + highlights_en):
-            tid = result["telegram_id"]
-            if tid not in seen_ids:
-                merged_results.append(result)
-                merged_highlights.append(highlight)
-                seen_ids.add(tid)
+        merged_results, merged_highlights = merge_results(results_ru, results_en, highlights_ru, highlights_en)
 
         logger.info(f"\n[FAISS/FULL_PIPELINE] Релевантные хайлайты: {merged_highlights}\n")
 
