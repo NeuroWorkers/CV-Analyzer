@@ -11,6 +11,9 @@ from utils.logger import setup_logger
 
 logger = setup_logger("LLM")
 
+async_count_1 = 0
+async_count_2 = 0
+
 
 async def semantic_search_with_llm(
     query: str,
@@ -19,7 +22,7 @@ async def semantic_search_with_llm(
     model: str,
     temperature: float = 0.0,
     max_concurrent: int = 10,
-    snippet_len: int = 512,
+    snippet_len: int = 2048,
 ) -> List[Dict[str, Any]]:
     """
     Семантический + полнотекстовый поиск по content/author.
@@ -35,6 +38,7 @@ async def semantic_search_with_llm(
     relevant_results: List[Dict[str, Any]] = []
 
     async def inspect_message(telegram_id: int, content: str, author: str) -> None:
+        global async_count_1, async_count_2
         trimmed = content[:snippet_len]
 
         prompt = (
@@ -56,6 +60,8 @@ async def semantic_search_with_llm(
 
         async with semaphore:
             try:
+                logger.info(f"Отправка запроса в together для {async_count_1}")
+                async_count_1 += 1
                 reply = await chat_completion_togetherai(
                     messages=messages,
                     model=model,
@@ -64,6 +70,9 @@ async def semantic_search_with_llm(
             except Exception as e:
                 logger.warning(f"[LLM Error] telegram_id={telegram_id}: {e}")
                 return
+
+        logger.info(f"Получение запроса для {async_count_2}")
+        async_count_2 += 1
 
         reply = reply.strip()
         if reply.upper().startswith("YES"):
