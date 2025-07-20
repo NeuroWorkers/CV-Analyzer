@@ -1,103 +1,98 @@
-import json
-import asyncio
 import os
-from typing import List, Dict, Any
-
-from utils.openrouter_request import chat_completion_openrouter
 
 from configs.cfg import relevant_text_path
 
+import json
+import asyncio
+from typing import List, Dict, Any
 
-def batchify(data: List[Dict], batch_size: int) -> List[List[Dict]]:
-    return [data[i:i + batch_size] for i in range(0, len(data), batch_size)]
+from utils.togetherai_request import chat_completion_togetherai
+from utils.logger import setup_logger
 
-
-def clean_json_response(text: str) -> str:
-    if text.startswith("```json"):
-        text = text.strip()[7:]
-    if text.endswith("```"):
-        text = text.strip()[:-3]
-    return text.strip()
+logger = setup_logger("LLM")
 
 
-async def process_batch_highlight(batch: List[Dict[str, str]], user_query: str, model: str) -> List[Dict[str, str]]:
-    content_block = "\n".join(
-        [f"{i + 1}. telegram_id: {entry['telegram_id']}\nАвтор: {entry['author']}\nКонтент: {entry['content']}" for
-         i, entry in enumerate(batch)]
-    )
+async def semantic_search_with_llm(
+    query: str,
+    json_path: str,
+    *,
+    model: str,
+    temperature: float = 0.0,
+    max_concurrent: int = 10,
+    snippet_len: int = 512,
+) -> List[Dict[str, Any]]:
+    """
+    Семантический + полнотекстовый поиск по content/author.
 
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                "Ты эксперт, который помогает находить только строго релевантные записи по смыслу. "
-                "Пользователь прислал список (telegram_id, author, content) и свой запрос. "
-                "Твоя задача — выбрать ТОЛЬКО те записи, которые:\n"
-                "1. Содержат явное совпадение по ключевым словам ИЛИ\n"
-                "2. Тесно связаны по смыслу и тематике с вопросом.\n\n"
-                "Не добавляй записи, которые слабо связаны или просто поверхностно упоминают тему.\n"
-                "Выводи только точные совпадения. Ответ — JSON-массив с telegram_id и highlight."
-            )
-        },
-        {
-            "role": "user",
-            "content": (
-                f"Вопрос пользователя: {user_query}\n\n"
-                f"Список записей:\n{content_block}\n\n"
-                f"Ответь JSON-массивом релевантных записей: telegram_id и highlight."
-            )
-        }
-    ]
-
-    try:
-        response = await chat_completion_openrouter(messages, model=model)
-        clean = clean_json_response(response)
-        relevant = json.loads(clean)
-        return relevant if isinstance(relevant, list) else []
-    except Exception as e:
-        print(f"[Ошибка в батче] {e}")
-        return []
-
-
-async def find_relevant_telegram_ids_with_highlights(json_path: str, user_query: str, model: str = "openai/gpt-4",
-                                                     batch_size: int = 10, max_batches: int = 70) -> List[
-    Dict[str, str]]:
+    Возвращает список словарей:
+    [{"telegram_id": int, "highlight": str}, ...]
+    Только релевантные.
+    """
     with open(json_path, "r", encoding="utf-8") as f:
-        raw = json.load(f)
+        data: Dict[str, List[Dict[str, Any]]] = json.load(f)
 
-    all_entries = []
-    for group in raw.values():
-        for item in group:
+    semaphore = asyncio.Semaphore(max_concurrent)
+    relevant_results: List[Dict[str, Any]] = []
+
+    async def inspect_message(telegram_id: int, content: str, author: str) -> None:
+        trimmed = content[:snippet_len]
+
+        prompt = (
+            f"Тебе дан пользовательский запрос и описание человека (автор и его сообщение). "
+            f"Нужно решить, релевантен ли этот человек запросу. "
+            f"Если да — кратко укажи, почему. Если нет — просто ответь NO.\n\n"
+            f"Запрос пользователя:\n\"{query}\"\n\n"
+            f"Автор:\n\"{author}\"\n\n"
+            f"Сообщение:\n\"{trimmed}\"\n\n"
+            f"Ответь в одном из двух форматов:\n"
+            f"1. YES: <одна релевантная фраза из сообщения>\n"
+            f"2. NO"
+        )
+
+        messages = [
+            {"role": "system", "content": "Ты бинарный фильтр. Ты не даёшь советы, не обсуждаешь. Только определяешь, релевантно ли сообщение запросу."},
+            {"role": "user", "content": prompt},
+        ]
+
+        async with semaphore:
             try:
-                fields = item["downloaded_text"]
-                telegram_id = fields[0]
-                timestamp = fields[1]
-                content = fields[2]
-                author = fields[3]
-
-                all_entries.append({
-                    "telegram_id": telegram_id,
-                    "author": author,
-                    "content": content,
-                    "date": timestamp
-                })
+                reply = await chat_completion_togetherai(
+                    messages=messages,
+                    model=model,
+                    temperature=temperature,
+                )
             except Exception as e:
-                print(f"[Парсинг] Ошибка: {e}")
+                logger.warning(f"[LLM Error] telegram_id={telegram_id}: {e}")
+                return
 
-    print(f"Всего записей: {len(all_entries)}")
+        reply = reply.strip()
+        if reply.upper().startswith("YES"):
+            parts = reply.split(":", 1)
+            highlight = parts[1].strip() if len(parts) > 1 else trimmed[:120]
+            relevant_results.append({"telegram_id": telegram_id, "highlight": highlight})
+            logger.info(f"[LLM] Релевантно: {telegram_id}")
+        elif reply.upper().startswith("NO"):
+            pass
+        else:
+            logger.warning(f"[LLM ⚠️ Нестандартный ответ] telegram_id={telegram_id}, reply={reply}")
 
-    batches = batchify(all_entries, batch_size)
-    if max_batches:
-        batches = batches[:max_batches]
+    tasks: List[asyncio.Task] = []
 
-    tasks = [process_batch_highlight(batch, user_query, model) for batch in batches]
-    results = await asyncio.gather(*tasks)
+    for records in data.values():
+        for rec in records:
+            text_block = rec.get("downloaded_text", [])
+            if len(text_block) >= 4:
+                try:
+                    telegram_id = int(text_block[0])
+                    content = text_block[2]
+                    author = text_block[3]
+                    tasks.append(asyncio.create_task(inspect_message(telegram_id, content, author)))
+                except Exception as e:
+                    logger.warning(f"[Parse Error] {e}")
+                    continue
 
-    relevant = []
-    for r in results:
-        relevant.extend(r)
-
-    return relevant
+    await asyncio.gather(*tasks, return_exceptions=True)
+    return relevant_results
 
 
 def get_records_by_telegram_ids_from_json(json_path: str, telegram_ids: List[int]) -> List[Dict[str, Any]]:
@@ -141,17 +136,32 @@ def get_records_by_telegram_ids_from_json(json_path: str, telegram_ids: List[int
     return result
 
 
-async def full_pipeline(user_query: str):
+async def full_pipeline(user_query: str) -> tuple[list[dict[str, Any]], list[Any | None]]:
     json_path = os.path.join(relevant_text_path, "cv.json")
-    relevant = await find_relevant_telegram_ids_with_highlights(json_path=json_path, user_query=user_query)
 
-    ids = [r["telegram_id"] for r in relevant]
+    results = await semantic_search_with_llm(
+        query=user_query,
+        json_path=json_path,
+        model="meta-llama/Llama-3-70b-chat-hf",
+        temperature=0.0,
+        max_concurrent=40
+    )
 
-    full_records = get_records_by_telegram_ids_from_json(json_path, ids)
+    telegram_ids = [r["telegram_id"] for r in results]
+    logger.info(f"{telegram_ids}")
+    highlight_map = {r["telegram_id"]: r["highlight"] for r in results}
+    logger.info(f"{highlight_map}")
+    full_records = get_records_by_telegram_ids_from_json(json_path, telegram_ids)
+    logger.info(f"{full_records}")
 
-    highlight_map = {r["telegram_id"]: r["highlight"] for r in relevant}
+    filtered_records = []
+    matched_highlights = []
 
     for rec in full_records:
-        rec["highlight"] = highlight_map.get(rec["telegram_id"])
+        highlight = highlight_map.get(rec["telegram_id"])
+        if highlight:
+            rec["highlight"] = highlight
+            filtered_records.append(rec)
+            matched_highlights.append(highlight)
 
-    return full_records, highlight_map
+    return filtered_records, matched_highlights

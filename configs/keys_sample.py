@@ -1,5 +1,6 @@
 openai_api_key = ""
 openrouter_api_key = ""
+together_api_key = ""
 
 API_ID = 0
 API_HASH = ''

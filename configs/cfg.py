@@ -51,6 +51,7 @@ specific_topic_id = configs.telegram_config_sample.specific_topic_id
 
 openai.api_key = configs.keys_sample.openai_api_key
 openrouter_api_key = configs.keys_sample.openrouter_api_key
+together_api_key = configs.keys_sample.together_api_key
 API_ID = configs.keys_sample.API_ID
 API_HASH = configs.keys_sample.API_HASH
 SESSION_STRING = configs.keys_sample.SESSION_STRING
@@ -174,6 +175,9 @@ try:
 
         if hasattr(configs.keys, 'openrouter_api_key'):
             openrouter_api_key = configs.keys.openrouter_api_key
+
+        if hasattr(configs.keys, 'together_api_key'):
+            together_api_key = configs.keys.together_api_key
 
         if hasattr(configs.keys, 'API_ID'):
             API_ID = configs.keys.API_ID
