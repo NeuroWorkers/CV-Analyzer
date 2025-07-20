@@ -1,9 +1,9 @@
-import { Modal } from '@mantine/core';
+import { Modal, Anchor } from '@mantine/core';
 import { useSelector } from 'react-redux';
 
 import type { IModalProps } from '../../../core/types/ui-types/modalTypes';
 import type { RootState } from '../../../core/store';
-import { extractFullName, extractUsername } from '../../../core/utils/extractFunctions';
+import { extractFullName, extractUsername, extractUsernameWithoutAt } from '../../../core/utils/extractFunctions';
 import { HighlightWithMarkdown } from '../hightlight/HighlightWithMarkdown';
 import { MarkdownRenderer } from '../markdown/MarkdownRenderer';
 
@@ -20,10 +20,9 @@ export const ModalWindow = ({ opened, close, data }: IModalProps) => {
       title={
         <div className={styles.title}>
           {data.author && (
-            <a
-              href={`https://t.me/${extractUsername(data.author)}`}
+            <Anchor 
+              href={`https://t.me/${extractUsernameWithoutAt(data.author)}`}
               target="_blank"
-              rel="noopener noreferrer"
               className={styles.authorLink}
             >
               {data.highlight_text ? (
@@ -34,7 +33,7 @@ export const ModalWindow = ({ opened, close, data }: IModalProps) => {
               ) : (
                 extractUsername(data.author)
               )}
-            </a>
+            </Anchor>
           )}
         </div>
       }
