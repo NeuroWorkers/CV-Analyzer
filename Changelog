@@ -1,3 +1,9 @@
+cvanlyzer-0.46
+bugfixes of 0.45
+
+cvanlyzer-0.45
+big bugfixes
+
 cvanlyzer-0.44
 --- major release ----
 after tests LL-preprocess + english translation + openai embbeddings works.
