@@ -115,10 +115,13 @@ async def full_pipeline(user_query: str) -> Tuple[List[dict[str, Any]], List[str
     query = user_query
     if PRE_PROCESSING_SIMPLE_FLAG:
         query = query_preprocess_faiss(query)
+        logger.info(f"\n[FAISS/FULL_PIPELINE] Предобработанный запрос пользователя: {query}\n")
     if PRE_PROCESSING_LLM_FLAG:
         query = await backend.subprocessing_LLM.pre_proccessing(query)
+        logger.info(f"\n[FAISS/FULL_PIPELINE] Обогащенный запрос пользователя: {query}\n")
 
     ru_part, en_part = split_query_by_lang(query)
+
     ru_tokens = [tok for tok in ru_part.split() if len(tok) > 2]
     en_tokens = [tok for tok in en_part.split() if len(tok) > 2]
 
@@ -148,10 +151,12 @@ async def full_pipeline(user_query: str) -> Tuple[List[dict[str, Any]], List[str
     final_highlights = [h for _, h in top_results + other_results]
 
     logger.info(f"[PIPELINE] уникальных записей: {len(final_results)}")
+    logger.info(f"\n[FAISS/FULL_PIPELINE] Релевантные хайлайты: {final_highlights}\n")
 
     if POST_PROCESSING_FLAG:
         final_results, final_highlights = await backend.subprocessing_nltk.post_proccessing(
             query + " " + user_query, final_results, final_highlights
         )
+        logger.info(f"\n[FAISS/FULL_PIPELINE] Постобработанные хайлайты: {final_highlights}\n")
 
     return final_results, final_highlights
