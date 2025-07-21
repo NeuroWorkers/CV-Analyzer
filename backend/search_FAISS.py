@@ -120,12 +120,9 @@ async def full_pipeline(user_query: str) -> Tuple[List[dict[str, Any]], List[str
         query = await backend.subprocessing_LLM.pre_proccessing(query)
         logger.info(f"\n[FAISS/FULL_PIPELINE] Обогащенный запрос пользователя: {query}\n")
 
-    ru_part, en_part = split_query_by_lang(query)
+    tokens = [tok for tok in query.split(',') if len(tok.strip()) > 2]
 
-    ru_tokens = [tok for tok in ru_part.split() if len(tok) > 2]
-    en_tokens = [tok for tok in en_part.split() if len(tok) > 2]
-
-    search_queries = [user_query, query] + en_tokens + ru_tokens
+    search_queries = [user_query, query] + tokens
     uniq_queries = list(dict.fromkeys(search_queries))
 
     triples = vector_search_batch(uniq_queries)
