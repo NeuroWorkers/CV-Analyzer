@@ -1,11 +1,10 @@
 import os
-
-from configs.cfg import relevant_text_path
-
 import json
 import asyncio
+import re
 from typing import List, Dict, Any
 
+from configs.cfg import relevant_text_path
 from utils.togetherai_request import chat_completion_togetherai
 from utils.logger import setup_logger
 
@@ -15,15 +14,8 @@ async_count_1 = 0
 async_count_2 = 0
 
 
-async def semantic_search_with_llm(
-    query: str,
-    json_path: str,
-    *,
-    model: str,
-    temperature: float = 0.0,
-    max_concurrent: int = 10,
-    snippet_len: int = 2048,
-) -> List[Dict[str, Any]]:
+async def semantic_search_with_llm(query: str, json_path: str, *, model: str, temperature: float = 0.0,
+                                   max_concurrent: int = 10, snippet_len: int = 2048) -> List[Dict[str, Any]]:
     """
     Семантический + полнотекстовый поиск по content/author.
 
@@ -37,30 +29,41 @@ async def semantic_search_with_llm(
     semaphore = asyncio.Semaphore(max_concurrent)
     relevant_results: List[Dict[str, Any]] = []
 
-    async def inspect_message(telegram_id: int, content: str, author: str) -> None:
+    async def inspect_batch(batch: List[Dict[str, Any]]) -> None:
+        nonlocal relevant_results
         global async_count_1, async_count_2
-        trimmed = content[:snippet_len]
 
-        prompt = (
-            f"Тебе дан пользовательский запрос и описание человека (автор и его сообщение). "
-            f"Нужно решить, релевантен ли этот человек запросу. "
-            f"Если да — кратко укажи, почему. Если нет — просто ответь NO.\n\n"
-            f"Запрос пользователя:\n\"{query}\"\n\n"
-            f"Автор:\n\"{author}\"\n\n"
-            f"Сообщение:\n\"{trimmed}\"\n\n"
-            f"Ответь в одном из двух форматов:\n"
-            f"1. YES: <одна релевантная фраза из сообщения>\n"
-            f"2. NO"
+        formatted_messages = []
+        for i, rec in enumerate(batch):
+            author = rec["author"]
+            content = rec["content"]
+            trimmed = content[:snippet_len]
+            formatted_messages.append(
+                f"{i + 1}.\nАвтор:\n\"{author}\"\nСообщение:\n\"{trimmed}\"\n"
+            )
+
+        batch_prompt = (
+                f"Тебе дан запрос пользователя и список сообщений. "
+                f"Твоя задача — найти точное вхождение запроса в каждом сообщении. "
+                f"Если запрос явно содержится в авторе или тексте — ответь YES: и скопируй точный фрагмент из текста. "
+                f"Если совпадений нет — просто ответь NO.\n\n"
+                f"Запрос:\n\"{query}\"\n\n"
+                f"Сообщения:\n" + "\n\n".join(formatted_messages) + "\n\n"
+                                                                    f"Формат ответа:\n"
+                                                                    f"1. YES: <цитата из текста или автора>\n"
+                                                                    f"2. NO\n"
+                                                                    f"3. и т.д."
         )
 
         messages = [
-            {"role": "system", "content": "Ты бинарный фильтр. Ты не даёшь советы, не обсуждаешь. Только определяешь, релевантно ли сообщение запросу."},
-            {"role": "user", "content": prompt},
+            {"role": "system",
+             "content": "Ты бинарный фильтр. Не даёшь советы, не обсуждаешь. Отвечаешь строго по формату."},
+            {"role": "user", "content": batch_prompt},
         ]
 
         async with semaphore:
             try:
-                logger.info(f"Отправка запроса в together для {async_count_1}")
+                logger.info(f"Отправка батча #{async_count_1}")
                 async_count_1 += 1
                 reply = await chat_completion_togetherai(
                     messages=messages,
@@ -68,24 +71,41 @@ async def semantic_search_with_llm(
                     temperature=temperature,
                 )
             except Exception as e:
-                logger.warning(f"[LLM Error] telegram_id={telegram_id}: {e}")
+                logger.warning(f"[LLM Error] batch failed: {e}")
                 return
 
-        logger.info(f"Получение запроса для {async_count_2}")
+        logger.info(f"Получен ответ на батч #{async_count_2}")
         async_count_2 += 1
 
-        reply = reply.strip()
-        if reply.upper().startswith("YES"):
-            parts = reply.split(":", 1)
-            highlight = parts[1].strip() if len(parts) > 1 else trimmed[:120]
-            relevant_results.append({"telegram_id": telegram_id, "highlight": highlight})
-            logger.info(f"[LLM] Релевантно: {telegram_id}")
-        elif reply.upper().startswith("NO"):
-            pass
-        else:
-            logger.warning(f"[LLM ⚠️ Нестандартный ответ] telegram_id={telegram_id}, reply={reply}")
+        lines = reply.strip().splitlines()
+        for line, rec in zip(lines, batch):
+            line = line.strip()
+            match = re.match(r"^\d+\.\s*(YES|NO)(?::\s*(.*))?$", line, re.IGNORECASE)
+            if not match:
+                logger.warning(f"[LLM ⚠️ Нестандартный ответ] telegram_id={rec['telegram_id']}, reply={line}")
+                continue
+
+            decision = match.group(1).upper()
+            detail = match.group(2) or rec["content"][:120]
+
+            if decision == "YES":
+                relevant_results.append({
+                    "telegram_id": rec["telegram_id"],
+                    "highlight": detail.strip()
+                })
 
     tasks: List[asyncio.Task] = []
+
+    current_batch = []
+    current_len = 0
+    max_batch_chars = snippet_len
+
+    def flush_batch():
+        nonlocal current_batch, current_len
+        if current_batch:
+            tasks.append(asyncio.create_task(inspect_batch(current_batch)))
+            current_batch = []
+            current_len = 0
 
     for records in data.values():
         for rec in records:
@@ -95,11 +115,22 @@ async def semantic_search_with_llm(
                     telegram_id = int(text_block[0])
                     content = text_block[2]
                     author = text_block[3]
-                    tasks.append(asyncio.create_task(inspect_message(telegram_id, content, author)))
+
+                    est_len = len(content) + len(author)
+                    if current_len + est_len > max_batch_chars:
+                        flush_batch()
+
+                    current_batch.append({
+                        "telegram_id": telegram_id,
+                        "content": content,
+                        "author": author
+                    })
+                    current_len += est_len
                 except Exception as e:
                     logger.warning(f"[Parse Error] {e}")
                     continue
 
+    flush_batch()
     await asyncio.gather(*tasks, return_exceptions=True)
     return relevant_results
 
@@ -107,13 +138,6 @@ async def semantic_search_with_llm(
 def get_records_by_telegram_ids_from_json(json_path: str, telegram_ids: List[int]) -> List[Dict[str, Any]]:
     """
     Извлекает полные записи из cv.json по списку telegram_id.
-
-    Args:
-        json_path (str): Путь к файлу cv.json.
-        telegram_ids (List[int]): Список целевых telegram_id.
-
-    Returns:
-        List[Dict[str, Any]]: Список словарей с полными данными.
     """
     with open(json_path, "r", encoding="utf-8") as f:
         raw = json.load(f)
