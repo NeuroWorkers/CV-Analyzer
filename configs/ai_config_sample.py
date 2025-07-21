@@ -6,7 +6,7 @@ sentence_transformers_threshold = 0.81
 
 openai_embedding_model = "text-embedding-3-large"
 openai_embedding_dim = 3072
-openai_threshold = 0.4
+openai_threshold = 0.6
 
 preprocessing_model = "openai/gpt-4o-mini"
 postprocessing_model = "google/gemini-2.5-flash"
@@ -25,4 +25,4 @@ SEARCH_MODE = "FAISS"
 
 PRE_PROCESSING_LLM_FLAG = True
 PRE_PROCESSING_SIMPLE_FLAG = False
-POST_PROCESSING_FLAG = True
+POST_PROCESSING_FLAG = False
