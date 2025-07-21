@@ -45,7 +45,7 @@ async def post_proccessing(user_query: str, results: List[dict], highlights: Lis
     filtered_highlights = []
 
     for result, highlight in zip(results, highlights):
-        highlight_words = tokenize_and_normalize(highlight)
+        highlight_words = tokenize_and_normalize(f"{result['author']} . {result['content']} . {highlight}")
 
         if any(qw in highlight_words for qw in query_words):
             filtered_results.append(result)

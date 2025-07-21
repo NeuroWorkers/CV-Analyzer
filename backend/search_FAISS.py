@@ -1,7 +1,7 @@
 import json
 import os
 import re
-from typing import Any, Tuple
+from typing import Any, Tuple, List
 
 import faiss
 import numpy as np
@@ -10,8 +10,19 @@ import torch
 from sentence_transformers import SentenceTransformer
 
 from utils.logger import setup_logger
-from configs.cfg import index_path, metadata_path, chunk_path, embedding_model, embedding_dim, threshold, \
-    N_PROBE, EMBEDDING_MODE, POST_PROCESSING_FLAG, PRE_PROCESSING_LLM_FLAG, PRE_PROCESSING_SIMPLE_FLAG
+from configs.cfg import (
+    index_path,
+    metadata_path,
+    chunk_path,
+    embedding_model,
+    embedding_dim,
+    threshold,
+    N_PROBE,
+    EMBEDDING_MODE,
+    POST_PROCESSING_FLAG,
+    PRE_PROCESSING_LLM_FLAG,
+    PRE_PROCESSING_SIMPLE_FLAG,
+)
 
 import backend.subprocessing_LLM
 import backend.subprocessing_nltk
@@ -19,26 +30,18 @@ from backend.q_preprocess import query_preprocess_faiss
 
 logger = setup_logger("faiss")
 
-model = None
-index = None
-metadata = None
-chunk_vectors = None
+model = index = metadata = chunk_vectors = None
 
 
-def init_resources():
-    """
-    Инициализирует модель SentenceTransformer, загружает FAISS индекс,
-    метаданные и эмбеддинги чанков.
-    """
+def init_resources() -> None:
+    """Однократно загружает модель и FAISS‑индекс."""
     global model, index, metadata, chunk_vectors
 
     if EMBEDDING_MODE == "sentence_transformers":
         device = "mps" if torch.backends.mps.is_available() else "cpu"
         if device == "cpu":
             faiss.omp_set_num_threads(os.cpu_count())
-
-        logger.info(f"[INIT RESOURCES] device: {device}")
-
+        logger.info(f"[INIT] device: {device}")
         model = SentenceTransformer(embedding_model, device=device)
 
     index = faiss.read_index(index_path)
@@ -50,127 +53,105 @@ def init_resources():
     chunk_vectors = np.load(chunk_path, allow_pickle=True)
 
 
-def get_openai_embedding(text: str, embed_model: str = embedding_model) -> np.ndarray:
+def get_openai_embeddings(texts: List[str], embed_model: str = embedding_model) -> np.ndarray:
+    if not texts:
+        return np.zeros((0, embedding_dim), dtype="float32")
     try:
-        response = openai.Embedding.create(input=text, model=embed_model)
-        return np.array(response.data[0].embedding, dtype="float32").reshape(1, -1)
+        response = openai.Embedding.create(input=texts, model=embed_model)
+        data = sorted(response.data, key=lambda x: x.index)
+        return np.array([d.embedding for d in data], dtype="float32")
     except Exception as e:
-        print(f"[OpenAI] Ошибка эмбеддинга: {e}")
-        return np.zeros((1, embedding_dim), dtype="float32")
-
-
-async def vector_search(optimized_query: str, k: int = 30):
-    query_vec = None
-
-    if EMBEDDING_MODE == "sentence_transformers":
-        query_vec = model.encode([optimized_query], normalize_embeddings=True)
-    else:
-        if EMBEDDING_MODE == "openai":
-            query_vec = get_openai_embedding(optimized_query)
-        else:
-            raise ValueError("ОШИБКА ФОРМИРОВАНИЯ ЕМБЕДДИНГОВ")
-
-    scores, indices = index.search(query_vec, k)
-
-    results = {}
-    highlights = []
-
-    for idx, score in zip(indices[0], scores[0]):
-        if idx == -1:
-            continue
-
-        item = metadata[idx]
-
-        if float(score) < threshold:
-            continue
-
-        telegram_id = item["telegram_id"]
-
-        if telegram_id not in results or results[telegram_id]["score"] < float(score):
-            results[telegram_id] = {
-                "telegram_id": telegram_id,
-                "date": item["date"],
-                "content": item['content'],
-                "author": item["author"],
-                "media_path": item["media_path"],
-                "score": float(score)
-            }
-            highlights.append(item.get("chunk", ""))
-
-    logger.info(f"[FAISS/VECTOR_SEARCH] было отдано {len(results)} записей на FASTAPI")
-
-    return list(results.values()), highlights
+        logger.error(f"[OpenAI] Ошибка эмбеддинга батча: {e}")
+        return np.zeros((len(texts), embedding_dim), dtype="float32")
 
 
 def split_query_by_lang(query: str) -> Tuple[str, str]:
+    ru, en = [], []
+    for tok in re.findall(r'\b[\w-]+\b', query):
+        (ru if re.search(r'[а-яА-ЯёЁ]', tok) else en).append(tok)
+    return " ".join(ru), " ".join(en)
+
+
+def vector_search_batch(queries: List[str], k: int = 30) -> List[Tuple[dict, str, str]]:
     """
-    Разделяет запрос на русские и английские слова, убирая знаки препинания и лишние пробелы.
-    Возвращает две подстроки: русскую и английскую.
+    Возвращает список кортежей (результат, highlight, источник-запрос), чтобы позже приоритизировать user_query.
     """
-    ru_words = []
-    en_words = []
+    if not queries:
+        return []
 
-    tokens = re.findall(r'\b[\w-]+\b', query)
+    if EMBEDDING_MODE == "sentence_transformers":
+        vecs = model.encode(queries, normalize_embeddings=True)
+    elif EMBEDDING_MODE == "openai":
+        vecs = get_openai_embeddings(queries)
+    else:
+        raise ValueError("Неизвестный EMBEDDING_MODE")
 
-    for token in tokens:
-        if re.search(r'[а-яА-ЯёЁ]', token):
-            ru_words.append(token)
-        elif re.search(r'[a-zA-Z]', token):
-            en_words.append(token)
+    scores, indices = index.search(vecs, k)
 
-    return ", ".join(ru_words), ", ".join(en_words)
+    triples = []  # (result_dict, highlight, query_text)
+    for q_idx, query in enumerate(queries):
+        for idx, score in zip(indices[q_idx], scores[q_idx]):
+            if idx == -1 or score < threshold:
+                continue
+            item = metadata[idx]
+            triples.append((
+                {
+                    "telegram_id": item["telegram_id"],
+                    "date": item["date"],
+                    "content": item["content"],
+                    "author": item["author"],
+                    "media_path": item["media_path"],
+                    "score": float(score),
+                },
+                item.get("chunk", ""),
+                query
+            ))
+
+    logger.info(f"[FAISS/BATCH] queries={len(queries)}, hits={len(triples)}")
+    return triples
 
 
-def merge_results(res1, res2, hl1, hl2):
-    seen_ids = set()
-    merged_results = []
-    merged_highlights = []
+async def full_pipeline(user_query: str) -> Tuple[List[dict[str, Any]], List[str]]:
+    query = user_query
+    if PRE_PROCESSING_SIMPLE_FLAG:
+        query = query_preprocess_faiss(query)
+    if PRE_PROCESSING_LLM_FLAG:
+        query = await backend.subprocessing_LLM.pre_proccessing(query)
 
-    for result, highlight in zip(res1 + res2, hl1 + hl2):
-        tid = result["telegram_id"]
-        if tid not in seen_ids:
-            merged_results.append(result)
-            merged_highlights.append(highlight)
-            seen_ids.add(tid)
+    ru_part, en_part = split_query_by_lang(query)
+    ru_tokens = [tok for tok in ru_part.split() if len(tok) > 2]
+    en_tokens = [tok for tok in en_part.split() if len(tok) > 2]
 
-    return merged_results, merged_highlights
+    search_queries = [user_query, query] + en_tokens + ru_tokens
+    uniq_queries = list(dict.fromkeys(search_queries))
 
+    triples = vector_search_batch(uniq_queries)
 
-async def full_pipeline(user_query: str) -> tuple[list[dict[str, float | Any]], list[Any]]:
-    try:
-        query = None
+    top_results = []
+    seen = set()
 
-        if PRE_PROCESSING_SIMPLE_FLAG:
-            query = query_preprocess_faiss(user_query)
-            logger.info(f"\n[FAISS/FULL_PIPELINE] Предобработанный запрос пользователя: {query}\n")
+    for rec, hl, src in triples:
+        if src == user_query:
+            tid = rec["telegram_id"]
+            if tid not in seen:
+                top_results.append((rec, hl))
+                seen.add(tid)
 
-        if PRE_PROCESSING_LLM_FLAG:
-            logger.info(f"\n backend.subprocessing_LLM.pre_proccessing() Start\n")
-            query = await backend.subprocessing_LLM.pre_proccessing(user_query)
-            logger.info(f"\n[FAISS/FULL_PIPELINE] Обогащенный запрос пользователя: {query}\n")
+    other_results = []
+    for rec, hl, _ in sorted(triples, key=lambda x: x[0]["score"], reverse=True):
+        tid = rec["telegram_id"]
+        if tid not in seen:
+            other_results.append((rec, hl))
+            seen.add(tid)
 
-        if query is None:
-            query = user_query
+    final_results = [r for r, _ in top_results + other_results]
+    final_highlights = [h for _, h in top_results + other_results]
 
-        ru_query, en_query = split_query_by_lang(query)
-        logger.info(f"[FAISS/FULL_PIPELINE] RU-query: {ru_query}")
-        logger.info(f"[FAISS/FULL_PIPELINE] EN-query: {en_query}")
+    logger.info(f"[PIPELINE] уникальных записей: {len(final_results)}")
 
-        results_ru, highlights_ru = await vector_search(ru_query) if ru_query else ([], [])
-        results_en, highlights_en = await vector_search(en_query) if en_query else ([], [])
+    if POST_PROCESSING_FLAG:
+        final_results, final_highlights = await backend.subprocessing_nltk.post_proccessing(
+            query + " " + user_query, final_results, final_highlights
+        )
 
-        merged_results, merged_highlights = merge_results(results_ru, results_en, highlights_ru, highlights_en)
-
-        logger.info(f"\n[FAISS/FULL_PIPELINE] Релевантные хайлайты: {merged_highlights}\n")
-
-        if POST_PROCESSING_FLAG:
-            merged_results, merged_highlights = await backend.subprocessing_nltk.post_proccessing(
-                query, merged_results, merged_highlights
-            )
-            logger.info(f"\n[FAISS/FULL_PIPELINE] Постобработанные хайлайты: {merged_highlights}\n")
-
-        return merged_results, merged_highlights
-
-    except Exception as e:
-        logger.error(f"[FAISS/FULL_PIPELINE] Ошибка: {e}")
-        return [], []
+    return final_results, final_highlights

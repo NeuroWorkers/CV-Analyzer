@@ -6,7 +6,7 @@ sentence_transformers_threshold = 0.81
 
 openai_embedding_model = "text-embedding-3-large"
 openai_embedding_dim = 3072
-openai_threshold = 0.2
+openai_threshold = 0.4
 
 preprocessing_model = "openai/gpt-4o-mini"
 postprocessing_model = "google/gemini-2.5-flash"
