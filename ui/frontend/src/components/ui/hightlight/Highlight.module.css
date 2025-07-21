@@ -8,15 +8,15 @@
   box-shadow: 0 0 0 1px rgba(255, 255, 0, 0.5) !important;
 }
 
-/* Специальные стили для подсветки в ссылках */
+/* Специальные стили для подсветки в ссылках - не блокируем pointer-events */
 a .highlight {
   color: #000 !important;
-  text-decoration: none !important;
+  /* Убираем text-decoration: none чтобы не мешать кликабельности ссылок */
 }
 
 a:hover .highlight {
   color: #000 !important;
-  text-decoration: none !important;
+  /* Убираем text-decoration: none чтобы не мешать кликабельности ссылок */
 }
 
 /* Специальные стили для подсветки в заголовках */
@@ -74,6 +74,19 @@ h6 .highlight {
   overflow-wrap: break-word;
   overflow: hidden;
   color: inherit;
+}
+
+/* Стили для ссылок в markdownContainer */
+.markdownContainer a {
+  color: #0ea5e9;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  cursor: pointer;
+}
+
+.markdownContainer a:hover {
+  color: #0284c7;
+  text-decoration: underline;
 }
 
 .markdownContainer p {
